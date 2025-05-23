@@ -1,0 +1,134 @@
+/*
+ * Copyright (c) 2025 MusaeMotion
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.musaemotion.a2a.common;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.collect.Lists;
+import com.musaemotion.a2a.common.constant.MediaType;
+import lombok.*;
+
+import java.io.Serializable;
+import java.util.List;
+
+/**
+ * @author：contact@musaemotion.com
+ * @package：com.musaemotion.a2a.common
+ * @project：A2A
+ * @date：2025/4/22 10:12
+ * @description：智能体Card
+ */
+@Builder
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class AgentCard implements Serializable {
+
+
+
+    /**
+     * 名称
+     */
+    private String name;
+
+    /**
+     * 描述
+     */
+    private String description;
+
+    /**
+     * url地址
+     */
+    private String url;
+
+    /**
+     * 版本
+     */
+    private String version;
+
+    /**
+     * 文档url
+     */
+    private String documentationUrl;
+
+    /**
+     * agent 提供者
+     */
+    private AgentProvider provider;
+
+    /**
+     * agent 能力
+     */
+    private AgentCapabilities capabilities;
+
+    /**
+     * agent 该智能体的授权模式
+     */
+    private AgentAuthentication authentication;
+
+    /**
+     * 默认输入类型
+     */
+    @Builder.Default
+    private List<MediaType> defaultInputModes = Lists.newArrayList(MediaType.TEXT);
+
+    /**
+     * 默认输出类型
+     */
+    @Builder.Default
+    private List<MediaType> defaultOutputModes = Lists.newArrayList(MediaType.TEXT);
+
+    /**
+     * 支持的能力
+     */
+    @Builder.Default
+    private List<AgentSkill> skills = Lists.newArrayList();
+
+    /**
+     * agent 提供者信息
+     * @param organization
+     * @param url
+     */
+    public record AgentProvider(String organization, String url) {}
+
+    /**
+     * agent 能力
+     * @param streaming
+     * @param pushNotifications
+     * @param stateTransitionHistory
+     */
+    public record AgentCapabilities(boolean streaming, boolean pushNotifications, boolean stateTransitionHistory) { }
+
+    /**
+     * agent 访问授权设置
+	 * TODO 暂时没有做授权相关的设置, schemes 是授权的方式， credentials 是授权的token,
+     * TODO hostAgent 访问该智能体的时候，使用 schemes 是授权的方式， credentials 是授权的token,进行访问, 后续来完善，暂时都未设置
+     * TODO Common.AgentAuthentication 是同一个对象后面来修改调整到一起
+     * @param schemes
+     * @param credentials
+     */
+    public record AgentAuthentication(List<String> schemes, String credentials) {}
+
+
+    public String toJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        return mapper.writeValueAsString(this);
+    }
+
+}

@@ -1,0 +1,113 @@
+server:
+  port: ${port:10001}
+
+######################################
+# Common Observability
+######################################
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+          - prometheus
+  metrics:
+    distribution:
+      # 图标设置
+      percentiles-histogram:
+        http.server.requests: true
+        gen_ai.client.operation: true
+        db.vector.client.operation: true
+        spring.ai.chat.client: true
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+  endpoint:
+    health:
+      show-details: always
+  health:
+    defaults:
+      enabled: true
+##############################################
+
+spring:
+  ######################################
+  # Spring AI 相关配置
+  ######################################
+  ai:
+    ######################################
+    # Spring AI observability settings
+    ######################################
+    chat:
+      client:
+        observations:
+          log-prompt: true
+      observations:
+        # 记录大模型输出
+        log-prompt: true
+        # 记录大模型提示词
+        log-completion: true
+    ######################################
+    # Host Agent: Spring AI 模型配置
+    ######################################
+    ollama:
+      base-url: 'http://192.168.10.100:11434'
+      # base-url: 'http://127.0.0.1:11434'
+      chat:
+        options:
+          model: 'qwen3:8b'
+      init:
+        pull-model-strategy: WHEN_MISSING
+        chat:
+          additional-models:
+            - qwen3:8b
+  ######################################
+  # spring starter database 配置, 请使用自己的数据库配置
+  ######################################
+  datasource:
+    url: jdbc:mysql://localhost:3306/a2a?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: a2a_user
+    password: a2a_Usera2o
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+    type: com.zaxxer.hikari.HikariDataSource
+  # 没有使用jpa的连接池，所以就不会打印对应的连接池相关信息
+  jpa:
+    show-sql: false
+    open-in-view: false
+  ######################################
+  #  flyway 数据库版本化配置
+  ######################################
+  flyway:
+    baseline-version: 1.0.0
+    baseline-on-migrate: true
+    encoding: UTF-8
+    clean-disabled: true
+    validate-on-migrate: true
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    driver-class-name: ${spring.datasource.driver-class-name}
+    locations: classpath:db/migration
+    table: flyway_schema_history
+    enabled: true
+
+######################################
+# musaemotion A2A配置
+######################################
+musaemotion:
+  a2a:
+    host-agent:
+      notify-url: http://localhost:5000
+      # 默认需要加载到注册中心的远程智能体, 请一定保证该地址智能体存在并且已启动，否则会异常
+      remote-agent-addresses:
+      #  - http://127.0.0.1:9999/

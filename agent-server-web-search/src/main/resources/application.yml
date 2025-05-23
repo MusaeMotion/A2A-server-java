@@ -1,0 +1,67 @@
+# spring boot 配置
+server:
+  port: ${port:9996}
+
+spring:
+  application:
+    name: 'agent-ollama-web-search'
+  # spring ai 相关配置
+  ai:
+    ######################################
+    # Spring AI observability settings
+    ######################################
+    chat:
+      client:
+        observations:
+          log-prompt: true
+      observations:
+        # 记录大模型输出
+        log-prompt: true
+        # 记录大模型提示词
+        log-completion: true
+    ######################################
+    # Spring AI 模型配置
+    ######################################
+    ollama:
+      chat:
+        options:
+          model: 'qwen3:8b'
+      base-url: 'http://192.168.10.100:11434'
+      # base-url: 'http://127.0.0.1:11434'
+      init:
+        pull-model-strategy: WHEN_MISSING
+        chat:
+          additional-models:
+            - qwen3:8b
+
+card-url: 'http://127.0.0.1'
+######################################
+#  musaemotion A2A Card 配置
+######################################
+musaemotion:
+  a2a:
+    server:
+      capabilities:
+        push-notifications: false
+        streaming: false
+      skills:
+        - id: 'webSearchSkill'
+          name: 'webSearchSkill'
+          description: '搜索引擎搜索'
+          examples:
+            - '请给我搜索一下刘德华的新闻'
+      url: ${card-url}:${server.port}
+      version: '1.0.0'
+      default-input-modes:
+         - 'text'
+         - 'image/png'
+      default-output-modes:
+         - 'text'
+         - 'image/png'
+      name: 'webSearch'
+      description: '在搜索引擎里搜索内容、文章、新闻、图片'
+
+
+
+
+

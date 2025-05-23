@@ -1,0 +1,208 @@
+{
+  "groups": [
+    {
+      "name": "musaemotion.a2a.server",
+      "type": "com.musaemotion.a2a.agent.server.properties.A2aServerProperties",
+      "sourceType": "com.musaemotion.a2a.agent.server.properties.A2aServerProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "musaemotion.a2a.server.name",
+      "type": "java.lang.String",
+      "description": "名称"
+    },
+    {
+      "name": "musaemotion.a2a.server.description",
+      "type": "java.lang.String",
+      "description": "描述"
+    },
+    {
+      "name": "musaemotion.a2a.server.url",
+      "type": "java.lang.String",
+      "description": "url地址"
+    },
+    {
+      "name": "musaemotion.a2a.server.version",
+      "type": "java.lang.String",
+      "description": "版本"
+    },
+    {
+      "name": "musaemotion.a2a.server.documentation-url",
+      "type": "java.lang.String",
+      "description": "文档url"
+    },
+    {
+      "name": "musaemotion.a2a.server.provider.organization",
+      "type": "java.lang.String",
+      "description": "agent 提供者组织"
+    },
+    {
+      "name": "musaemotion.a2a.server.provider.url",
+      "type": "java.lang.String",
+      "description": "agent 提供者url"
+    },
+    {
+      "name": "musaemotion.a2a.server.capabilities.streaming",
+      "type": "java.lang.Boolean",
+      "description": "是否支持流式处理"
+    },
+    {
+      "name": "musaemotion.a2a.server.capabilities.push-notifications",
+      "type": "java.lang.Boolean",
+      "description": "是否支持推送通知"
+    },
+    {
+      "name": "musaemotion.a2a.server.capabilities.state-transition-history",
+      "type": "java.lang.Boolean",
+      "description": "是否支持状态转换历史"
+    },
+    {
+      "name": "musaemotion.a2a.server.authentication.schemes",
+      "type": "java.util.List<java.lang.String>",
+      "description": "认证方案"
+    },
+    {
+      "name": "musaemotion.a2a.server.authentication.credentials",
+      "type": "java.lang.String",
+      "description": "认证凭证"
+    },
+    {
+      "name": "musaemotion.a2a.server.default-input-modes",
+      "type": "java.util.List<java.lang.String>",
+      "description": "默认输入类型"
+    },
+    {
+      "name": "musaemotion.a2a.server.default-output-modes",
+      "type": "java.util.List<java.lang.String>",
+      "description": "默认输出类型"
+    },
+    {
+      "name": "musaemotion.a2a.server.skills",
+      "type": "java.util.List<com.musaemotion.a2a.common.AgentSkill>",
+      "description": "支持的能力"
+    }
+  ],
+  "hints": [
+    {
+      "name": "musaemotion.a2a.server.name",
+      "value": [
+        {
+          "description": "请输入服务器名称，例如：'A2A Server'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.description",
+      "value": [
+        {
+          "description": "请输入服务器的详细描述，例如：'A2A Server for handling agent interactions'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.url",
+      "value": [
+        {
+          "description": "请输入服务器的URL地址，例如：'http://example.com/a2a'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.version",
+      "value": [
+        {
+          "description": "请输入服务器的版本号，例如：'1.0.0'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.documentation-url",
+      "value": [
+        {
+          "description": "请输入服务器文档的URL地址，例如：'http://example.com/docs'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.provider.organization",
+      "value": [
+        {
+          "description": "请输入agent提供者的组织名称，例如：'Example Organization'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.provider.url",
+      "value": [
+        {
+          "description": "请输入agent提供者的URL地址，例如：'http://example.com/provider'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.capabilities.streaming",
+      "value": [
+        {
+          "description": "是否支持流式处理，例如：'true' 或 'false'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.capabilities.push-notifications",
+      "value": [
+        {
+          "description": "是否支持推送通知，例如：'true' 或 'false'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.capabilities.state-transition-history",
+      "value": [
+        {
+          "description": "是否支持状态转换历史，例如：'true' 或 'false'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.authentication.schemes",
+      "value": [
+        {
+          "description": "请输入支持的认证方案，例如：'["basic", "bearer"]'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.authentication.credentials",
+      "value": [
+        {
+          "description": "请输入认证凭证，例如：'your-credentials'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.default-input-modes",
+      "value": [
+        {
+          "description": "请输入默认输入类型，例如：'["text", "text/plain"]'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.default-output-modes",
+      "value": [
+        {
+          "description": "请输入默认输出类型，例如：'["text", "text/plain"]'"
+        }
+      ]
+    },
+    {
+      "name": "musaemotion.a2a.server.skills",
+      "value": [
+        {
+          "description": "请输入支持的能力，例如：'[{\"id\":\"skill1\",\"name\":\"Skill 1\",\"description\":\"Description of Skill 1\",\"tags\":[\"tag1\",\"tag2\"],\"examples\":[\"example1\",\"example2\"],\"inputModes\":[\"text\",\"json\"],\"outputModes\":[\"text\",\"json\"]}]'"
+        }
+      ]
+    }
+  ]
+}

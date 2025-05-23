@@ -1,0 +1,45 @@
+
+# spring boot 配置
+server:
+  port: ${port:9998}
+
+spring:
+  application:
+    name: 'agent-zhipu-generate-images'
+  ######################################
+  # Spring AI Zhipu 配置
+  ######################################
+  ai:
+    zhipuai:
+      image:
+        api-key: 建议使用自己的key
+      api-key: 建议使用自己的key
+card-url: 'http://127.0.0.1'
+######################################
+#  musaemotion A2A Card 配置
+######################################
+musaemotion:
+  a2a:
+    server:
+      capabilities:
+        push-notifications: false
+        streaming: false
+      skills:
+        - id: 'image-skill'
+          name: 'imageGenerations'
+          description: '用于图片创作生成'
+          examples:
+            - '请帮我生成一副关于爱情的图片，要求是可爱风格。'
+      url: ${card-url}:${server.port}
+      version: '1.0.0'
+      default-input-modes:
+         - 'text'
+      default-output-modes:
+         - 'image/png'
+      # name 只能使用英文
+      name: 'imageGenerations'
+      description: '可以使用文字内容生成图片，并且可以定义图片的风格。'
+
+
+
+

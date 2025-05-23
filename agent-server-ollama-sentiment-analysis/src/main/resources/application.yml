@@ -1,0 +1,65 @@
+server:
+  port: ${port:9999}
+
+spring:
+  application:
+    name: 'agent-ollama-sentiment-analysis'
+  ######################################
+  # Spring AI 相关配置
+  ######################################
+  ai:
+    ######################################
+    # Spring AI observability settings
+    ######################################
+    chat:
+      client:
+        observations:
+          log-prompt: true
+      observations:
+        # 记录大模型输出
+        log-prompt: true
+        # 记录大模型提示词
+        log-completion: true
+    ######################################
+    # Spring AI 模型配置，该智能体不合适这种带深度思考的模型
+    ######################################
+    ollama:
+      chat:
+        options:
+          model: 'qwen2.5:latest'
+      base-url: 'http://192.168.10.100:11434'
+      # base-url: 'http://127.0.0.1:11434'
+      init:
+        pull-model-strategy: WHEN_MISSING
+        chat:
+          additional-models:
+            - qwen2.5:latest
+card-url: 'http://127.0.0.1'
+######################################
+#  musaemotion A2A Card 配置
+######################################
+musaemotion:
+  a2a:
+    server:
+      capabilities:
+        push-notifications: true
+        streaming: true
+      skills:
+        - id: 'test-skill'
+          name: 'testSkill'
+          description: '主要是用于情感分析'
+          examples:
+            - '请帮我分析一下 我觉的这个不好吃是喜欢吃还是不喜欢吃'
+      url: ${card-url}:${server.port}
+      version: '1.0.0'
+      #default-input-modes:
+      #  - 'text'
+      #default-output-modes:
+      #  - 'text'
+      # name 只能使用英文
+      name: 'SentimentAnalysis'
+      description: '情感分析是否正向反向'
+
+
+
+

@@ -1,0 +1,21 @@
+{
+  "properties": [
+    {
+      "name": "musaemotion.a2a.host-agent.notify-url",
+      "type": "java.lang.String",
+      "description": "通知服务url地址，如果为空则不启动通知服务"
+    },
+    {
+      "name": "musaemotion.a2a.host-agent.remote-agent-addresses",
+      "type": "java.util.List<java.lang.String>",
+      "description": "默认启动远程智能体地址列表"
+    }
+  ],
+  "groups": [
+    {
+      "name": "musaemotion.a2a.host-agent",
+      "type": "com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties",
+      "sourceType": "com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties"
+    }
+  ]
+}

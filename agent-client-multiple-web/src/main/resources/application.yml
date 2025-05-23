@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: 'host-agent'
+  profiles:
+    active: '@profiles.active@'
+    group:
+      dev: "dev"
+      prod: "prod"
+      test: "test"
+
+
