@@ -2,7 +2,10 @@
   <img src="logo.png" width="50%" alt="MusaeMotion-A2A" />
 </div>
 
-**Other languages: [中文](README.zh-CN.md)**
+<p align="right">
+  <a href="README.zh-CN.md">中文</a> | <b>English</b>
+</p>
+
 # A2A Protocol Implementation Based on Java Spring Framework
 
 ## Project Overview
@@ -16,7 +19,7 @@ This project is an implementation of the A2A protocol based on the Java Spring f
 - [A2A Protocol Introduction](https://developers.googleblog.com/zh-hans/a2a-a-new-era-of-agent-interoperability/)
 - [Google A2A GitHub](https://github.com/google/A2A)
 - [Spring AI](https://github.com/spring-projects/spring-ai)
-
+- [The front-end project used by this project](https://github.com/MusaeMotion/A2A-manage-front-react)
 
 ## A2A Protocol Architecture and Corresponding Modules
 ![A2A Protocol Architecture](a2a.png)
@@ -25,7 +28,7 @@ This project is an implementation of the A2A protocol based on the Java Spring f
 - **A2A Client**: Corresponds to `framework/a2a-agent-client`, responsible for communicating with the A2A Server, encapsulating network requests, message processing, and other basic functions.
 - **A2A Server**: Corresponds to `framework/a2a-agent-server`, handles client requests and provides agent services.
 - **HostAgent and Remote Agent**: Corresponds to `framework/a2a-host-agent`, implements agent management and scheduling. It manages and maintains agent states, processes client requests, and assigns them to appropriate agents.
-- **Front-End**: See the accompanying frontend screenshots for an intuitive user interface.
+- **Front-End**: See the accompanying frontend screenshots for an intuitive user interface.[A2A-manage-front](https://github.com/MusaeMotion/A2A-manage-front-react)
 ![Frontend Screenshot 1](front1.png)
 ![Frontend Screenshot 2](front2.png)
 ![Frontend Screenshot 3](front3.png)

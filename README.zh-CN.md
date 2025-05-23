@@ -2,7 +2,10 @@
   <img src="logo.png" width="50%" alt="MusaeMotion-A2A" />
 </div>
 
-**其他语言版本: [English](README.md)**
+<p align="right">
+  <b>中文</b> | <a href="README.md">English</a>
+</p>
+
 # A2A 协议基于 Java Spring 框架实现
 
 ## 项目概述
@@ -16,7 +19,7 @@
 - [A2A 协议介绍](https://developers.googleblog.com/zh-hans/a2a-a-new-era-of-agent-interoperability/)
 - [Google A2A GitHub](https://github.com/google/A2A)
 - [Spring AI](https://github.com/spring-projects/spring-ai)
-
+- [本项目配套前端](https://github.com/MusaeMotion/A2A-manage-front-react)
 
 ## A2A 协议架构及对应模块
 ![A2A 协议架构图](a2a.png)
@@ -25,7 +28,7 @@
 - **A2A Client**：本项目对应模块为 `framework/a2a-agent-client`，负责与 A2A Server 进行通信，封装了网络请求、消息处理等基础功能。
 - **A2A Server**：本项目对应模块为 `framework/a2a-agent-server`，处理客户端的请求，提供智能体服务。
 - **HostAgent 和 Remote Agent**：本项目对应模块为 `framework/a2a-host-agent`，实现智能体的管理和调度。它负责管理和维护智能体的状态，处理客户端的请求并分配给合适的智能体进行处理。
-- **Front-End**：见配套前端截图，提供了直观的用户交互界面。
+- **Front-End**：见配套前端截图，提供了直观的用户交互界面。[A2A-manage-front](https://github.com/MusaeMotion/A2A-manage-front-react)
 ![前端截图 1](front1.png)
 ![前端截图 2](front2.png)
 ![前端截图 3](front3.png)
