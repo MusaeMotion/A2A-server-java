@@ -46,72 +46,66 @@ import java.util.LinkedHashMap;
 @RequiredArgsConstructor
 public class ServerController {
 
-    private final A2aServerProperties a2aServerProperties;
+	private final A2aServerProperties a2aServerProperties;
 
-    private final ServerProperties serverProperties;
+	private final ServerProperties serverProperties;
 
-    private final String urlTemplate = "http://%s:%s/";
+	private final String urlTemplate = "http://%s:%s/";
 
-    private final ServerEndpointManager serverEndpointManager;
+	private final ServerEndpointManager serverEndpointManager;
 
-    @Resource
-    private final AgentService agentService;
+	private final PushNotificationSenderService pushNotificationSenderService;
 
-    private final PushNotificationSenderService pushNotificationSenderService;
-
-    /**
-     * 智能体说明
-     * TODO 后续完善鉴权功能 AgentAuthentication，让hostAgent访问的时候增加授权访问的能力
-     * @return
-     */
-    @GetMapping(value = {"/.well-known/agent.json"})
-    @ResponseBody
-    public AgentCard wellKnownAgentCard() {
-        AgentCard agentCard = AgentCard.builder().build();
-        BeanUtils.copyProperties(this.a2aServerProperties, agentCard);
-        // 默认输入和输出类型设置
-        agentCard.setDefaultInputModes(agentService.supportedContentTypes());
-        agentCard.setDefaultOutputModes(agentService.supportedContentTypes());
-        if (!StringUtils.hasText(agentCard.getUrl())) {
-            agentCard.setUrl(
-                    String.format(urlTemplate,
-                            serverProperties.getAddress().getHostAddress(),
-                            serverProperties.getPort()
-                    )
-            );
-        }
-        return agentCard;
-    }
-
-    /**
-     * 智能体jwk密钥终结点。
-     * @return
-     */
-    @GetMapping(value = {"/.well-known/jwks.json"}, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public String wellKnownAgentJwk() {
-       return pushNotificationSenderService.getJwk();
-    }
-
-    /**
-     * 如果json请求走这个接口
+	/**
+	 * 智能体说明
 	 * TODO 后续完善鉴权功能 AgentAuthentication，让hostAgent访问的时候增加授权访问的能力
-     * @param request
-     * @return
-     */
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public JSONRPCMessage processRequest(@RequestBody LinkedHashMap request) {
-       return this.serverEndpointManager.processRequest(request);
-    }
+	 * @return
+	 */
+	@GetMapping(value = {"/.well-known/agent.json"})
+	@ResponseBody
+	public AgentCard wellKnownAgentCard() {
+		AgentCard agentCard = AgentCard.builder().build();
+		BeanUtils.copyProperties(this.a2aServerProperties, agentCard);
+		if (!StringUtils.hasText(agentCard.getUrl())) {
+			agentCard.setUrl(
+					String.format(urlTemplate,
+							serverProperties.getAddress().getHostAddress(),
+							serverProperties.getPort()
+					)
+			);
+		}
+		return agentCard;
+	}
 
-    /**
-     * 如果是 流模式 accept text/event-stream
+	/**
+	 * 智能体jwk密钥终结点。
+	 * @return
+	 */
+	@GetMapping(value = {"/.well-known/jwks.json"}, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public String wellKnownAgentJwk() {
+		return pushNotificationSenderService.getJwk();
+	}
+
+	/**
+	 * 如果json请求走这个接口
 	 * TODO 后续完善鉴权功能 AgentAuthentication，让hostAgent访问的时候增加授权访问的能力
-     * @param request
-     * @return
-     */
-    @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<?> processRequestSubscribe(@RequestBody LinkedHashMap request) {
-        return this.serverEndpointManager.processRequestSubscribe(request);
-    }
+	 * @param request
+	 * @return
+	 */
+	@PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+	public JSONRPCMessage processRequest(@RequestBody LinkedHashMap request) {
+		return this.serverEndpointManager.processRequest(request);
+	}
+
+	/**
+	 * 如果是 流模式 accept text/event-stream
+	 * TODO 后续完善鉴权功能 AgentAuthentication，让hostAgent访问的时候增加授权访问的能力
+	 * @param request
+	 * @return
+	 */
+	@PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public Flux<?> processRequestSubscribe(@RequestBody LinkedHashMap request) {
+		return this.serverEndpointManager.processRequestSubscribe(request);
+	}
 }

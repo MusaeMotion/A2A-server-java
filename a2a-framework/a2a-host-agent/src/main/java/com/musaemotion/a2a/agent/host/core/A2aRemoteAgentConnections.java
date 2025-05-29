@@ -55,25 +55,25 @@ import static com.musaemotion.a2a.common.constant.MetaDataKey.MESSAGE_ID;
 @Slf4j
 public class A2aRemoteAgentConnections {
 
-    /**
-     * a2a client
-     */
-    private A2aClient a2aClient;
+	/**
+	 * a2a client
+	 */
+	private A2aClient a2aClient;
 
-    /**
-     * agent Card
-     */
-    @Getter
-    private AgentCard agentCard;
+	/**
+	 * agent Card
+	 */
+	@Getter
+	private AgentCard agentCard;
 
-    /**
-     * agentCard,
-     * @param agentCard
-     */
-    public A2aRemoteAgentConnections(AgentCard agentCard){
-        this.a2aClient = new A2aClient(agentCard);
-        this.agentCard = agentCard;
-    }
+	/**
+	 * agentCard,
+	 * @param agentCard
+	 */
+	public A2aRemoteAgentConnections(AgentCard agentCard){
+		this.a2aClient = new A2aClient(agentCard);
+		this.agentCard = agentCard;
+	}
 
 
 	/**
@@ -82,20 +82,24 @@ public class A2aRemoteAgentConnections {
 	 * @param callback
 	 * @return
 	 */
-	private Task callAgent(TaskSendParams taskSendParams,  ISendTaskCallback callback){
+	private Task callAgent(TaskSendParams taskSendParams, ISendTaskCallback callback){
 		SendTaskRequest sendTaskRequest = SendTaskRequest.newInstance(taskSendParams);
 		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest);
 		if(sendTaskResponse.getResult() == null && sendTaskResponse.getError() != null) {
 			throw new RuntimeException(sendTaskResponse.getError().getMessage());
 		}
-
+		// 合并任务相关的元数据
 		this.mergeMetadata(sendTaskResponse.getResult(), taskSendParams);
+
+		// 合并消息相关的元数据
 		if (sendTaskResponse.getResult() != null && sendTaskResponse.getResult().getStatus() != null && sendTaskResponse.getResult().getStatus().getMessage() != null) {
+			// 合并到消息对象上
 			this.mergeMetadata(sendTaskResponse.getResult().getStatus().getMessage(), taskSendParams.getMessage());
 			var message = sendTaskResponse.getResult().getStatus().getMessage();
 			if (isNullOrEmpty(message.getMetadata())) {
 				message.setMetadata(Maps.newConcurrentMap());
 			}
+			//
 			if (message.getMetadata().containsKey(MESSAGE_ID)) {
 				message.getMetadata().put(LAST_MESSAGE_ID, message.getMetadata().get(MESSAGE_ID));
 			}
@@ -158,39 +162,28 @@ public class A2aRemoteAgentConnections {
 		return taskModel.get();
 	}
 
-    /**
-     * 发送任务, 会判断是流请求，还是 同步请求
-     * @param taskSendParams
-     * @param callback
-     */
-    public Task sendTask(TaskSendParams taskSendParams, ISendTaskCallback callback) {
-		// 创建Task
-		callback.sendTaskCallback(
-				Task.builder()
-						.id(taskSendParams.getId())
-						.sessionId(taskSendParams.getSessionId())
-						.status(
-								Common.TaskStatus.builder()
-										.state(TaskState.SUBMITTED)
-										.message(taskSendParams.getMessage())
-										.build()
-						)
-						.metadata(taskSendParams.getMetadata())
-						.history(Lists.newArrayList(taskSendParams.getMessage()))
-						.build());
+	/**
+	 * 发送任务, 会判断是流请求，还是 同步请求
+	 * @param taskSendParams
+	 * @param callback
+	 */
+	public Task sendTask(TaskSendParams taskSendParams, ISendTaskCallback callback) {
+		// 任务提交中
+		callback.sendTaskCallback(Task.from(taskSendParams));
 
 		if (this.getAgentCard().getCapabilities().streaming()) {
-		  return this.streamAgent(taskSendParams, callback);
+			return this.streamAgent(taskSendParams, callback);
 		}
+
 		return this.callAgent(taskSendParams, callback);
 	}
 
-    /**
-     * 合并metaData
-     * @param target
-     * @param source
-     */
-    private void mergeMetadata(IMetadata target, IMetadata source) {
+	/**
+	 * 合并metaData
+	 * @param target
+	 * @param source
+	 */
+	private void mergeMetadata(IMetadata target, IMetadata source) {
 		if (isNullOrEmpty(target.getMetadata()) || isNullOrEmpty(source.getMetadata())) {
 			return;
 		}
@@ -203,12 +196,12 @@ public class A2aRemoteAgentConnections {
 	}
 
 
-    /**
-     * 判断map 为空
-     * @param map
-     * @return
-     */
-    public static boolean isNullOrEmpty(Map<?, ?> map) {
-        return map == null || map.isEmpty();
-    }
+	/**
+	 * 判断map 为空
+	 * @param map
+	 * @return
+	 */
+	public static boolean isNullOrEmpty(Map<?, ?> map) {
+		return map == null || map.isEmpty();
+	}
 }

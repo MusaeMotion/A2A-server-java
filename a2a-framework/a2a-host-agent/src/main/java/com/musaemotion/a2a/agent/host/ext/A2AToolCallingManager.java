@@ -87,7 +87,7 @@ public class A2AToolCallingManager implements ToolCallingManager {
 	private final HostAgentPromptService hostAgentPromptService;
 
 	public A2AToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver toolCallbackResolver,
-									 ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, HostAgentPromptService hostAgentPromptService) {
+								 ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, HostAgentPromptService hostAgentPromptService) {
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
 		Assert.notNull(toolCallbackResolver, "toolCallbackResolver cannot be null");
 		Assert.notNull(toolExecutionExceptionProcessor, "toolCallExceptionConverter cannot be null");
@@ -184,7 +184,7 @@ public class A2AToolCallingManager implements ToolCallingManager {
 	 * Execute the tool call and return the response message.
 	 */
 	private A2AToolCallingManager.InternalToolExecutionResult executeToolCall(Prompt prompt, AssistantMessage assistantMessage,
-																				  ToolContext toolContext) {
+																			  ToolContext toolContext) {
 		List<ToolCallback> toolCallbacks = List.of();
 		if (prompt.getOptions() instanceof ToolCallingChatOptions toolCallingChatOptions) {
 			toolCallbacks = toolCallingChatOptions.getToolCallbacks();
@@ -265,11 +265,11 @@ public class A2AToolCallingManager implements ToolCallingManager {
 		messages.add(assistantMessage);
 		// 工具触发调用响应
 		messages.add(toolResponseMessage);
-		// TODO 这里不添加SystemMessage hotsAgent 也能正常调度分配执行，因为LLM根据历史Message进行推理
-		// TODO 后面这里可以思考一些灵活的做法，这里可能和谷歌原adk框架实现原理不太一样。
-		Message newSystem = new SystemMessage(this.hostAgentPromptService.hostAgentSystemPrompt(state));
-		messages.add(newSystem);
-
+		if(!state.containsKey(RETURN_DIRECT)) {
+			Message newSystem = new SystemMessage(this.hostAgentPromptService.hostAgentSystemPrompt(state));
+			messages.add(newSystem);
+			return  messages;
+		}
 		return messages;
 	}
 	private List<Message> buildConversationHistoryAfterToolExecution(List<Message> previousMessages,

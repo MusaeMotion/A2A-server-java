@@ -41,89 +41,98 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 
-    private TaskRepository repository;
+	private TaskRepository repository;
 
-    @Autowired
-    public MysqlTaskCenterManager(TaskRepository repository){
-        this.repository = repository;
-    }
+	@Autowired
+	public MysqlTaskCenterManager(TaskRepository repository){
+		this.repository = repository;
+	}
 
-    /**
-     *
-     * @param task
-     * @return
-     */
-    @Override
-    public Task addTask(Task task) {
-        var op = this.repository.findById(task.getId());
-        if (op.isPresent()) {
-            log.warn("该任务已经存在");
-            return op.get().toTask();
-        }
-        TaskEntity taskEntity = TaskEntity.newTaskEntity(task.getId(), task);
-        this.repository.save(taskEntity);
-        return taskEntity.toTask();
-    }
+	/**
+	 *
+	 * @param task
+	 * @return
+	 */
+	@Override
+	public Task addTask(Task task) {
+		var op = this.repository.findById(task.getId());
+		if (op.isPresent()) {
+			log.warn("该任务已经存在");
+			return op.get().toTask();
+		}
+		TaskEntity taskEntity = TaskEntity.newTaskEntity(task.getId(), task);
+		this.repository.save(taskEntity);
+		return taskEntity.toTask();
+	}
 
-    @Override
-    public Boolean exists(String taskId) {
-        return this.repository.existsById(taskId);
-    }
+	@Override
+	public Boolean exists(String taskId) {
+		return this.repository.existsById(taskId);
+	}
 
-    @Override
-    public List<Task> listByInputMessageId(List<String> messageIds) {
-         return this.repository.findAllByInputMessageIdIn(messageIds).stream().map(item->item.toTask()).collect(Collectors.toList());
-    }
+	@Override
+	public List<Task> listByInputMessageId(List<String> inputMessageIds) {
+		return this.repository.findAllByInputMessageIdIn(inputMessageIds).stream().map(item->item.toTask()).collect(Collectors.toList());
+	}
 
-    @Override
-    public Optional<Task> getById(String taskId) {
-        var op = this.repository.findById(taskId);
-        if(op.isEmpty()){
-            return Optional.empty();
-        }
-        return Optional.of(op.get().toTask());
-    }
+	@Override
+	public Optional<Task> getByMessageId(String messageId) {
+		var optional = this.repository.findByMessageId(messageId);
+		if(optional.isPresent()) {
+			return Optional.of(optional.get().toTask());
+		}
+		return Optional.empty();
+	}
 
-    @Override
-    public List<Task> getByConversationId(String conversationId) {
+	@Override
+	public Optional<Task> getById(String taskId) {
+		var optional = this.repository.findById(taskId);
+		if(optional.isEmpty()){
+			return Optional.empty();
+		}
+		return Optional.of(optional.get().toTask());
+	}
 
-        if(StringUtils.hasText(conversationId)){
-           return this.repository.findByConversationIdOrderByCreatedAtDesc(conversationId).stream().map(item->item.toTask()).collect(Collectors.toList());
-        }
-        return this.repository.findAllByOrderByCreatedAtDesc().stream().map(item->item.toTask()).collect(Collectors.toList());
-    }
+	@Override
+	public List<Task> getByConversationId(String conversationId) {
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void deleteByConversationId(String conversationId) {
-        this.repository.deleteByConversationId(conversationId);
-    }
+		if(StringUtils.hasText(conversationId)){
+			return this.repository.findByConversationIdOrderByCreatedAtDesc(conversationId).stream().map(item->item.toTask()).collect(Collectors.toList());
+		}
+		return this.repository.findAllByOrderByCreatedAtDesc().stream().map(item->item.toTask()).collect(Collectors.toList());
+	}
 
-    /**
-     *
-     * @param taskIds
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void removeTask(List<String> taskIds) {
-        taskIds.forEach(taskId -> {
-            this.repository.deleteById(taskId);
-        });
-    }
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void deleteByConversationId(String conversationId) {
+		this.repository.deleteByConversationId(conversationId);
+	}
 
-    /**
-     *
-     * @param task
-     */
-    @Override
-    public void updateTask(Task task) {
-        var op = this.repository.findById(task.getId());
-        if (op.isEmpty()) {
-            log.warn("该任务不存在");
-            return;
-        }
-        TaskEntity taskEntity = op.get();
-        taskEntity = TaskEntity.updateTaskInfo(taskEntity, task);
-        this.repository.save(taskEntity);
-    }
+	/**
+	 *
+	 * @param taskIds
+	 */
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void removeTask(List<String> taskIds) {
+		taskIds.forEach(taskId -> {
+			this.repository.deleteById(taskId);
+		});
+	}
+
+	/**
+	 *
+	 * @param task
+	 */
+	@Override
+	public void updateTask(Task task) {
+		var op = this.repository.findById(task.getId());
+		if (op.isEmpty()) {
+			log.warn("该任务不存在");
+			return;
+		}
+		TaskEntity taskEntity = op.get();
+		taskEntity = TaskEntity.updateTaskInfo(taskEntity, task);
+		this.repository.save(taskEntity);
+	}
 }

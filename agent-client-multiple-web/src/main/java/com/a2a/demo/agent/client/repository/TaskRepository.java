@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author：contact@musaemotion.com
@@ -34,30 +35,36 @@ import java.util.List;
 public interface TaskRepository  extends JpaRepository<TaskEntity, String>, JpaSpecificationExecutor<TaskEntity> {
 
 
-    /**
-     * @param conversationId
-     * @return
-     */
-    List<TaskEntity> findByConversationIdOrderByCreatedAtDesc(String conversationId);
+	/**
+	 * @param conversationId
+	 * @return
+	 */
+	List<TaskEntity> findByConversationIdOrderByCreatedAtDesc(String conversationId);
 
-    /**
-     * 获取所有
-     * @return
-     */
-    List<TaskEntity> findAllByOrderByCreatedAtDesc();
+	/**
+	 * 获取所有
+	 * @return
+	 */
+	List<TaskEntity> findAllByOrderByCreatedAtDesc();
+
+	/**
+	 *
+	 * @param inputMessageIds
+	 * @return
+	 */
+	List<TaskEntity> findAllByInputMessageIdIn(List<String> inputMessageIds);
 
 
-    /**
-     * 
-     * @param messageIds
-     * @return
-     */
-    List<TaskEntity> findAllByInputMessageIdIn(List<String> messageIds);
+	/**
+	 * 根据消息id获取对应的
+	 * @return
+	 */
+	Optional<TaskEntity> findByMessageId(String messageId);
 
-    /**
-     * 删除对话相关的所有消息
-     * @param conversationId
-     * @return
-     */
-    Integer deleteByConversationId(String conversationId);
+	/**
+	 * 删除对话相关的所有消息
+	 * @param conversationId
+	 * @return
+	 */
+	Integer deleteByConversationId(String conversationId);
 }

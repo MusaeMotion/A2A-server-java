@@ -29,21 +29,21 @@ import com.musaemotion.a2a.common.base.Task;
  */
 public interface ISendTaskCallback {
 
-    /**
-     * 提交
-     * @param task
-     */
-    void sendTaskCallback(Task task);
+	/**
+	 * 发送任务回调，在前处理和后处理都有调用
+	 * @param task
+	 */
+	void sendTaskCallback(Task task);
 
-    /**
-     * 任务状态更新
-     * @param taskStatusUpdateEvent
-     */
-    void sendTaskCallback(TaskStatusUpdateEvent taskStatusUpdateEvent);
+	/**
+	 * 任务状态更新
+	 * @param taskStatusUpdateEvent
+	 */
+	void sendTaskCallback(TaskStatusUpdateEvent taskStatusUpdateEvent);
 
-    /**
-     * 任务工件更新
-     * @param taskArtifactUpdateEvent
-     */
-    void sendTaskCallback(TaskArtifactUpdateEvent taskArtifactUpdateEvent);
+	/**
+	 * 任务工件更新
+	 * @param taskArtifactUpdateEvent
+	 */
+	void sendTaskCallback(TaskArtifactUpdateEvent taskArtifactUpdateEvent);
 }
