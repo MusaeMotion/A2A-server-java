@@ -7,9 +7,9 @@
 ## If you want to implement your own single-responsibility agent, add the following Maven dependency:
 ```xml
 <dependency>
-    <groupId>com.musaemotion.framework</groupId>
+    <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a-agent-server</artifactId>
-    <version>${version}</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 

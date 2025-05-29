@@ -35,9 +35,9 @@
 		<flyway-mysql.version>11.5.0</flyway-mysql.version>
         <url>http://www.musaemotion.com/</url>
     </properties>
-    <groupId>com.musaemotion</groupId>
+    <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0</version>
     <name>A2A</name>
     <description>A2A</description>
     <dependencyManagement>
