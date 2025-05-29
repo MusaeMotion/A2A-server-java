@@ -25,45 +25,49 @@ package com.musaemotion.a2a.common.constant;
  */
 public interface MetaDataKey {
 
-    /**
-     * 当前任务id
-     */
-    String TASK_ID = "task_id";
+	/**
+	 * 主任务ID，为了后续扩展
+	 */
+	String MAIN_TASK_ID = "main_task_id";
 
-    /**
-     * 当前智能体名称
-     */
-    String CUR_AGENT_NAME = "agentName";
+	/**
+	 * 当前智能体名称
+	 */
+	String CUR_AGENT_NAME = "agentName";
 
-    /**
-     * 就是 conversation_id 交谈id
-     */
-    String SESSION_ID = "session_id";
+	/**
+	 * 就是 conversation_id 交谈id
+	 */
+	String SESSION_ID = "session_id";
 
-    /**
-     * 交谈id, 就是sessionId, 估计是adk里面会读取 conversation_id 字段
-     */
-    String CONVERSATION_ID = "conversation_id";
+	/**
+	 * 交谈id, 就是sessionId, 估计是adk里面会读取 conversation_id 字段
+	 */
+	String CONVERSATION_ID = "conversation_id";
 
-    /**
-     * 输入消息扩展元数据
-     */
-    String INPUT_MESSAGE_METADATA = "input_message_metadata";
+	/**
+	 * 输入消息扩展元数据
+	 */
+	String INPUT_MESSAGE_METADATA = "input_message_metadata";
 
-    /**
-     * 消息id
-     */
-    String MESSAGE_ID = "message_id";
+	/**
+	 * 输入消息扩展元数据
+	 */
+	String INPUT_MESSAGE_ID = "input_message_id";
+	/**
+	 * 消息id
+	 */
+	String MESSAGE_ID = "message_id";
 
-    /**
-     * 上一条消息id
-     */
-    String LAST_MESSAGE_ID = "last_message_id";
+	/**
+	 * 上一条消息id
+	 */
+	String LAST_MESSAGE_ID = "last_message_id";
 
-    /**
-     * 当前session 活动 状态
-     */
-    String SESSION_ACTIVE = "session_active";
+	/**
+	 * 当前session 活动 状态
+	 */
+	String SESSION_ACTIVE = "session_active";
 
 
 }

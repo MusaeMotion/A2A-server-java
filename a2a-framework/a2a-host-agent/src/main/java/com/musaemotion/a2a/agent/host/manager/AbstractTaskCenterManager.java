@@ -34,75 +34,74 @@ import java.util.List;
  */
 public abstract class AbstractTaskCenterManager {
 
+	/**
+	 * 智能体相互调用过程中，消息id关系，后面选择落库。
+	 */
+	@Getter
+	private Map<String, String> nextId = new HashMap<String, String>();
 
-    /**
-     * key 消息id, value taskId, 建立消息和任务的关系
-     * 创建了任务的消息进行关联，消息id和任务id进行关联，这样可以跟踪回复给用户
-     */
-    @Getter
-    private Map<String, String> taskMap = new HashMap<String, String>();
+	/**
+	 * 处理工件使用的map
+	 */
+	@Getter
+	private Map<String, Map<Integer, Common.Artifact>> artifactChunks = new HashMap<>();
 
-    /**
-     * 建立消息之间的关系
-     */
-    @Getter
-    private Map<String, String> nextId = new HashMap<String, String>();
+	/**
+	 * 添加任务
+	 * @param task
+	 */
+	public abstract Task addTask(Task task);
 
-    /**
-     * 处理工件使用的map
-     */
-    @Getter
-    private Map<String, Map<Integer, Common.Artifact>> artifactChunks = new HashMap<>();
+	/**
+	 * 是否存在
+	 * @param taskId
+	 * @return
+	 */
+	public abstract Boolean exists(String taskId);
 
-    /**
-     * 添加任务
-     * @param task
-     */
-    public abstract Task addTask(Task task);
+	/**
+	 * 根据消息ids列表获取任务列表
+	 * @param inputMessageIds
+	 * @return
+	 */
+	public abstract List<Task> listByInputMessageId(List<String> inputMessageIds);
 
-    /**
-     * 是否存在
-     * @param taskId
-     * @return
-     */
-    public abstract Boolean exists(String taskId);
+	/**
+	 * 根据消息id获取对应的任务
+	 * @param messageId
+	 * @return
+	 */
+	public abstract Optional<Task> getByMessageId(String messageId);
 
-    /**
-     * 根据消息ids列表获取任务列表
-     * @param messageIds
-     * @return
-     */
-    public abstract List<Task> listByInputMessageId(List<String> messageIds);
+	/**
+	 * 根据任务id获取任务
+	 * @param taskId
+	 * @return
+	 */
+	public abstract Optional<Task> getById(String taskId);
 
-    /**
-     * 根据任务id获取任务
-     * @param taskId
-     * @return
-     */
-    public abstract Optional<Task> getById(String taskId);
+	/**
+	 * 根据对话id获取列表
+	 * @param conversationId
+	 * @return
+	 */
+	public abstract List<Task> getByConversationId(String conversationId);
 
-    /**
-     * 根据对话id获取列表
-     * @param conversationId
-     * @return
-     */
-    public abstract List<Task> getByConversationId(String conversationId);
+	/**
+	 * 根据对话id删除
+	 * @param conversationId
+	 */
+	public abstract void deleteByConversationId(String conversationId);
 
-    /**
-     * 根据对话id删除
-     * @param conversationId
-     */
-    public abstract void deleteByConversationId(String conversationId);
+	/**
+	 * 删除任务
+	 * @param taskIds
+	 */
+	public abstract void removeTask(List<String> taskIds) ;
 
-    /**
-     * 删除任务
-     * @param taskIds
-     */
-    public abstract void removeTask(List<String> taskIds) ;
-
-    /**
-     * 更新任务
-     * @param task
-     */
-    public abstract void updateTask(Task task);
+	/**
+	 * 更新任务
+	 * @param task
+	 */
+	public abstract void updateTask(Task task);
 }

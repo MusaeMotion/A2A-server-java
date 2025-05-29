@@ -29,29 +29,33 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class JsonUtils {
 
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+	private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static String toJson(Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        }catch (JsonProcessingException e) {
-           throw new RuntimeException(e.getMessage());
-        }
-    }
+	/**
+	 * 转换成字符串
+	 * @param obj
+	 * @return
+	 */
+	public static String toJson(Object obj) {
+		try {
+			return objectMapper.writeValueAsString(obj);
+		}catch (JsonProcessingException e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
 
-    public static boolean isValidMapFormat(String input) {
-        // 使用正则表达式来检查字符串是否符合Map的格式
-        return input.matches("^\\{(\\w+:\\w+,?)\\}$");
-    }
 
-    /**
-     * 测试
-     * @param json
-     * @return
-     */
-    public static boolean isJSON(String json) {
-        // 检查字符串是否以{或[开头，并且以}或]结尾
-        String regex = "^[\\{\\[](\\s*([\\w\\d\\s\\:\\,\\[\\]\\{\\}\"\\.\\-\\_\\!\\?\\*\\+\\=\\|\\<\\>\\/]+)\\s*)+[\\}\\]]$";
-        return json.matches(regex);
-    }
+	/**
+	 * 工具类
+	 * @param str
+	 * @return
+	 */
+	public static boolean isJsonString(String str) {
+		try {
+			objectMapper.readTree(str);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 }
