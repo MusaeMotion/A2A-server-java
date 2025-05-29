@@ -34,6 +34,8 @@ public enum MediaType {
 
     IMAGE_PNG("image/png"),
 
+	VIDEO_MP4("video/mp4"),
+
     APP_JSON("application/json");
 
 

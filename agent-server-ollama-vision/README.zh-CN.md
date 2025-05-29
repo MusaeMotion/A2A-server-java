@@ -6,9 +6,9 @@
 ## 如果你想实现你自己职责单一的其他智能体 maven dependency
 ```maven
       <dependency>
-            <groupId>com.musaemotion.framework</groupId>
+            <groupId>io.github.musaemotion</groupId>
             <artifactId>a2a-agent-server</artifactId>
-            <version>${version}</version>
+            <version>0.1.0</version>
       </dependency>
 ```
 

@@ -8,9 +8,9 @@ If you want to implement your own host-agent, simply add the following Maven dep
 
 ```xml
 <dependency>
-    <groupId>com.musaemotion.framework</groupId>
+    <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a-host-agent</artifactId>
-    <version>${version}</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
