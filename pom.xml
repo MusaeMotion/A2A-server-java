@@ -27,7 +27,6 @@
         <gson.version>2.10.1</gson.version>
         <nimbus-jose-jwt.version>9.9</nimbus-jose-jwt.version>
         <httpclient.version>4.5.13</httpclient.version>
-        <bcprov-jdk15on.version>1.70</bcprov-jdk15on.version>
         <hibernate-types-60.version>2.21.1</hibernate-types-60.version>
         <mysql-connector-j.veriosn>9.3.0</mysql-connector-j.veriosn>
         <micrometer.veriosn>1.14.5</micrometer.veriosn>
@@ -37,7 +36,7 @@
     </properties>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <name>A2A</name>
     <description>A2A</description>
     <dependencyManagement>
@@ -203,6 +202,9 @@
 					<source>17</source>
 					<target>17</target>
 					<encoding>UTF-8</encoding>
+					<compilerArgs>
+						<arg>-parameters</arg>
+					</compilerArgs>
 				</configuration>
 			</plugin>
 		</plugins>

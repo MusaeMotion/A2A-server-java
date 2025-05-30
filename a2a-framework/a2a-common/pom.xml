@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>io.github.musaemotion</groupId>
 		<artifactId>a2a-framework</artifactId>
-		<version>0.1.0</version>
+		<version>0.1.1</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -12,6 +12,14 @@
     <packaging>jar</packaging>
     <name>a2a-common</name>
 
+	<description>musaemotion for a2a common</description>
+	<developers>
+		<developer>
+			<name>musaemotion</name>
+			<email>contact@musaemotion.com</email>
+			<organization>https://github.com/MusaeMotion</organization>
+		</developer>
+	</developers>
 	<url>https://github.com/MusaeMotion/A2A-server-java</url>
 	<licenses>
 		<license>
