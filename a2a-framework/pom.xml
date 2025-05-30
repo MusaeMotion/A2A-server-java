@@ -7,7 +7,6 @@
         <version>0.1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a-framework</artifactId>
     <packaging>pom</packaging>
 
