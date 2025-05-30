@@ -7,10 +7,22 @@
         <version>0.1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <url>${url}</url>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a-framework</artifactId>
     <packaging>pom</packaging>
+
+	<url>https://github.com/MusaeMotion/A2A-server-java</url>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:https://github.com/MusaeMotion/A2A-server-java.git</connection>
+		<developerConnection>scm:git:https://github.com/MusaeMotion/A2A-server-java.git</developerConnection>
+		<url>https://github.com/MusaeMotion/A2A-server-java</url>
+	</scm>
     <modules>
         <module>a2a-common</module>
         <module>a2a-agent-server</module>

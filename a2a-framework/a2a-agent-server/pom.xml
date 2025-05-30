@@ -11,7 +11,19 @@
     <artifactId>a2a-agent-server</artifactId>
     <packaging>jar</packaging>
     <name>a2a-agent-server</name>
-    <url>${url}</url>
+
+	<url>https://github.com/MusaeMotion/A2A-server-java</url>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:https://github.com/MusaeMotion/A2A-server-java.git</connection>
+		<developerConnection>scm:git:https://github.com/MusaeMotion/A2A-server-java.git</developerConnection>
+		<url>https://github.com/MusaeMotion/A2A-server-java</url>
+	</scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -83,4 +95,58 @@
             <artifactId>jakarta.xml.bind-api</artifactId>
         </dependency>
     </dependencies>
+
+	<!-- sonatype 要求的插件 -->
+	<build>
+		<plugins>
+			<!-- 生成source -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
+				<executions>
+					<execution>
+						<id>oss</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Javadoc -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.6.3</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<!--不检查注释规范-->
+							<doclint>none</doclint>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- 工程文件自动签名-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>3.2.3</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>
