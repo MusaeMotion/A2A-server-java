@@ -185,7 +185,6 @@
 				<extensions>true</extensions>
 				<configuration>
 					<publishingServerId>sonatype</publishingServerId>
-					<tokenAuth>true</tokenAuth>
 				</configuration>
 			</plugin>
 			<!-- 生成source -->
