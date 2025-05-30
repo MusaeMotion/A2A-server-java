@@ -36,7 +36,7 @@
     </properties>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <name>A2A</name>
     <description>A2A</description>
     <dependencyManagement>
@@ -202,6 +202,9 @@
 					<source>17</source>
 					<target>17</target>
 					<encoding>UTF-8</encoding>
+					<compilerArgs>
+						<arg>-parameters</arg>
+					</compilerArgs>
 				</configuration>
 			</plugin>
 		</plugins>
