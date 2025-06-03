@@ -325,7 +325,7 @@ public class HostAgent implements ToolContextStateService {
 
 		Task result = client.sendTask(request, this.callback);
 
-		var response = this.sendAfter(result, state, request.getMessage().getMessageId(), agentName);
+		var response = this.sendAfter(request, result, state,  agentName);
 
 		return response;
 	}
@@ -390,15 +390,16 @@ public class HostAgent implements ToolContextStateService {
 
 	/**
 	 * 消息发送后处理
+	 * @param request
 	 * @param result
 	 * @param state
-	 * @param messageId
 	 * @param agentName
 	 * @return
 	 */
-	private List<Object> sendAfter(Task result, Map<String, Object> state, String messageId, String agentName){
+	private List<Object> sendAfter(TaskSendParams request, Task result, Map<String, Object> state, String agentName){
+		String messageId = request.getMessage().getMessageId();
 		if(result == null){
-			Optional<Task> opTask = this.taskCenterManager.getById(result.getId());
+			Optional<Task> opTask = this.taskCenterManager.getById(request.getId());
 			result = opTask.get();
 			result.setStatus(Common.TaskStatus.builder().state(TaskState.FAILED).build());
 		}
