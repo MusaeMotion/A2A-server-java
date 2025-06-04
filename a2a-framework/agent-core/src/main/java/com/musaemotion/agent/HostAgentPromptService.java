@@ -16,6 +16,8 @@
 
 package com.musaemotion.agent;
 
+import com.musaemotion.agent.model.SendMessageRequest;
+
 import java.util.Map;
 
 /**
@@ -27,12 +29,19 @@ import java.util.Map;
  */
 public interface HostAgentPromptService {
 
-    /**
-     * 获取
-     * @param state
-     * @return
-     */
-   String hostAgentSystemPrompt(Map<String, Object> state);
+	/**
+	 * 用户提示词
+	 * @param input
+	 * @return
+	 */
+	String userPrompt(SendMessageRequest input);
+
+	/**
+	 * 获取系统提示词
+	 * @param state
+	 * @return
+	 */
+	String hostAgentSystemPrompt(Map<String, Object> state);
 
     /**
      * 远程智能体列表
