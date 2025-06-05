@@ -30,7 +30,8 @@ import java.util.Map;
 public interface HostAgentPromptService {
 
 	/**
-	 * 用户提示词
+	 * 根据用户交谈发送的请求 使用 metadata 里面信息处理一些自己的业务逻辑
+	 * 并且构造 userPrompt 内容
 	 * @param input
 	 * @return
 	 */

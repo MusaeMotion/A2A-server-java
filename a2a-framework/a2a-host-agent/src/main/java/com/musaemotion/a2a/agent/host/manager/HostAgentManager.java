@@ -57,6 +57,8 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.musaemotion.a2a.common.constant.ArtifactDataKey.*;
@@ -95,6 +97,8 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * host Agent 提示词service
 	 */
 	private HostAgentPromptService hostAgentPromptService;
+
+
 
 	/**
 	 *
@@ -281,20 +285,19 @@ public class HostAgentManager implements ISendTaskCallback {
 	 */
 	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input) {
 
+
 		Common.Message userMessage = this.sendBefore(input);
 
 		AssistantMessage assistantMessage = this.hostAgent.call(input, this.buildToolContext(input));
 
 		Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
 
-		// 包装task列表
 		var message = CommonMessageExt.fromMessage(agnetMessage);
 		String lastMessageId = agnetMessage.getLastMessageId();
 		if(StringUtils.hasText(lastMessageId)){
 			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
 			message.setTask(tasks);
 		}
-		// 包装task列表
 
 		return SendMessageResponse.buildMessageResponse(
 				message,

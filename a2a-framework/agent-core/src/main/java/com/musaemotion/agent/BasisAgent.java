@@ -138,7 +138,7 @@ public class BasisAgent<T extends SendMessageRequest> {
 		StringBuffer stringBuffer = new StringBuffer(hostAgentPromptService.userPrompt(input));
 		stringBuffer.append("\n");
 		stringBuffer.append(PartUtils.getTextContent(input.getParams()));
-		log.warn("UserPrompt text: {}", stringBuffer.toString());
+		// log.warn("UserPrompt text: {}", stringBuffer.toString());
 		return stringBuffer.toString();
 	}
 
