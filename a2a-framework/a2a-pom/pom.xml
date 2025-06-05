@@ -63,11 +63,6 @@
 				<version>${project.version}</version>
 			</dependency>
 
-			<dependency>
-				<groupId>io.github.musaemotion</groupId>
-				<artifactId>a2a-host-agent</artifactId>
-				<version>${project.version}</version>
-			</dependency>
 
 			<dependency>
 				<groupId>io.github.musaemotion</groupId>
