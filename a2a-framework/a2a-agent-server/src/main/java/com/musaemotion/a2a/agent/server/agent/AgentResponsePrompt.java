@@ -79,4 +79,12 @@ public class AgentResponsePrompt {
         }
         return String.format(SYSTEM_TEMPLATE, "");
     }
+
+	/**
+	 * 标准系统提示词
+	 * @return
+	 */
+	public static String buildAgentResponseSystem(){
+		return buildAgentResponseSystem("");
+	}
 }
