@@ -129,6 +129,20 @@ public class BasisAgent<T extends SendMessageRequest> {
     private List<ToolCallback> toolCallbacks = Lists.newArrayList();
 
 
+	/**
+	 * 构造user 提示词内容
+	 * @param input
+	 * @return
+	 */
+	private String buildUserPromptText(T input) {
+		StringBuffer stringBuffer = new StringBuffer(hostAgentPromptService.userPrompt(input));
+		stringBuffer.append("\n");
+		stringBuffer.append(PartUtils.getTextContent(input.getParams()));
+		// log.warn("UserPrompt text: {}", stringBuffer.toString());
+		return stringBuffer.toString();
+	}
+
+
     /**
      * 处理参数，和userText
      * @param userText
@@ -208,7 +222,9 @@ public class BasisAgent<T extends SendMessageRequest> {
     public AssistantMessage call(T input, Map<String, Object> toolContext) {
         ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(input.getContent(), Lists.newArrayList(), toolContext);
         ChatResponse chatResponse = chatClientRequestSpec.advisors(buildAdvisor(input))
-                .user(PartUtils.getTextContent(input.getParams()))
+                .user(
+						buildUserPromptText(input)
+				)
 				// 1.0.0 版本之后可以直接提供工具也可以设置工具提供者
 				.toolCallbacks(this.toolCallbacks)
                 .toolContext(toolContext)
@@ -237,7 +253,7 @@ public class BasisAgent<T extends SendMessageRequest> {
 	 */
 	public Flux<AssistantMessage> stream(T input, Map<String, Object> toolContext) {
         return this.createFluxSink(fluxSink -> {
-            ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(PartUtils.getTextContent(input.getParams()), Lists.newArrayList(), toolContext);
+            ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPromptText(input), Lists.newArrayList(), toolContext);
             chatClientRequestSpec
                     .advisors(buildAdvisor(input))
 					// 1.0.0 版本之后可以直接提供工具也可以设置工具提供者

@@ -171,7 +171,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 	/**
 	 * 创建一个task副本，并且指定聊天记录长度内容作为新task副本的历史记录
-	 *
 	 * @param task
 	 * @param historyLength
 	 * @return
@@ -245,7 +244,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 
 	/**
-	 *
+	 * 处理agent 响应
 	 * @param sendTaskRequest
 	 * @param agentGeneralResponse
 	 * @return
@@ -327,7 +326,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 	/**
 	 * 获取任务响应
-	 *
 	 * @param request
 	 * @return
 	 */

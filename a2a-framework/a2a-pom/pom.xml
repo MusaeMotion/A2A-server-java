@@ -1,0 +1,75 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>io.github.musaemotion</groupId>
+		<artifactId>a2a-framework</artifactId>
+		<version>0.1.2</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>a2a-pom</artifactId>
+	<packaging>pom</packaging>
+
+	<name>a2a-pom</name>
+	<description>musaemotion for a2a-framework Materials</description>
+	<developers>
+		<developer>
+			<name>musaemotion</name>
+			<email>contact@musaemotion.com</email>
+			<organization>https://github.com/MusaeMotion</organization>
+		</developer>
+	</developers>
+	<url>https://github.com/MusaeMotion/A2A-server-java</url>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:https://github.com/MusaeMotion/A2A-server-java.git</connection>
+		<developerConnection>scm:git:https://github.com/MusaeMotion/A2A-server-java.git</developerConnection>
+		<url>https://github.com/MusaeMotion/A2A-server-java</url>
+	</scm>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.github.musaemotion</groupId>
+				<artifactId>a2a-common</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>io.github.musaemotion</groupId>
+				<artifactId>a2a-agent-server</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>io.github.musaemotion</groupId>
+				<artifactId>a2a-agent-client</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>io.github.musaemotion</groupId>
+				<artifactId>agent-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>io.github.musaemotion</groupId>
+				<artifactId>a2a-host-agent</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+		</dependencies>
+	</dependencyManagement>
+
+</project>

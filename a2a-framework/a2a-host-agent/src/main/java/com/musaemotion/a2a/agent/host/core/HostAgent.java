@@ -339,8 +339,6 @@ public class HostAgent implements ToolContextStateService {
 	 */
 	private TaskSendParams sendBefore(Map<String, Object> state, String agentName, String message){
 
-
-
 		// 创建默认任务id
 		String taskId = GuidUtils.createShortRandomGuid();
 		String mainTaskId =GuidUtils.createGuid();

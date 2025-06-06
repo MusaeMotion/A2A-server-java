@@ -144,6 +144,7 @@
         <module>a2a-agent-client</module>
         <module>agent-core</module>
         <module>a2a-host-agent</module>
+        <module>a2a-pom</module>
     </modules>
     <dependencies>
 		<dependency>
