@@ -57,6 +57,7 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -99,6 +100,10 @@ public class HostAgentManager implements ISendTaskCallback {
 	private HostAgentPromptService hostAgentPromptService;
 
 
+	/**
+	 * host agent 任务实现方法
+	 */
+	private ExecutorService executorService = Executors.newFixedThreadPool(10);
 
 	/**
 	 *
@@ -250,31 +255,39 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @return
 	 */
 	private Common.Message sendBefore(SendMessageRequest input){
-
 		this.checkSendMessageRequest(input);
-
 		// 消息处理
 		Common.Message userMessage = this.sanitizeRequestMessage(input);
-
 		// 消息管理器保存
-		this.messageManager.add(userMessage);
-
+		this.messageManager.upsert(userMessage);
 		return userMessage;
 	}
 
+
 	/**
-	 * 之后处理
+	 * 后处理
 	 * @param assistantMessage
 	 * @param userMessage
 	 * @return
 	 */
-	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage)  {
+	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage){
+		return this.sendAfter(assistantMessage, userMessage, "");
+	}
 
+	/**
+	 * 后处理
+	 * @param assistantMessage
+	 * @param userMessage
+	 * @param messageId
+	 * @return
+	 */
+	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage, String messageId)  {
 		Common.Message agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage);
-
+		if(StringUtils.hasText(messageId)){
+			agnetMessage.getMetadata().put(MESSAGE_ID, messageId);
+		}
 		// 消息管理器保存
-		this.messageManager.add(agnetMessage);
-
+		this.messageManager.upsert(agnetMessage);
 		return agnetMessage;
 	}
 
@@ -285,22 +298,31 @@ public class HostAgentManager implements ISendTaskCallback {
 	 */
 	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input) {
 
-
+		// 处理消息
 		Common.Message userMessage = this.sendBefore(input);
+		// 预写入临时返回消息
+		AssistantMessage assistantMessage = new AssistantMessage("您的消息已经收到", input.getMetadata());
+		Common.Message tempMessage = this.sendAfter(assistantMessage, userMessage);
+		log.warn("message: {}", assistantMessage.getMetadata().get(MESSAGE_ID));
 
-		AssistantMessage assistantMessage = this.hostAgent.call(input, this.buildToolContext(input));
+		Runnable runTask = new Runnable() {
+			@Override
+			public void run() {
+				AssistantMessage assistantMessage = HostAgentManager.this.hostAgent.call(input, HostAgentManager.this.buildToolContext(input));
+				Common.Message agnetMessage = HostAgentManager.this.sendAfter(assistantMessage, userMessage, tempMessage.getMessageId());
+				var message = CommonMessageExt.fromMessage(agnetMessage);
+				String lastMessageId = agnetMessage.getLastMessageId();
+				if(StringUtils.hasText(lastMessageId)){
+					List<Task> tasks = HostAgentManager.this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
+					message.setTask(tasks);
+				}
+			}
+		};
 
-		Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
-
-		var message = CommonMessageExt.fromMessage(agnetMessage);
-		String lastMessageId = agnetMessage.getLastMessageId();
-		if(StringUtils.hasText(lastMessageId)){
-			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
-			message.setTask(tasks);
-		}
+		executorService.execute(runTask);
 
 		return SendMessageResponse.buildMessageResponse(
-				message,
+				tempMessage,
 				input.getConversationId()
 		);
 	}
@@ -323,10 +345,12 @@ public class HostAgentManager implements ISendTaskCallback {
 						fluxSink.complete();
 					})
 					.subscribe(assistantMessage -> {
-						Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
+						// Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
+						Common.Message message =this.sanitizeResponseMessage(assistantMessage, userMessage);
+						log.info("message: {}", message.getMetadata().get(MESSAGE_ID));
 						fluxSink.next(
 								SendMessageResponse.buildMessageResponse(
-										agnetMessage,
+										message,
 										input.getConversationId()
 								)
 						);
