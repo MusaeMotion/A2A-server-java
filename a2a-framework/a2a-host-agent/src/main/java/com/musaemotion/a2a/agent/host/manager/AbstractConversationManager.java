@@ -27,13 +27,13 @@ import java.util.List;
  * @date：2025/5/6 17:21
  * @description：请完善描述
  */
-public abstract class AbstractConversationManager {
+public abstract class AbstractConversationManager<T extends Conversation> {
 
     /**
      * 创建一个交谈
      * @return
      */
-    public abstract Conversation create(String conversationName);
+    public abstract T create(String conversationName);
 
     /**
      * 判断是否存在
@@ -51,5 +51,5 @@ public abstract class AbstractConversationManager {
     /**
      * 获取交谈列表
      */
-    public abstract List<Conversation> list();
+    public abstract List<T> list();
 }
