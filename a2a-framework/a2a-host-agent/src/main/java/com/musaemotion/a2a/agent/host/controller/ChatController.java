@@ -16,6 +16,7 @@
 
 package com.musaemotion.a2a.agent.host.controller;
 
+import com.musaemotion.a2a.agent.host.model.response.CommonMessageExt;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
 import com.musaemotion.a2a.agent.host.model.response.Result;
@@ -70,7 +71,7 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public  Flux<SendMessageResponse<Common.Message>> stream(@RequestBody SendMessageRequest input) {
+    public  Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input) {
         return this.hostAgentManager.stream(input);
     }
 }

@@ -50,6 +50,11 @@ public class CommonMessageExt extends Common.Message {
         return commonMessageExt;
     }
 
+	/**
+	 *
+	 * @param message
+	 * @return
+	 */
     public static CommonMessageExt fromMessage(Common.Message message) {
         CommonMessageExt commonMessageExt = new CommonMessageExt();
         BeanUtils.copyProperties(message, commonMessageExt);

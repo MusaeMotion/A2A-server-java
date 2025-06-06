@@ -187,9 +187,10 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @param userMessage
 	 * @return
 	 */
-	private Common.Message sanitizeResponseMessage(AssistantMessage assistantMessage, Common.Message userMessage) {
+	private Common.Message sanitizeResponseMessage(AssistantMessage assistantMessage, Common.Message userMessage, String messageId) {
 		Common.Message message = null;
 		if (JsonUtils.isJsonString(assistantMessage.getText())) {
+			log.warn("JSON：{}", assistantMessage.toString());
 			message = Common.Message.builder()
 					.role(MessageRole.AGENT)
 					.metadata(assistantMessage.getMetadata())
@@ -222,6 +223,7 @@ public class HostAgentManager implements ISendTaskCallback {
 				throw new RuntimeException("响应内容反序列化失败");
 			}
 		} else {
+			log.warn("直接文本：{}", assistantMessage.toString());
 			message = Common.Message.builder()
 					.role(MessageRole.AGENT)
 					.parts(Lists.newArrayList(new Common.TextPart(assistantMessage.getText())))
@@ -230,7 +232,7 @@ public class HostAgentManager implements ISendTaskCallback {
 		}
 		message.getMetadata().put(LAST_MESSAGE_ID, userMessage.getMetadata().get(MESSAGE_ID).toString());
 		message.getMetadata().put(CONVERSATION_ID, userMessage.getMetadata().get(CONVERSATION_ID).toString());
-		message.getMetadata().put(MESSAGE_ID, GuidUtils.createGuid());
+		message.getMetadata().put(MESSAGE_ID, StringUtils.hasText(messageId)? messageId: GuidUtils.createGuid());
 		return message;
 	}
 
@@ -282,13 +284,25 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @return
 	 */
 	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage, String messageId)  {
-		Common.Message agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage);
-		if(StringUtils.hasText(messageId)){
-			agnetMessage.getMetadata().put(MESSAGE_ID, messageId);
-		}
+		Common.Message agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
 		// 消息管理器保存
 		this.messageManager.upsert(agnetMessage);
 		return agnetMessage;
+	}
+
+	/**
+	 * 加载task信息
+	 * @param agnetMessage
+	 * @return
+	 */
+	private CommonMessageExt loadTask(Common.Message agnetMessage){
+		var message = CommonMessageExt.fromMessage(agnetMessage);
+		String lastMessageId = agnetMessage.getLastMessageId();
+		if(StringUtils.hasText(lastMessageId)){
+			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
+			message.setTask(tasks);
+		}
+		return message;
 	}
 
 	/**
@@ -297,34 +311,28 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @return
 	 */
 	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input) {
-
-		// 处理消息
 		Common.Message userMessage = this.sendBefore(input);
-		// 预写入临时返回消息
-		AssistantMessage assistantMessage = new AssistantMessage("您的消息已经收到", input.getMetadata());
-		Common.Message tempMessage = this.sendAfter(assistantMessage, userMessage);
-		log.warn("message: {}", assistantMessage.getMetadata().get(MESSAGE_ID));
-
-		Runnable runTask = new Runnable() {
-			@Override
-			public void run() {
-				AssistantMessage assistantMessage = HostAgentManager.this.hostAgent.call(input, HostAgentManager.this.buildToolContext(input));
-				Common.Message agnetMessage = HostAgentManager.this.sendAfter(assistantMessage, userMessage, tempMessage.getMessageId());
-				var message = CommonMessageExt.fromMessage(agnetMessage);
-				String lastMessageId = agnetMessage.getLastMessageId();
-				if(StringUtils.hasText(lastMessageId)){
-					List<Task> tasks = HostAgentManager.this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
-					message.setTask(tasks);
-				}
-			}
-		};
-
-		executorService.execute(runTask);
-
+		AssistantMessage assistantMessage = this.hostAgent.call(input, this.buildToolContext(input));
+		Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
+		var message = loadTask(agnetMessage);
 		return SendMessageResponse.buildMessageResponse(
-				tempMessage,
+				message,
 				input.getConversationId()
 		);
+	}
+
+	/**
+	 * 流请求包装消息
+	 * @param messages
+	 * @return
+	 */
+	private Common.Message streamFinishReasonMessage(List<Common.Message> messages){
+		var parts =	messages.stream().map(item->item.getParts()).flatMap(Collection::stream).collect(Collectors.toUnmodifiableList());
+		String text = parts.stream().filter(part->{ return  part instanceof Common.TextPart; }).map(item->((Common.TextPart) item).getText()).collect(Collectors.joining(""));
+		var agentMessage = messages.get(messages.size()-1);
+		agentMessage.getParts().clear();
+		agentMessage.getParts().add(new Common.TextPart(text));
+		return agentMessage;
 	}
 
 	/**
@@ -332,25 +340,33 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @param input
 	 * @return
 	 */
-	public Flux<SendMessageResponse<Common.Message>> stream(SendMessageRequest input) {
+	/*public Flux<SendMessageResponse<CommonMessageExt>> stream(SendMessageRequest input) {
 
 		Common.Message userMessage = this.sendBefore(input);
 
 		Flux<AssistantMessage> fluxAssistantMessage = this.hostAgent.stream(input, this.buildToolContext(input));
-
-		Flux<SendMessageResponse<Common.Message>> flux = Flux.create(fluxSink -> {
+		// 创建消息id
+		String messageId = GuidUtils.createGuid();
+		List<Common.Message> messages = Lists.newArrayList();
+		Flux<SendMessageResponse<CommonMessageExt>> flux = Flux.create(fluxSink -> {
 			fluxAssistantMessage
 					.doFinally(i -> {
-						// log.error("HostAgent完成：{}", i.name());
+                        var agentMessage = this.streamFinishReasonMessage(messages);
+						this.messageManager.upsert(agentMessage);
 						fluxSink.complete();
 					})
 					.subscribe(assistantMessage -> {
-						// Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
-						Common.Message message =this.sanitizeResponseMessage(assistantMessage, userMessage);
-						log.info("message: {}", message.getMetadata().get(MESSAGE_ID));
+						var agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
+						messages.add(agnetMessage);
+
+						// 加载任务消息
+						if(assistantMessage.getMetadata().get("finishReason").equals("STOP")){
+							agnetMessage = loadTask(agnetMessage);
+							log.warn("加载结束信息{}", agnetMessage.toString());
+						}
 						fluxSink.next(
 								SendMessageResponse.buildMessageResponse(
-										message,
+										agnetMessage,
 										input.getConversationId()
 								)
 						);
@@ -358,6 +374,50 @@ public class HostAgentManager implements ISendTaskCallback {
 
 		});
 		return flux;
+	}*/
+
+	public Flux<SendMessageResponse> stream(SendMessageRequest input) {
+		Common.Message userMessage = this.sendBefore(input);
+
+		return Flux.create(fluxSink -> {
+
+			ExecutorService executor = Executors.newSingleThreadExecutor();
+			executor.submit(() -> {
+				Flux<AssistantMessage> fluxAssistantMessage = this.hostAgent.stream(input, this.buildToolContext(input));
+				String messageId = GuidUtils.createGuid();
+				List<Common.Message> messages = Lists.newArrayList();
+				fluxAssistantMessage
+						 .doFinally(i -> {
+							 var agentMessage = this.streamFinishReasonMessage(messages);
+							 this.messageManager.upsert(agentMessage);
+							 fluxSink.complete();
+							 executor.shutdown();
+						 })
+						 .subscribe(assistantMessage -> {
+							try {
+								var agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
+								messages.add(agnetMessage);
+
+								// 加载任务消息
+								if ("STOP".equals(assistantMessage.getMetadata().get("finishReason"))) {
+									agnetMessage = loadTask(agnetMessage);
+									log.warn("加载结束信息{}", agnetMessage.toString());
+								}
+								log.warn("推送了消息");
+								fluxSink.next(
+										SendMessageResponse.buildMessageResponse(
+										agnetMessage,
+										input.getConversationId())
+								);
+
+							} catch (Exception e) {
+								log.error("处理消息时发生错误", e);
+								fluxSink.error(e); // 处理异常
+							}
+						});
+			});
+
+		});
 	}
 
 	/**

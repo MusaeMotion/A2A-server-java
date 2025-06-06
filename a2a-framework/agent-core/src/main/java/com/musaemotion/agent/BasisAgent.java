@@ -256,18 +256,14 @@ public class BasisAgent<T extends SendMessageRequest> {
             ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPromptText(input), Lists.newArrayList(), toolContext);
             chatClientRequestSpec
                     .advisors(buildAdvisor(input))
-					// 1.0.0 版本之后可以直接提供工具也可以设置工具提供者
 					.toolCallbacks(this.toolCallbacks)
                     .toolContext(toolContext)
                     .stream()
                     .chatResponse()
                     .doFinally(i -> {
-                        // log.error("BasisAgent 完成了请求：{}", i.name());
                         fluxSink.complete();
                     })
-                    .doOnComplete(() -> {
-                        // log.error("BasisAgent 完成了请求");
-                    })
+                    .doOnComplete(() -> {})
                     .doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
                     .onErrorResume((error) -> {
                         var generation = new Generation(new AssistantMessage("人工智能出现了一点问题，请换个问题咨询：" + error.getMessage()));
@@ -276,7 +272,7 @@ public class BasisAgent<T extends SendMessageRequest> {
                         )).build());
                     })
                     .subscribe(chatResponse -> {
-                        log.error("subscribe {}", chatResponse.getResult().getOutput().getText());
+                        // log.error("subscribe {}", chatResponse.getResult().getOutput().getText());
                         fluxSink.next(chatResponse.getResult().getOutput());
                     });
         });
