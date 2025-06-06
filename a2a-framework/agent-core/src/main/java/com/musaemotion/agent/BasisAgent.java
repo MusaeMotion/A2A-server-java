@@ -246,35 +246,26 @@ public class BasisAgent<T extends SendMessageRequest> {
     }
 
 	/**
-	 *
+	 * stream请求
 	 * @param input
 	 * @param toolContext
 	 * @return
 	 */
 	public Flux<AssistantMessage> stream(T input, Map<String, Object> toolContext) {
-        return this.createFluxSink(fluxSink -> {
-            ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPromptText(input), Lists.newArrayList(), toolContext);
-            chatClientRequestSpec
-                    .advisors(buildAdvisor(input))
-					.toolCallbacks(this.toolCallbacks)
-                    .toolContext(toolContext)
-                    .stream()
-                    .chatResponse()
-                    .doFinally(i -> {
-                        fluxSink.complete();
-                    })
-                    .doOnComplete(() -> {})
-                    .doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
-                    .onErrorResume((error) -> {
-                        var generation = new Generation(new AssistantMessage("人工智能出现了一点问题，请换个问题咨询：" + error.getMessage()));
-                        return Mono.just(ChatResponse.builder().generations(List.of(
-                                generation
-                        )).build());
-                    })
-                    .subscribe(chatResponse -> {
-                        // log.error("subscribe {}", chatResponse.getResult().getOutput().getText());
-                        fluxSink.next(chatResponse.getResult().getOutput());
-                    });
-        });
-    }
+		ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPromptText(input), Lists.newArrayList(), toolContext);
+		return chatClientRequestSpec
+				.advisors(buildAdvisor(input))
+				.toolCallbacks(this.toolCallbacks)
+				.toolContext(toolContext)
+				.stream()
+				.chatResponse()
+				.doOnComplete(() ->  log.info("BasisAgent 智能体完成"))
+				.doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
+				.onErrorResume((error) -> {
+					var generation = new Generation(new AssistantMessage("人工智能出现了一点问题，请换个问题咨询：" + error.getMessage()));
+					return Mono.just(ChatResponse.builder().generations(List.of(
+							generation
+					)).build());
+				}).map(chatResponse -> chatResponse.getResult().getOutput());
+	}
 }

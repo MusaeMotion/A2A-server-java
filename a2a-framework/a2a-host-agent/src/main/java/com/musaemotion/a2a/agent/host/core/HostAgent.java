@@ -260,7 +260,7 @@ public class HostAgent implements ToolContextStateService {
 	 * @param input
 	 * @return
 	 */
-	public Flux<AssistantMessage> stream(SendMessageRequest input,   Map<String, Object> toolContext) {
+	public Flux<AssistantMessage> stream(SendMessageRequest input,  Map<String, Object> toolContext) {
 		return this.basisAgent.stream(input, toolContext);
 	}
 

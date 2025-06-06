@@ -55,6 +55,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -190,7 +191,6 @@ public class HostAgentManager implements ISendTaskCallback {
 	private Common.Message sanitizeResponseMessage(AssistantMessage assistantMessage, Common.Message userMessage, String messageId) {
 		Common.Message message = null;
 		if (JsonUtils.isJsonString(assistantMessage.getText())) {
-			log.warn("JSON：{}", assistantMessage.toString());
 			message = Common.Message.builder()
 					.role(MessageRole.AGENT)
 					.metadata(assistantMessage.getMetadata())
@@ -223,7 +223,6 @@ public class HostAgentManager implements ISendTaskCallback {
 				throw new RuntimeException("响应内容反序列化失败");
 			}
 		} else {
-			log.warn("直接文本：{}", assistantMessage.toString());
 			message = Common.Message.builder()
 					.role(MessageRole.AGENT)
 					.parts(Lists.newArrayList(new Common.TextPart(assistantMessage.getText())))
@@ -336,88 +335,34 @@ public class HostAgentManager implements ISendTaskCallback {
 	}
 
 	/**
-	 * 流请求
+	 * 发送流请求
 	 * @param input
 	 * @return
 	 */
-	/*public Flux<SendMessageResponse<CommonMessageExt>> stream(SendMessageRequest input) {
-
+	public  Flux<SendMessageResponse> stream(SendMessageRequest input) {
 		Common.Message userMessage = this.sendBefore(input);
-
 		Flux<AssistantMessage> fluxAssistantMessage = this.hostAgent.stream(input, this.buildToolContext(input));
-		// 创建消息id
 		String messageId = GuidUtils.createGuid();
 		List<Common.Message> messages = Lists.newArrayList();
-		Flux<SendMessageResponse<CommonMessageExt>> flux = Flux.create(fluxSink -> {
-			fluxAssistantMessage
-					.doFinally(i -> {
-                        var agentMessage = this.streamFinishReasonMessage(messages);
-						this.messageManager.upsert(agentMessage);
-						fluxSink.complete();
-					})
-					.subscribe(assistantMessage -> {
-						var agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
+		return fluxAssistantMessage.doFinally(i -> {
+					var agentMessage = this.streamFinishReasonMessage(messages);
+					this.messageManager.upsert(agentMessage);
+				})
+				.map(assistantMessage -> {
+					var agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
+					try {
 						messages.add(agnetMessage);
-
 						// 加载任务消息
-						if(assistantMessage.getMetadata().get("finishReason").equals("STOP")){
+						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason"))) {
 							agnetMessage = loadTask(agnetMessage);
-							log.warn("加载结束信息{}", agnetMessage.toString());
 						}
-						fluxSink.next(
-								SendMessageResponse.buildMessageResponse(
-										agnetMessage,
-										input.getConversationId()
-								)
-						);
-					});
-
-		});
-		return flux;
-	}*/
-
-	public Flux<SendMessageResponse> stream(SendMessageRequest input) {
-		Common.Message userMessage = this.sendBefore(input);
-
-		return Flux.create(fluxSink -> {
-
-			ExecutorService executor = Executors.newSingleThreadExecutor();
-			executor.submit(() -> {
-				Flux<AssistantMessage> fluxAssistantMessage = this.hostAgent.stream(input, this.buildToolContext(input));
-				String messageId = GuidUtils.createGuid();
-				List<Common.Message> messages = Lists.newArrayList();
-				fluxAssistantMessage
-						 .doFinally(i -> {
-							 var agentMessage = this.streamFinishReasonMessage(messages);
-							 this.messageManager.upsert(agentMessage);
-							 fluxSink.complete();
-							 executor.shutdown();
-						 })
-						 .subscribe(assistantMessage -> {
-							try {
-								var agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
-								messages.add(agnetMessage);
-
-								// 加载任务消息
-								if ("STOP".equals(assistantMessage.getMetadata().get("finishReason"))) {
-									agnetMessage = loadTask(agnetMessage);
-									log.warn("加载结束信息{}", agnetMessage.toString());
-								}
-								log.warn("推送了消息");
-								fluxSink.next(
-										SendMessageResponse.buildMessageResponse(
-										agnetMessage,
-										input.getConversationId())
-								);
-
-							} catch (Exception e) {
-								log.error("处理消息时发生错误", e);
-								fluxSink.error(e); // 处理异常
-							}
-						});
-			});
-
-		});
+					} catch (Exception e) {
+						agnetMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));
+					}
+					return SendMessageResponse.buildMessageResponse(
+							agnetMessage,
+							input.getConversationId());
+				});
 	}
 
 	/**
