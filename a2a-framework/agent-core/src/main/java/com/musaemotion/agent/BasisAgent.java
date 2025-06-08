@@ -201,8 +201,6 @@ public class BasisAgent<T extends SendMessageRequest> {
 		if (this.chatMemorySize != null && this.chatMemorySize>0) {
 			memoryBuilder.maxMessages(chatMemorySize);
 		}
-
-
 		advisors.add(MessageChatMemoryAdvisor
 				.builder(memoryBuilder.build())
 				.conversationId(input.getConversationId())
@@ -234,16 +232,6 @@ public class BasisAgent<T extends SendMessageRequest> {
         return chatResponse.getResult().getOutput();
     }
 
-    /**
-     * 创建FluxSink对象
-     * @return
-     */
-    protected Flux<AssistantMessage> createFluxSink(Consumer<? super FluxSink<AssistantMessage>> emitter) {
-        Flux<AssistantMessage> flux = Flux.create(sink -> {
-            emitter.accept(sink);
-        });
-        return flux;
-    }
 
 	/**
 	 * stream请求

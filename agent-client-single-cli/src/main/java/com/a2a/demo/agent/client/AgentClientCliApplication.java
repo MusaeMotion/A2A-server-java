@@ -16,6 +16,7 @@
 
 package com.a2a.demo.agent.client;
 
+import com.musaemotion.a2a.agent.client.INotificationConsumer;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.agent.client.A2ACardResolver;
@@ -65,7 +66,14 @@ public class AgentClientCliApplication implements CommandLineRunner {
                 // 启动通知的http服务
                 pushNotificationServer = new PushNotificationServer(
                         InetAddress.getByName(uri.getHost()),
-                        uri.getPort()
+                        uri.getPort(),
+						// 通知处理
+						new INotificationConsumer() {
+							@Override
+							public void processMessage(String message) {
+								log.info("通知处理：{}", message);
+							}
+						}
                 );
                 // 注册到通知里面
                 pushNotificationServer.registerAgent(card.getName(), argsModel.getAgentUrl());

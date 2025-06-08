@@ -18,6 +18,7 @@ package com.musaemotion.a2a.agent.host.controller;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.musaemotion.a2a.agent.host.manager.SseEmitterManager;
 import com.musaemotion.a2a.agent.host.model.response.CommonMessageExt;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
@@ -29,6 +30,7 @@ import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.agent.model.SendMessageRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +63,17 @@ public class ChatController {
      * 主机智能体
      */
     private final HostAgentManager hostAgentManager;
+
+	/**
+	 * 消息订阅
+	 * @param conversationId
+	 * @param inputMessageId
+	 * @return
+	 */
+	@GetMapping(value = "/notification/{conversationId}/{inputMessageId}")
+	public SseEmitter notification(@PathVariable("conversationId") String conversationId, @PathVariable("inputMessageId") String inputMessageId) {
+		return SseEmitterManager.subscribe(conversationId, inputMessageId);
+	}
 
     /**
      * call 同步调用

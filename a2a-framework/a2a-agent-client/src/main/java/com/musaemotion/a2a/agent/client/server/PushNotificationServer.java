@@ -17,8 +17,10 @@
 package com.musaemotion.a2a.agent.client.server;
 
 import com.google.common.collect.Maps;
+import com.musaemotion.a2a.agent.client.INotificationConsumer;
 import com.musaemotion.a2a.agent.client.notification.PushNotificationReceiverAuth;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.embedded.netty.NettyReactiveWebServerFactory;
 import org.springframework.boot.web.reactive.server.AbstractReactiveWebServerFactory;
@@ -35,6 +37,7 @@ import reactor.core.publisher.Mono;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static com.musaemotion.a2a.common.notification.PushNotificationAuth.AUTH_HEADER_NAME;
 
@@ -69,14 +72,18 @@ public class PushNotificationServer {
     // 智能体名称和智能体url对
     private Map<String, String> agentUrls;
 
+    // 消息消费者
+	private INotificationConsumer notificationConsumer;
+
     /**
      * @param host 通知服务的host
      * @param port 通知服务的端口
      */
-    public PushNotificationServer(InetAddress host, int port) {
+    public PushNotificationServer(InetAddress host, int port, INotificationConsumer notificationConsumer) {
         this.host = host;
         this.port = port;
         this.agentUrls = Maps.newHashMap();
+		this.notificationConsumer = notificationConsumer;
     }
 
     /**
@@ -172,9 +179,12 @@ public class PushNotificationServer {
                         return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                     }
                     if (valid) {
-                        log.warn("签名验证通过，接受到推送过来的数据 => {} ", data);
-                        return ServerResponse.ok().build();
-                    }
+						// log.warn("签名验证通过，接受到推送过来的数据 => {} ", data);
+						if (notificationConsumer != null) {
+							notificationConsumer.processMessage(data);
+						}
+						return ServerResponse.ok().build();
+					}
                     log.warn("签名验证失败，接受到推送过来的数据 => {} ", data);
                     return ServerResponse.status(HttpStatus.UNAUTHORIZED).build();
 

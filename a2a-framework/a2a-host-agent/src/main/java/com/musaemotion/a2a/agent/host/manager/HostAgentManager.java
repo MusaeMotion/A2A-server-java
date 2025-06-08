@@ -49,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,16 +79,34 @@ import static com.musaemotion.agent.BasisAgent.STATE;
 @Service
 public class HostAgentManager implements ISendTaskCallback {
 
+	/**
+	 * 交谈管理器
+	 */
 	private AbstractConversationManager conversationManager;
 
+	/**
+	 * 消息管理器
+	 */
 	private AbstractMessageManager messageManager;
 
+	/**
+	 * 远程智能体管理器
+	 */
 	private AbstractRemoteAgentManager remoteAgentManager;
 
+	/**
+	 * 主机智能体
+	 */
 	private HostAgent hostAgent;
 
+	/**
+	 * 消息通知服务
+	 */
 	private PushNotificationServer pushNotificationServer;
 
+	/**
+	 * 智能体任务管理器
+	 */
 	private AbstractTaskCenterManager taskCenterManager;
 
 	/**
@@ -100,11 +119,20 @@ public class HostAgentManager implements ISendTaskCallback {
 	 */
 	private HostAgentPromptService hostAgentPromptService;
 
-
 	/**
-	 * host agent 任务实现方法
+	 * 接受通知
+	 * @param event
 	 */
-	private ExecutorService executorService = Executors.newFixedThreadPool(10);
+	@EventListener
+	public void handleNotification(String event) throws JsonProcessingException {
+		ObjectMapper mapper = new ObjectMapper();
+		Task task = mapper.readValue(event, Task.class);
+		log.warn("消息内容： {}", event);
+		log.warn("接收到消息：{}, {}", task.getInputMessageId() ,task.getSessionId());
+		// 删除删除通知sse
+		SseEmitterManager.pushData(task.getInputMessageId(),task.getSessionId() , event);
+	}
+
 
 	/**
 	 *
@@ -314,6 +342,8 @@ public class HostAgentManager implements ISendTaskCallback {
 		AssistantMessage assistantMessage = this.hostAgent.call(input, this.buildToolContext(input));
 		Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
 		var message = loadTask(agnetMessage);
+		// 删除删除通知sse
+		SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
 		return SendMessageResponse.buildMessageResponse(
 				message,
 				input.getConversationId()
@@ -339,12 +369,14 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @param input
 	 * @return
 	 */
-	public  Flux<SendMessageResponse> stream(SendMessageRequest input) {
+	public Flux<SendMessageResponse> stream(SendMessageRequest input) {
 		Common.Message userMessage = this.sendBefore(input);
 		Flux<AssistantMessage> fluxAssistantMessage = this.hostAgent.stream(input, this.buildToolContext(input));
 		String messageId = GuidUtils.createGuid();
 		List<Common.Message> messages = Lists.newArrayList();
 		return fluxAssistantMessage.doFinally(i -> {
+					// 删除删除通知sse
+					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
 					var agentMessage = this.streamFinishReasonMessage(messages);
 					this.messageManager.upsert(agentMessage);
 				})
