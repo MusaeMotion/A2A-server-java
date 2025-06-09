@@ -9,7 +9,7 @@
     <dependency>
         <groupId>io.github.musaemotion</groupId>
         <artifactId>a2a-host-agent</artifactId>
-        <version>0.1.2</version>
+        <version>0.2.0</version>
     </dependency>
 ```
  
