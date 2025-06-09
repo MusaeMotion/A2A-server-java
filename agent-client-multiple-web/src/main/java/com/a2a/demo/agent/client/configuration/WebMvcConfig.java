@@ -22,6 +22,7 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -34,6 +35,20 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+	/**
+	 * 开启前端跨域访问，（解决 umijs 代理流响应会被等待后端流请求完成之后返回无法达到真正流响应的问题）
+	 * @param registry
+	 */
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		registry.addMapping("/**") // 允许所有路径的跨域请求
+				.allowedOrigins("http://localhost:8000") // 允许的来源
+				.allowedMethods("GET", "POST", "PUT", "DELETE") // 允许的 HTTP 方法
+				.allowedHeaders("*") // 允许的请求头
+				.allowCredentials(true) // 是否允许发送 Cookie
+				.maxAge(3600); // 预检请求的缓存时间（秒）
+	}
 
 	/**
 	 * 集成前端
