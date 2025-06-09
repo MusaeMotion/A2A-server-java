@@ -231,6 +231,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 					.sessionId(taskSendParams.getSessionId())
 					.status(new Common.TaskStatus(TaskState.SUBMITTED, taskSendParams.getMessage()))
 					.history(Lists.newArrayList(taskSendParams.getMessage()))
+					.metadata(taskSendParams.getMetadata())
 					.build();
 			log.info("Upserting task SUBMITTED {}", taskSendParams.getId());
 		} else {
@@ -244,7 +245,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 
 	/**
-	 * 处理agent 响应
+	 * 处理 agent 响应
 	 * @param sendTaskRequest
 	 * @param agentGeneralResponse
 	 * @return
@@ -433,6 +434,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	@Override
 	public JSONRPCMessage onSendTask(SendTaskRequest request) {
 		log.error("request task {}", request.getParams().getId());
+		log.error("request data {}", request.toString());
 		// 验证请求
 		Optional<JSONRPCResponse> optionalError = this.validateRequest(request.getParams(), request.getId());
 		if (optionalError.isPresent()) {
@@ -509,7 +511,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		if (optionalError.isPresent()) {
 			return Flux.just(optionalError.get());
 		}
-
 		// 保存任务, 任务状态是提交中
 		this.upsertTask(request.getParams());
 

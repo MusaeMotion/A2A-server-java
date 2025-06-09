@@ -45,7 +45,7 @@ public class MysqlMessageManager extends AbstractMessageManager {
     private final MessageRepository messageRepository;
 
     @Override
-    public void add(Common.Message message) {
+    public void upsert(Common.Message message) {
         MessageEntity messageEntity = MessageEntity.newMessage(message);
         this.messageRepository.save(messageEntity);
     }
