@@ -1,4 +1,4 @@
-package com.labidc.a2a;
+package com.musaemotion.a2a.agent.client;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
