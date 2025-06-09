@@ -127,8 +127,10 @@ public class HostAgentManager implements ISendTaskCallback {
 	public void handleNotification(String event) throws JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		Task task = mapper.readValue(event, Task.class);
+		log.info("收到消息: {}", event);
 		// 删除删除通知sse
 		SseEmitterManager.pushData(task.getSessionId(), task.getInputMessageId() , event);
+
 	}
 
 
@@ -386,6 +388,7 @@ public class HostAgentManager implements ISendTaskCallback {
 						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason"))) {
 							agnetMessage = loadTask(agnetMessage);
 						}
+
 					} catch (Exception e) {
 						agnetMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));
 					}
