@@ -34,7 +34,7 @@ public abstract class AbstractMessageManager {
      * 添加消息 message 元数据里有交谈id和消息id
      * @param message
      */
-    public abstract void add(Common.Message message);
+    public abstract void upsert(Common.Message message);
 
     /**
      * 获取交谈相关的所有message, 请按照时间先后顺序获取数据

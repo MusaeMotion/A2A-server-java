@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.musaemotion.search;
+package com.a2a.demo.agent.server;
 
 import com.a2a.demo.agent.server.page.ItemDto;
 import com.a2a.demo.agent.server.page.SearchPage;

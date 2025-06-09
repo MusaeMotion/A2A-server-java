@@ -72,8 +72,7 @@ public class TaskSendParams implements Serializable, IMetadata {
 	private Common.PushNotificationConfig pushNotification;
 
 	/**
-	 * 要检索的历史消息长度
-	 * TODO 原谷歌 python 这里是 tasks/get 请求 getTask，有用到，后面根据自己实际需求来
+	 * 获取远程智能体历史消息记录的长度
 	 */
 	private Integer historyLength;
 
@@ -81,6 +80,7 @@ public class TaskSendParams implements Serializable, IMetadata {
 	 * 其他扩展字段
 	 */
 	private Map<String, Object> metadata;
+
 
 	/**
 	 * 构建任务文本消息

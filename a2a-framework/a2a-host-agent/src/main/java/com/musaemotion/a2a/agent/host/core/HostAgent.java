@@ -260,7 +260,7 @@ public class HostAgent implements ToolContextStateService {
 	 * @param input
 	 * @return
 	 */
-	public Flux<AssistantMessage> stream(SendMessageRequest input,   Map<String, Object> toolContext) {
+	public Flux<AssistantMessage> stream(SendMessageRequest input,  Map<String, Object> toolContext) {
 		return this.basisAgent.stream(input, toolContext);
 	}
 
@@ -338,8 +338,6 @@ public class HostAgent implements ToolContextStateService {
 	 * @return
 	 */
 	private TaskSendParams sendBefore(Map<String, Object> state, String agentName, String message){
-
-
 
 		// 创建默认任务id
 		String taskId = GuidUtils.createShortRandomGuid();

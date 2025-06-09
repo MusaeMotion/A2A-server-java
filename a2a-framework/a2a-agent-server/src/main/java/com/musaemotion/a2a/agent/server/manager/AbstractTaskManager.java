@@ -171,7 +171,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 	/**
 	 * 创建一个task副本，并且指定聊天记录长度内容作为新task副本的历史记录
-	 *
 	 * @param task
 	 * @param historyLength
 	 * @return
@@ -232,8 +231,9 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 					.sessionId(taskSendParams.getSessionId())
 					.status(new Common.TaskStatus(TaskState.SUBMITTED, taskSendParams.getMessage()))
 					.history(Lists.newArrayList(taskSendParams.getMessage()))
+					.metadata(taskSendParams.getMetadata())
 					.build();
-			log.info("Upserting task SUBMITTED {}", taskSendParams.getId());
+			// log.info("Upserting task SUBMITTED {}", taskSendParams.getId());
 		} else {
 			task = optionalTask.get();
 			// 追加消息
@@ -245,7 +245,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 
 	/**
-	 *
+	 * 处理 agent 响应
 	 * @param sendTaskRequest
 	 * @param agentGeneralResponse
 	 * @return
@@ -278,7 +278,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		// 追加历史信息
 		Task taskResult = this.appendTaskHistory(task, historyLength);
 		// 发送通知
-		this.sendTaskNotification(task).join();
+		this.sendTaskNotification(task);
 		// 返回追加后task
 		return SendTaskResponse.buildResponse(sendTaskRequest.getId(), taskResult);
 	}
@@ -319,7 +319,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		Task task = this.updateTask(taskId, taskStatus, artifacts.size() > 0 ? artifacts : null);
 
 		// 发送通知消息
-		this.sendTaskNotification(task).join();
+		this.sendTaskNotification(task);
 
 
 		return taskStatus;
@@ -327,7 +327,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 	/**
 	 * 获取任务响应
-	 *
 	 * @param request
 	 * @return
 	 */
@@ -434,7 +433,8 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	@Override
 	public JSONRPCMessage onSendTask(SendTaskRequest request) {
-		log.error("request task {}", request.getParams().getId());
+		log.info("request task {}", request.getParams().getId());
+		// log.error("request data {}", request.toString());
 		// 验证请求
 		Optional<JSONRPCResponse> optionalError = this.validateRequest(request.getParams(), request.getId());
 		if (optionalError.isPresent()) {
@@ -460,7 +460,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 				return SendTaskResponse.buildInvalidParamsError(request.getId(), new InvalidParamsError("Push notification URL is invalid"));
 			}
 			// 发送通知消息，发送工作中
-			this.sendTaskNotification(task).join();
+			this.sendTaskNotification(task);
 		}
 
 		String query = PartUtils.getTextContent(params.getMessage());
@@ -511,7 +511,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		if (optionalError.isPresent()) {
 			return Flux.just(optionalError.get());
 		}
-
 		// 保存任务, 任务状态是提交中
 		this.upsertTask(request.getParams());
 

@@ -21,9 +21,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.musaemotion.a2a.agent.host.manager.AbstractRemoteAgentManager;
 import com.musaemotion.a2a.agent.host.model.RemoteAgentInfo;
+import com.musaemotion.a2a.agent.host.provider.UserPromptProvider;
 import com.musaemotion.agent.HostAgentPromptService;
+import com.musaemotion.agent.model.SendMessageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -44,6 +47,8 @@ import static com.musaemotion.a2a.common.constant.MetaDataKey.*;
 public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 
 	private static AbstractRemoteAgentManager remoteAgentManager;
+
+	private UserPromptProvider userPromptProvider;
 
 	/**
 	 * check_pending_task_states 有可能在框架adk内部实现的，因为 adk 会创建一个任务任务列表出来。
@@ -67,6 +72,17 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
         
         Please do not create your own tools
         
+        * **Task Delegation:** Utilize the `send_message` function to assign actionable tasks to remote agents.
+		* **Contextual Awareness for Remote Agents:** If a remote agent repeatedly requests user confirmation, assume it lacks access to the         full conversation history. In such cases, enrich the task description with all necessary contextual information relevant to that         specific agent.
+		* **Autonomous Agent Engagement:** Never seek user permission before engaging with remote agents. If multiple agents are required to         fulfill a request, connect with them directly without requesting user preference or confirmation.
+		* **Transparent Communication:** Always present the complete and detailed response from the remote agent to the user.
+		* **User Confirmation Relay:** If a remote agent asks for confirmation, and the user has not already provided it, relay this         confirmation request to the user.
+		* **Focused Information Sharing:** Provide remote agents with only relevant contextual information. Avoid extraneous details.
+		* **No Redundant Confirmations:** Do not ask remote agents for confirmation of information or actions.
+		* **Tool Reliance:** Strictly rely on available tools to address user requests. Do not generate responses based on assumptions. If         information is insufficient, request clarification from the user.
+		* **Prioritize Recent Interaction:** Focus primarily on the most recent parts of the conversation when processing requests.
+		* **Active Agent Prioritization:** If an active agent is already engaged, route subsequent related requests to that agent using the         appropriate task update tool.
+		
         Agents:
         %s
         
@@ -75,19 +91,34 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 
 
 	/**
-	 * 远程智能体管理器
-	 * @param remoteAgentManager
+	 *
+	 * @param remoteAgentManager 远程智能体管理器
+	 * @param userPromptProvider 用户自定义提示词处理器
 	 */
 	@Autowired
-	public HostAgentPromptServiceImpl(AbstractRemoteAgentManager remoteAgentManager) {
+	public HostAgentPromptServiceImpl(AbstractRemoteAgentManager remoteAgentManager, @Autowired(required = false) UserPromptProvider userPromptProvider) {
 		this.remoteAgentManager = remoteAgentManager;
+		this.userPromptProvider = userPromptProvider;
 	}
 
+	/**
+	 * 构造用户提示词
+	 * @param input
+	 * @return
+	 */
+	@Override
+	public String userPrompt(SendMessageRequest input) {
+		// log.warn("userPrompt called");
+		if(this.userPromptProvider == null) {
+			return "";
+		}
+		return this.userPromptProvider.getUserPrompt(input);
+	}
 
 	@Override
 	public String hostAgentSystemPrompt(Map<String, Object> state) {
 		String systemPrompt = String.format(ROOT_PROMPT_TPL, this.loadRemoteAgentsToString(), getActiveAgent(state));
-		log.error("hostAgentSystemPrompt：{}", systemPrompt);
+		// log.error("hostAgentSystemPrompt：{}", systemPrompt);
 		return systemPrompt;
 	}
 

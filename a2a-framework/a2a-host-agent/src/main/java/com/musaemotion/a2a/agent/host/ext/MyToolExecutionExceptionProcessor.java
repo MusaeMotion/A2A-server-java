@@ -33,8 +33,7 @@ public class MyToolExecutionExceptionProcessor implements ToolExecutionException
     @Override
     public String process(ToolExecutionException exception) {
         log.error("工具调用出现异常: {}", exception.getToolDefinition().name());
-        exception.printStackTrace();
-        return exception.getMessage();
+		throw exception;
     }
 
     public static MyToolExecutionExceptionProcessor.Builder builder() {

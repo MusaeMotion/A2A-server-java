@@ -49,14 +49,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.musaemotion.a2a.common.constant.ArtifactDataKey.*;
@@ -74,16 +79,34 @@ import static com.musaemotion.agent.BasisAgent.STATE;
 @Service
 public class HostAgentManager implements ISendTaskCallback {
 
+	/**
+	 * 交谈管理器
+	 */
 	private AbstractConversationManager conversationManager;
 
+	/**
+	 * 消息管理器
+	 */
 	private AbstractMessageManager messageManager;
 
+	/**
+	 * 远程智能体管理器
+	 */
 	private AbstractRemoteAgentManager remoteAgentManager;
 
+	/**
+	 * 主机智能体
+	 */
 	private HostAgent hostAgent;
 
+	/**
+	 * 消息通知服务
+	 */
 	private PushNotificationServer pushNotificationServer;
 
+	/**
+	 * 智能体任务管理器
+	 */
 	private AbstractTaskCenterManager taskCenterManager;
 
 	/**
@@ -95,6 +118,21 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * host Agent 提示词service
 	 */
 	private HostAgentPromptService hostAgentPromptService;
+
+	/**
+	 * 接受通知
+	 * @param event
+	 */
+	@EventListener
+	public void handleNotification(String event) throws JsonProcessingException {
+		ObjectMapper mapper = new ObjectMapper();
+		Task task = mapper.readValue(event, Task.class);
+		log.info("收到消息: {}", event);
+		// 删除删除通知sse
+		SseEmitterManager.pushData(task.getSessionId(), task.getInputMessageId() , event);
+
+	}
+
 
 	/**
 	 *
@@ -178,7 +216,7 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @param userMessage
 	 * @return
 	 */
-	private Common.Message sanitizeResponseMessage(AssistantMessage assistantMessage, Common.Message userMessage) {
+	private Common.Message sanitizeResponseMessage(AssistantMessage assistantMessage, Common.Message userMessage, String messageId) {
 		Common.Message message = null;
 		if (JsonUtils.isJsonString(assistantMessage.getText())) {
 			message = Common.Message.builder()
@@ -221,7 +259,7 @@ public class HostAgentManager implements ISendTaskCallback {
 		}
 		message.getMetadata().put(LAST_MESSAGE_ID, userMessage.getMetadata().get(MESSAGE_ID).toString());
 		message.getMetadata().put(CONVERSATION_ID, userMessage.getMetadata().get(CONVERSATION_ID).toString());
-		message.getMetadata().put(MESSAGE_ID, GuidUtils.createGuid());
+		message.getMetadata().put(MESSAGE_ID, StringUtils.hasText(messageId)? messageId: GuidUtils.createGuid());
 		return message;
 	}
 
@@ -246,32 +284,52 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @return
 	 */
 	private Common.Message sendBefore(SendMessageRequest input){
-
 		this.checkSendMessageRequest(input);
-
 		// 消息处理
 		Common.Message userMessage = this.sanitizeRequestMessage(input);
-
 		// 消息管理器保存
-		this.messageManager.add(userMessage);
-
+		this.messageManager.upsert(userMessage);
 		return userMessage;
 	}
 
+
 	/**
-	 * 之后处理
+	 * 后处理
 	 * @param assistantMessage
 	 * @param userMessage
 	 * @return
 	 */
-	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage)  {
+	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage){
+		return this.sendAfter(assistantMessage, userMessage, "");
+	}
 
-		Common.Message agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage);
-
+	/**
+	 * 后处理
+	 * @param assistantMessage
+	 * @param userMessage
+	 * @param messageId
+	 * @return
+	 */
+	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage, String messageId)  {
+		Common.Message agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
 		// 消息管理器保存
-		this.messageManager.add(agnetMessage);
-
+		this.messageManager.upsert(agnetMessage);
 		return agnetMessage;
+	}
+
+	/**
+	 * 加载task信息
+	 * @param agnetMessage
+	 * @return
+	 */
+	private CommonMessageExt loadTask(Common.Message agnetMessage){
+		var message = CommonMessageExt.fromMessage(agnetMessage);
+		String lastMessageId = agnetMessage.getLastMessageId();
+		if(StringUtils.hasText(lastMessageId)){
+			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
+			message.setTask(tasks);
+		}
+		return message;
 	}
 
 	/**
@@ -280,22 +338,12 @@ public class HostAgentManager implements ISendTaskCallback {
 	 * @return
 	 */
 	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input) {
-
 		Common.Message userMessage = this.sendBefore(input);
-
 		AssistantMessage assistantMessage = this.hostAgent.call(input, this.buildToolContext(input));
-
 		Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
-
-		// 包装task列表
-		var message = CommonMessageExt.fromMessage(agnetMessage);
-		String lastMessageId = agnetMessage.getLastMessageId();
-		if(StringUtils.hasText(lastMessageId)){
-			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
-			message.setTask(tasks);
-		}
-		// 包装task列表
-
+		var message = loadTask(agnetMessage);
+		// 删除删除通知sse
+		SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
 		return SendMessageResponse.buildMessageResponse(
 				message,
 				input.getConversationId()
@@ -303,34 +351,51 @@ public class HostAgentManager implements ISendTaskCallback {
 	}
 
 	/**
-	 * 流请求
+	 * 流请求包装消息
+	 * @param messages
+	 * @return
+	 */
+	private Common.Message streamFinishReasonMessage(List<Common.Message> messages){
+		var parts =	messages.stream().map(item->item.getParts()).flatMap(Collection::stream).collect(Collectors.toUnmodifiableList());
+		String text = parts.stream().filter(part->{ return  part instanceof Common.TextPart; }).map(item->((Common.TextPart) item).getText()).collect(Collectors.joining(""));
+		var agentMessage = messages.get(messages.size()-1);
+		agentMessage.getParts().clear();
+		agentMessage.getParts().add(new Common.TextPart(text));
+		return agentMessage;
+	}
+
+	/**
+	 * 发送流请求
 	 * @param input
 	 * @return
 	 */
-	public Flux<SendMessageResponse<Common.Message>> stream(SendMessageRequest input) {
-
+	public Flux<SendMessageResponse> stream(SendMessageRequest input) {
 		Common.Message userMessage = this.sendBefore(input);
-
 		Flux<AssistantMessage> fluxAssistantMessage = this.hostAgent.stream(input, this.buildToolContext(input));
+		String messageId = GuidUtils.createGuid();
+		List<Common.Message> messages = Lists.newArrayList();
+		return fluxAssistantMessage.doFinally(i -> {
+					// 删除删除通知sse
+					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
+					var agentMessage = this.streamFinishReasonMessage(messages);
+					this.messageManager.upsert(agentMessage);
+				})
+				.map(assistantMessage -> {
+					var agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
+					try {
+						messages.add(agnetMessage);
+						// 加载任务消息
+						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason"))) {
+							agnetMessage = loadTask(agnetMessage);
+						}
 
-		Flux<SendMessageResponse<Common.Message>> flux = Flux.create(fluxSink -> {
-			fluxAssistantMessage
-					.doFinally(i -> {
-						// log.error("HostAgent完成：{}", i.name());
-						fluxSink.complete();
-					})
-					.subscribe(assistantMessage -> {
-						Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
-						fluxSink.next(
-								SendMessageResponse.buildMessageResponse(
-										agnetMessage,
-										input.getConversationId()
-								)
-						);
-					});
-
-		});
-		return flux;
+					} catch (Exception e) {
+						agnetMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));
+					}
+					return SendMessageResponse.buildMessageResponse(
+							agnetMessage,
+							input.getConversationId());
+				});
 	}
 
 	/**

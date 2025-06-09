@@ -17,6 +17,7 @@
 package com.musaemotion.agent;
 
 import com.google.common.collect.Lists;
+import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.common.utils.PartUtils;
 import com.musaemotion.agent.model.FileInfo;
 import com.musaemotion.agent.model.ModelHyperParams;
@@ -32,6 +33,7 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.content.Media;
@@ -129,6 +131,20 @@ public class BasisAgent<T extends SendMessageRequest> {
     private List<ToolCallback> toolCallbacks = Lists.newArrayList();
 
 
+	/**
+	 * 构造user 提示词内容
+	 * @param input
+	 * @return
+	 */
+	private String buildUserPromptText(T input) {
+		StringBuffer stringBuffer = new StringBuffer(hostAgentPromptService.userPrompt(input));
+		stringBuffer.append("\n");
+		stringBuffer.append(PartUtils.getTextContent(input.getParams()));
+		// log.warn("UserPrompt text: {}", stringBuffer.toString());
+		return stringBuffer.toString();
+	}
+
+
     /**
      * 处理参数，和userText
      * @param userText
@@ -187,8 +203,6 @@ public class BasisAgent<T extends SendMessageRequest> {
 		if (this.chatMemorySize != null && this.chatMemorySize>0) {
 			memoryBuilder.maxMessages(chatMemorySize);
 		}
-
-
 		advisors.add(MessageChatMemoryAdvisor
 				.builder(memoryBuilder.build())
 				.conversationId(input.getConversationId())
@@ -208,7 +222,9 @@ public class BasisAgent<T extends SendMessageRequest> {
     public AssistantMessage call(T input, Map<String, Object> toolContext) {
         ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(input.getContent(), Lists.newArrayList(), toolContext);
         ChatResponse chatResponse = chatClientRequestSpec.advisors(buildAdvisor(input))
-                .user(PartUtils.getTextContent(input.getParams()))
+                .user(
+						buildUserPromptText(input)
+				)
 				// 1.0.0 版本之后可以直接提供工具也可以设置工具提供者
 				.toolCallbacks(this.toolCallbacks)
                 .toolContext(toolContext)
@@ -218,51 +234,32 @@ public class BasisAgent<T extends SendMessageRequest> {
         return chatResponse.getResult().getOutput();
     }
 
-    /**
-     * 创建FluxSink对象
-     * @return
-     */
-    protected Flux<AssistantMessage> createFluxSink(Consumer<? super FluxSink<AssistantMessage>> emitter) {
-        Flux<AssistantMessage> flux = Flux.create(sink -> {
-            emitter.accept(sink);
-        });
-        return flux;
-    }
 
 	/**
-	 *
+	 * stream请求
 	 * @param input
 	 * @param toolContext
 	 * @return
 	 */
 	public Flux<AssistantMessage> stream(T input, Map<String, Object> toolContext) {
-        return this.createFluxSink(fluxSink -> {
-            ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(PartUtils.getTextContent(input.getParams()), Lists.newArrayList(), toolContext);
-            chatClientRequestSpec
-                    .advisors(buildAdvisor(input))
-					// 1.0.0 版本之后可以直接提供工具也可以设置工具提供者
-					.toolCallbacks(this.toolCallbacks)
-                    .toolContext(toolContext)
-                    .stream()
-                    .chatResponse()
-                    .doFinally(i -> {
-                        // log.error("BasisAgent 完成了请求：{}", i.name());
-                        fluxSink.complete();
-                    })
-                    .doOnComplete(() -> {
-                        // log.error("BasisAgent 完成了请求");
-                    })
-                    .doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
-                    .onErrorResume((error) -> {
-                        var generation = new Generation(new AssistantMessage("人工智能出现了一点问题，请换个问题咨询：" + error.getMessage()));
-                        return Mono.just(ChatResponse.builder().generations(List.of(
-                                generation
-                        )).build());
-                    })
-                    .subscribe(chatResponse -> {
-                        log.error("subscribe {}", chatResponse.getResult().getOutput().getText());
-                        fluxSink.next(chatResponse.getResult().getOutput());
-                    });
-        });
-    }
+		ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPromptText(input), Lists.newArrayList(), toolContext);
+		return chatClientRequestSpec
+				.advisors(buildAdvisor(input))
+				.toolCallbacks(this.toolCallbacks)
+				.toolContext(toolContext)
+				.stream()
+				.chatResponse()
+				.doOnComplete(() ->  log.info("BasisAgent 智能体完成"))
+				.doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
+				.onErrorResume((error) -> {
+					var generation = new Generation(
+							new AssistantMessage("人工智能出现了一点问题, 稍后再试" ),
+							ChatGenerationMetadata.builder().finishReason(GuidUtils.createGuid()).build()
+					);
+					log.error("BasisAgent error: {} ",error.getMessage());
+					return Mono.just(ChatResponse.builder().generations(List.of(
+							generation
+					)).build());
+				}).map(chatResponse -> chatResponse.getResult().getOutput());
+	}
 }

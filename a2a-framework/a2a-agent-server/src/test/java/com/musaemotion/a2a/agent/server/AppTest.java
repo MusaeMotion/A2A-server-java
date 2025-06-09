@@ -1,4 +1,4 @@
-package com.musaemotion;
+package com.musaemotion.a2a.agent.server;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

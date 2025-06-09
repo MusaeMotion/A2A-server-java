@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.musaemotion</groupId>
-	<version>0.1.2</version>
+	<version>0.2.0</version>
     <artifactId>a2a-framework</artifactId>
     <packaging>pom</packaging>
 
@@ -144,6 +144,7 @@
         <module>a2a-agent-client</module>
         <module>agent-core</module>
         <module>a2a-host-agent</module>
+        <module>a2a-pom</module>
     </modules>
     <dependencies>
 		<dependency>

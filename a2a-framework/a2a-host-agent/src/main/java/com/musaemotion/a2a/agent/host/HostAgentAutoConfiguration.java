@@ -17,6 +17,7 @@
 package com.musaemotion.a2a.agent.host;
 
 
+import com.musaemotion.a2a.agent.client.INotificationConsumer;
 import com.musaemotion.a2a.agent.host.ext.A2AToolCallingManager;
 import com.musaemotion.a2a.agent.host.ext.MyToolExecutionExceptionProcessor;
 import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
@@ -70,11 +71,12 @@ public class HostAgentAutoConfiguration {
      */
     @Bean("pushNotificationServer")
     @ConditionalOnProperty(name = "musaemotion.a2a.host-agent.notify-url")
-    public PushNotificationServer pushNotificationServer(@Autowired A2aHostAgentProperties a2aHostAgentProperties) throws URISyntaxException, UnknownHostException {
+    public PushNotificationServer pushNotificationServer(@Autowired A2aHostAgentProperties a2aHostAgentProperties, @Autowired INotificationConsumer notificationConsumer) throws URISyntaxException, UnknownHostException {
         URI uri = new URI(a2aHostAgentProperties.getNotifyUrl());
         PushNotificationServer pushNotificationServer = new PushNotificationServer(
                 InetAddress.getByName(uri.getHost()),
-                uri.getPort()
+                uri.getPort(),
+				notificationConsumer
         );
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.submit(pushNotificationServer::strat);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.musaemotion.search;
+package com.a2a.demo.agent.server;
 
 import com.microsoft.playwright.*;
 import org.junit.jupiter.api.*;

@@ -26,6 +26,7 @@ import com.musaemotion.a2a.common.base.Task;
  * @project：A2A
  * @date：2025/4/27 22:53
  * @description：HostAgent: fun(sendTask)-> obj(client: A2aRemoteAgentConnections).sendTask() 调用的回调
+ * TODO 线程安全性？
  */
 public interface ISendTaskCallback {
 
