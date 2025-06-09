@@ -265,12 +265,13 @@ public class A2AToolCallingManager implements ToolCallingManager {
 		messages.add(assistantMessage);
 		// 工具触发调用响应
 		messages.add(toolResponseMessage);
+
 		/*
 		if(!state.containsKey(RETURN_DIRECT)) {
 			Message newSystem = new SystemMessage(this.hostAgentPromptService.hostAgentSystemPrompt(state));
 			messages.add(newSystem);
 			return  messages;
-		} */
+		}*/
 		return messages;
 	}
 	private List<Message> buildConversationHistoryAfterToolExecution(List<Message> previousMessages,

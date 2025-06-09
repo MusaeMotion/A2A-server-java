@@ -17,6 +17,7 @@
 package com.musaemotion.agent;
 
 import com.google.common.collect.Lists;
+import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.common.utils.PartUtils;
 import com.musaemotion.agent.model.FileInfo;
 import com.musaemotion.agent.model.ModelHyperParams;
@@ -32,6 +33,7 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.content.Media;
@@ -250,7 +252,11 @@ public class BasisAgent<T extends SendMessageRequest> {
 				.doOnComplete(() ->  log.info("BasisAgent 智能体完成"))
 				.doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
 				.onErrorResume((error) -> {
-					var generation = new Generation(new AssistantMessage("人工智能出现了一点问题，请换个问题咨询：" + error.getMessage()));
+					var generation = new Generation(
+							new AssistantMessage("人工智能出现了一点问题, 稍后再试" ),
+							ChatGenerationMetadata.builder().finishReason(GuidUtils.createGuid()).build()
+					);
+					log.error("BasisAgent error: {} ",error.getMessage());
 					return Mono.just(ChatResponse.builder().generations(List.of(
 							generation
 					)).build());

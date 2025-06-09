@@ -46,7 +46,8 @@ public class SseEmitterManager {
 			return emitters.get(key);
 		}
 		log.warn("subscribe emitter for key: {}", key);
-		SseEmitter sseEmitter = new SseEmitter(60_000L);
+		// TODO 暂不设置超时，后续完善客户端心跳
+		SseEmitter sseEmitter = new SseEmitter(0L);
 		subscribe(key, sseEmitter);
 		return sseEmitter;
 	}
@@ -62,7 +63,7 @@ public class SseEmitterManager {
 			SseEmitter sseEmitter = emitters.get(key);
 			if (sseEmitter != null) {
 				try {
-					sseEmitter.send(SseEmitter.event().id(String.valueOf(System.currentTimeMillis())).data("ping", MediaType.TEXT_PLAIN));
+					sseEmitter.send(SseEmitter.event().id(String.valueOf(System.currentTimeMillis())).data("ping", MediaType.TEXT_PLAIN).reconnectTime(30000));
 				} catch (Exception e) {
 					log.error("Failed to send ping to key: {} with {}", key, e.getMessage());
 					emitters.remove(key);
