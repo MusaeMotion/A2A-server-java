@@ -127,10 +127,8 @@ public class HostAgentManager implements ISendTaskCallback {
 	public void handleNotification(String event) throws JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		Task task = mapper.readValue(event, Task.class);
-		log.warn("消息内容： {}", event);
-		log.warn("接收到消息：{}, {}", task.getInputMessageId() ,task.getSessionId());
 		// 删除删除通知sse
-		SseEmitterManager.pushData(task.getInputMessageId(),task.getSessionId() , event);
+		SseEmitterManager.pushData(task.getSessionId(), task.getInputMessageId() , event);
 	}
 
 
