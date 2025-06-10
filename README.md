@@ -56,6 +56,22 @@ This project is an implementation of the A2A protocol based on the Java Spring f
 - [agent-server-web-search (Web Search Agent)](agent-server-web-search/README.md)
 - [agent-server-zhipu-generate-images (Text-to-Image Agent)](agent-server-zhipu-generate-images/README.md)
 
+## BOM（Bill of Materials） import
+
+```maven
+<dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.github.musaemotion</groupId>
+        <artifactId>a2a-pom</artifactId>
+        <version>0.2.1</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+```
+
 ## ⚙️ Project Building and Startup
 ### Project Building
 The project uses Maven for building. Execute the following command in the project root directory:
