@@ -14,36 +14,25 @@
  * limitations under the License.
  */
 
-package com.musaemotion.a2a.agent.host.controller;
+package com.a2a.demo.agent.client.controller;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.musaemotion.a2a.agent.host.manager.SseEmitterManager;
-import com.musaemotion.a2a.agent.host.model.response.CommonMessageExt;
-import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
 import com.musaemotion.a2a.agent.host.model.response.Result;
 import com.musaemotion.a2a.agent.host.model.response.SendMessageResponse;
-import com.musaemotion.a2a.agent.host.manager.HostAgentManager;
-import com.musaemotion.a2a.common.constant.MessageRole;
-import com.musaemotion.a2a.common.utils.GuidUtils;
+import com.musaemotion.a2a.agent.host.manager.ChatManager;
+import com.musaemotion.a2a.common.base.Task;
 import com.musaemotion.agent.model.SendMessageRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 /**
@@ -62,7 +51,20 @@ public class ChatController {
     /**
      * 主机智能体
      */
-    private final HostAgentManager hostAgentManager;
+    private final ChatManager chatManager;
+
+	/**
+	 * 通知监听
+	 * @param event
+	 */
+	@EventListener
+	public void handleNotification(String event) throws JsonProcessingException {
+		ObjectMapper mapper = new ObjectMapper();
+		Task task = mapper.readValue(event, Task.class);
+		log.info("收到消息: {}", event);
+		// 删除删除通知sse
+		SseEmitterManager.pushData(task.getSessionId(), task.getInputMessageId() , event);
+	}
 
 	/**
 	 * 消息订阅
@@ -85,7 +87,7 @@ public class ChatController {
 		try {
 			return ResponseEntity.ok(
 					Result.buildSuccess(
-							this.hostAgentManager.call(input)
+							this.chatManager.call(input)
 					)
 			);
 		} catch (Exception e) {
@@ -100,7 +102,7 @@ public class ChatController {
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input) {
-        return  this.hostAgentManager.stream(input);
+        return  this.chatManager.stream(input);
     }
 
 }

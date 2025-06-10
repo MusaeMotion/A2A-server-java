@@ -16,7 +16,6 @@
 
 package com.musaemotion.a2a.agent.host.core;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.IMetadata;
@@ -30,7 +29,6 @@ import com.musaemotion.a2a.common.request.SendTaskStreamingRequest;
 import com.musaemotion.a2a.common.request.params.TaskSendParams;
 import com.musaemotion.a2a.common.response.SendTaskResponse;
 import com.musaemotion.a2a.common.response.SendTaskStreamingResponse;
-import com.musaemotion.a2a.common.constant.TaskState;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.agent.client.A2aClient;
 import lombok.Getter;
@@ -82,7 +80,7 @@ public class A2aRemoteAgentConnections {
 	 * @param callback
 	 * @return
 	 */
-	private Task callAgent(TaskSendParams taskSendParams, ISendTaskCallback callback){
+	private Task callAgent(TaskSendParams taskSendParams, SendTaskCallbackHandle callback){
 		SendTaskRequest sendTaskRequest = SendTaskRequest.newInstance(taskSendParams);
 		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest);
 		if(sendTaskResponse.getResult() == null && sendTaskResponse.getError() != null) {
@@ -116,7 +114,7 @@ public class A2aRemoteAgentConnections {
 	 * @param callback
 	 * @return
 	 */
-	private Task streamAgent(TaskSendParams taskSendParams,  ISendTaskCallback callback){
+	private Task streamAgent(TaskSendParams taskSendParams,  SendTaskCallbackHandle callback){
 		AtomicReference<Task> taskModel = new AtomicReference<>();
 		// 流请求
 		ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams));
@@ -167,7 +165,7 @@ public class A2aRemoteAgentConnections {
 	 * @param taskSendParams
 	 * @param callback
 	 */
-	public Task sendTask(TaskSendParams taskSendParams, ISendTaskCallback callback) {
+	public Task sendTask(TaskSendParams taskSendParams, SendTaskCallbackHandle callback) {
 		// 任务提交中
 		callback.sendTaskCallback(Task.from(taskSendParams));
 

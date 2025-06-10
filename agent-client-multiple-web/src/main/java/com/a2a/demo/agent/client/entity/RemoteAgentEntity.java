@@ -16,7 +16,7 @@
 
 package com.a2a.demo.agent.client.entity;
 
-import com.musaemotion.a2a.agent.host.model.service.AgentCardVo;
+import com.a2a.demo.agent.client.dto.AgentCardExtend;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import com.musaemotion.a2a.common.AgentCard;
 import jakarta.persistence.Column;
@@ -74,6 +74,11 @@ public class RemoteAgentEntity {
     @Column(length = 1000, columnDefinition = "json")
     private AgentCard agentCard;
 
+	/**
+	 * 是否启用
+	 */
+	private Boolean enable;
+
     /**
      * 构建对象
      * @param id
@@ -86,6 +91,7 @@ public class RemoteAgentEntity {
         remoteAgent.setDescription(agentCard.getDescription());
         remoteAgent.setName(agentCard.getName());
         remoteAgent.setDisplayName(agentCard.getName());
+		remoteAgent.setEnable(true);
         return remoteAgent;
     }
 
@@ -93,10 +99,25 @@ public class RemoteAgentEntity {
      * 构建Dto对象
      * @return
      */
-    public AgentCardVo toAgentCard(){
-        AgentCardVo agentCardVo = new AgentCardVo();
-        BeanUtils.copyProperties(this.getAgentCard(), agentCardVo);
-        agentCardVo.setId(this.getId());
-        return agentCardVo;
+    public AgentCardExtend toAgentCard(){
+		AgentCardExtend agentCardExtend = new AgentCardExtend();
+        BeanUtils.copyProperties(this.getAgentCard(), agentCardExtend);
+		agentCardExtend.setId(this.getId());
+		agentCardExtend.setEnable(this.getEnable());
+        return agentCardExtend;
     }
+
+	/**
+	 * 通过agentCard 覆盖 RemoteAgentEntity
+	 * @param agentCard
+	 * @return
+	 */
+	public RemoteAgentEntity from(AgentCard agentCard) {
+		this.setAgentCard(agentCard);
+		this.setAddress(agentCard.getUrl());
+		this.setDescription(agentCard.getDescription());
+		this.setName(agentCard.getName());
+		this.setDisplayName(agentCard.getName());
+		return this;
+	}
 }

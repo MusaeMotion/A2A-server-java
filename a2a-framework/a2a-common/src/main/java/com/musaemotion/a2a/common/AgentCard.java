@@ -39,8 +39,6 @@ import java.util.List;
 @NoArgsConstructor
 public class AgentCard implements Serializable {
 
-
-
     /**
      * 名称
      */

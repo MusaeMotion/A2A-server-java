@@ -43,7 +43,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**") // 允许所有路径的跨域请求
-				.allowedOrigins("http://localhost:8000") // 允许的来源
+				.allowedOrigins("http://localhost:8000","http://localhost:8001/", "http://localhost:5173")// 允许的来源
 				.allowedMethods("GET", "POST", "PUT", "DELETE") // 允许的 HTTP 方法
 				.allowedHeaders("*") // 允许的请求头
 				.allowCredentials(true) // 是否允许发送 Cookie

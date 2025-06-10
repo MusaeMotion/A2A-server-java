@@ -16,7 +16,6 @@
 
 package com.musaemotion.a2a.agent.host.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
 import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
 import com.musaemotion.a2a.agent.host.ext.A2AToolCallingManager;
@@ -77,7 +76,7 @@ public class HostAgent implements ToolContextStateService {
 	/**
 	 * 任务状态的回调, 可以用于落库与打印监控
 	 */
-	private ISendTaskCallback callback;
+	private SendTaskCallbackHandle callback;
 
 	/**
 	 * 通知服务
@@ -126,7 +125,7 @@ public class HostAgent implements ToolContextStateService {
 	 * @param pushNotificationServer
 	 * @param chatModel
 	 */
-	public HostAgent(List<String> remoteAgentAddresses, ISendTaskCallback callback, PushNotificationServer pushNotificationServer, ChatModel chatModel, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, HostAgentPromptService hostAgentPromptService, ObservationRegistry observationRegistry) {
+	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModel chatModel, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, HostAgentPromptService hostAgentPromptService, ObservationRegistry observationRegistry) {
 		this.remoteAgentAddresses = remoteAgentAddresses;
 		this.callback = callback;
 		this.remoteAgentManager = remoteAgentManager;
@@ -309,9 +308,9 @@ public class HostAgent implements ToolContextStateService {
 		Yields:
 		  A dictionary of JSON data.
 	""")
-	public List<Object> sendTask(String agentName, String message, ToolContext toolContext) throws JsonProcessingException {
+	public List<Object> sendTask(String agentName, String message, ToolContext toolContext) throws Throwable {
 		// 获取当前调度的智能体连接对象
-		A2aRemoteAgentConnections client = this.remoteAgentManager.getRemoteAgentConnections(agentName)
+		A2aRemoteAgentConnections client = (A2aRemoteAgentConnections) this.remoteAgentManager.getRemoteAgentConnections(agentName)
 				.orElseThrow(() -> new RuntimeException("Agent " + agentName + " not found"));
 
 		// 判断智能体连接是否存在
@@ -510,7 +509,7 @@ public class HostAgent implements ToolContextStateService {
 
 		private List<String> remoteAgentAddresses;
 
-		private ISendTaskCallback sendTaskCallback;
+		private SendTaskCallbackHandle sendTaskCallback;
 
 		private PushNotificationServer pushNotificationServer;
 
@@ -534,7 +533,7 @@ public class HostAgent implements ToolContextStateService {
 			return this;
 		}
 
-		public HostAgent.Builder sendTaskCallback(ISendTaskCallback sendTaskCallback) {
+		public HostAgent.Builder sendTaskCallback(SendTaskCallbackHandle sendTaskCallback) {
 			this.sendTaskCallback = sendTaskCallback;
 			return this;
 		}
