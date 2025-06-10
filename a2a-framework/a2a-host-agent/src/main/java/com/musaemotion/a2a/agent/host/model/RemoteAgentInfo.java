@@ -16,7 +16,6 @@
 
 package com.musaemotion.a2a.agent.host.model;
 
-import com.musaemotion.a2a.common.AgentSkill;
 import lombok.Builder;
 import lombok.Data;
 
@@ -34,12 +33,12 @@ import java.util.List;
 public class RemoteAgentInfo {
 
 	// 名称
-	private String name;
+	private String agentName;
 
 	// 描述
 	private String description;
 
 	// 能力
-	private List<AgentSkill> skills;
+	private List<AgentSkillVo> skills;
 
 }

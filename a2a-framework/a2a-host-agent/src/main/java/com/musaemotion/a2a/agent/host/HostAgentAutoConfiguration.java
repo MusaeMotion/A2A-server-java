@@ -25,6 +25,8 @@ import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
 import com.musaemotion.agent.HostAgentPromptService;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -83,5 +85,13 @@ public class HostAgentAutoConfiguration {
         return pushNotificationServer;
     }
 
+	/**
+	 * 聊天内容
+	 * @return
+	 */
+	@Bean
+	public ChatMemoryRepository chatMemoryRepository() {
+	   return new InMemoryChatMemoryRepository();
+	}
 
 }
