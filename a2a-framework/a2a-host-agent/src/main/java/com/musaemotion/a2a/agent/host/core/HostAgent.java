@@ -40,6 +40,7 @@ import com.musaemotion.agent.model.SendMessageRequest;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ToolContext;
@@ -119,13 +120,17 @@ public class HostAgent implements ToolContextStateService {
 	private HostAgentPromptService hostAgentPromptService;
 
 	/**
+	 * 聊天记录
+	 */
+	private ChatMemoryRepository chatMemoryRepository;
+	/**
 	 * 构造
 	 * @param remoteAgentAddresses
 	 * @param callback
 	 * @param pushNotificationServer
 	 * @param chatModel
 	 */
-	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModel chatModel, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, HostAgentPromptService hostAgentPromptService, ObservationRegistry observationRegistry) {
+	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModel chatModel, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, HostAgentPromptService hostAgentPromptService, ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
 		this.remoteAgentAddresses = remoteAgentAddresses;
 		this.callback = callback;
 		this.remoteAgentManager = remoteAgentManager;
@@ -135,6 +140,7 @@ public class HostAgent implements ToolContextStateService {
 		this.messageManager = messageManager;
 		this.observationRegistry = observationRegistry;
 		this.hostAgentPromptService = hostAgentPromptService;
+		this.chatMemoryRepository = chatMemoryRepository;
 		this.initHostAgent();
 
 	}
@@ -155,6 +161,7 @@ public class HostAgent implements ToolContextStateService {
                         """)
 				// 读取两条记忆
 				.chatMemorySize(5)
+				.chatMemoryRepository(this.chatMemoryRepository)
 				.chatClient(ChatClient.create(this.chatModel, this.observationRegistry))
 				.observationRegistry(this.observationRegistry)
 				.hostAgentPromptService(this.hostAgentPromptService)
@@ -525,6 +532,8 @@ public class HostAgent implements ToolContextStateService {
 
 		private HostAgentPromptService hostAgentPromptService;
 
+		private ChatMemoryRepository chatMemoryRepository;
+
 		private Builder() {
 		}
 
@@ -576,6 +585,12 @@ public class HostAgent implements ToolContextStateService {
 			return this;
 		}
 
+		public HostAgent.Builder chatMemoryRepository(
+				ChatMemoryRepository chatMemoryRepository) {
+			this.chatMemoryRepository = chatMemoryRepository;
+			return this;
+		}
+
 		public HostAgent build() {
 			Assert.notNull(chatModel, "chatModel 不能为空");
 			Assert.notNull(remoteAgentManager, "remoteAgentManager 不能为空");
@@ -583,8 +598,9 @@ public class HostAgent implements ToolContextStateService {
 			Assert.notNull(messageManager, "messageManager 不能为空");
 			Assert.notNull(sendTaskCallback, "sendTaskCallback 不能为空");
 			Assert.notNull(hostAgentPromptService, "hostAgentPromptService 不能为空");
+			Assert.notNull(this.chatMemoryRepository, "chatMemoryRepository 不能为空");
 
-			HostAgent hostAgent = new HostAgent(remoteAgentAddresses, sendTaskCallback, pushNotificationServer, chatModel, remoteAgentManager, taskCenterManager, messageManager, hostAgentPromptService, observationRegistry);
+			HostAgent hostAgent = new HostAgent(remoteAgentAddresses, sendTaskCallback, pushNotificationServer, chatModel, remoteAgentManager, taskCenterManager, messageManager, hostAgentPromptService, observationRegistry, chatMemoryRepository);
 			return hostAgent;
 		}
 

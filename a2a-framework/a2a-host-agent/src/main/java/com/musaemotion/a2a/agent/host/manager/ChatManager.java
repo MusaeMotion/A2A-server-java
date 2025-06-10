@@ -36,6 +36,7 @@ import com.musaemotion.agent.HostAgentPromptService;
 import com.musaemotion.agent.model.SendMessageRequest;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,7 +109,10 @@ public class ChatManager {
 	 */
 	private ChatModel chatModel;
 
-
+	/**
+	 * 聊天记录
+	 */
+	private ChatMemoryRepository chatMemoryRepository;
 	/**
 	 * 构造hostAgent
 	 *
@@ -126,6 +130,7 @@ public class ChatManager {
 				.messageManager(this.messageManager)
 				.observationRegistry(this.observationRegistry)
 				.hostAgentPromptService(this.hostAgentPromptService)
+				.chatMemoryRepository(this.chatMemoryRepository)
 				.chatModel(chatModel)
 				.sendTaskCallback(new DefaultSendTaskCallbackHandle(this.taskCenterManager))
 				.build();
@@ -141,7 +146,7 @@ public class ChatManager {
 	 * @param pushNotificationServer
 	 */
 	@Autowired
-	public ChatManager(ChatModel chatModel, A2aHostAgentProperties a2aHostAgentProperties, AbstractRemoteAgentManager remoteAgentManager, AbstractConversationManager abstractConversationManager, AbstractMessageManager abstractMessageManager, AbstractTaskCenterManager abstractTaskCenterManager, HostAgentPromptService hostAgentPromptService, @Autowired(required = false) PushNotificationServer pushNotificationServer, @Autowired(required = false) ObservationRegistry observationRegistry) {
+	public ChatManager(ChatModel chatModel, A2aHostAgentProperties a2aHostAgentProperties, AbstractRemoteAgentManager remoteAgentManager, AbstractConversationManager abstractConversationManager, AbstractMessageManager abstractMessageManager, AbstractTaskCenterManager abstractTaskCenterManager, HostAgentPromptService hostAgentPromptService, @Autowired(required = false) PushNotificationServer pushNotificationServer, @Autowired(required = false) ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
 		this.conversationManager = abstractConversationManager;
 		this.messageManager = abstractMessageManager;
 		this.pushNotificationServer = pushNotificationServer;
@@ -154,6 +159,7 @@ public class ChatManager {
 		this.remoteAgentManager = remoteAgentManager;
 		this.a2aHostAgentProperties = a2aHostAgentProperties;
 		this.chatModel = chatModel;
+		this.chatMemoryRepository = chatMemoryRepository;
 	}
 
 	/**

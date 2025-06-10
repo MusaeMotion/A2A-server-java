@@ -111,8 +111,7 @@ public class BasisAgent<T extends SendMessageRequest> {
     /**
      * 提示词内存存储方案
       */
-    @Builder.Default
-    private ChatMemoryRepository chatMemoryRepository = new InMemoryChatMemoryRepository();
+    private ChatMemoryRepository chatMemoryRepository;
 
     /**
      * 系统提示词请在该接口实现
@@ -179,7 +178,8 @@ public class BasisAgent<T extends SendMessageRequest> {
 
         // 入口请求构建系统提示词
         chat = chat.system(hostAgentPromptService.hostAgentSystemPrompt((Map<String, Object>) toolContext.get(STATE)));
-        return chat;
+
+		return chat;
     }
 
     /**
@@ -199,7 +199,7 @@ public class BasisAgent<T extends SendMessageRequest> {
         advisors.add(loggerAdvisor());
 
 		var memoryBuilder = MessageWindowChatMemory.builder()
-				.chatMemoryRepository(this.chatMemoryRepository==null?new InMemoryChatMemoryRepository():this.chatMemoryRepository);
+				.chatMemoryRepository(this.chatMemoryRepository);
 		if (this.chatMemorySize != null && this.chatMemorySize>0) {
 			memoryBuilder.maxMessages(chatMemorySize);
 		}

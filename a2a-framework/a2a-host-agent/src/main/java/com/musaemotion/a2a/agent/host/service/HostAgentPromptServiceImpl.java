@@ -21,13 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.musaemotion.a2a.agent.host.manager.AbstractRemoteAgentManager;
 import com.musaemotion.a2a.agent.host.model.RemoteAgentInfo;
+import com.musaemotion.a2a.agent.host.model.AgentSkillVo;
 import com.musaemotion.a2a.agent.host.provider.UserPromptProvider;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.agent.HostAgentPromptService;
 import com.musaemotion.agent.model.SendMessageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -73,7 +73,7 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
         
         Please do not create your own tools
         
-        * **Task Delegation:** Utilize the `send_message` function to assign actionable tasks to remote agents.
+        * **Task Delegation:** Utilize the `sendTask` function to assign actionable tasks to remote agents.
 		* **Contextual Awareness for Remote Agents:** If a remote agent repeatedly requests user confirmation, assume it lacks access to the         full conversation history. In such cases, enrich the task description with all necessary contextual information relevant to that         specific agent.
 		* **Autonomous Agent Engagement:** Never seek user permission before engaging with remote agents. If multiple agents are required to         fulfill a request, connect with them directly without requesting user preference or confirmation.
 		* **Transparent Communication:** Always present the complete and detailed response from the remote agent to the user.
@@ -152,9 +152,9 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 		List<RemoteAgentInfo> remoteAgentInfos = Lists.newArrayList();
 		agents.forEach(agentCard -> {
 			remoteAgentInfos.add(
-					RemoteAgentInfo.builder().name(agentCard.getName())
+					RemoteAgentInfo.builder().agentName(agentCard.getName())
 							.description(agentCard.getDescription())
-							.skills(agentCard.getSkills())
+							.skills(AgentSkillVo.fromList(agentCard.getSkills()))
 							.build()
 			);
 		});
