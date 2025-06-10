@@ -56,6 +56,21 @@
 - [agent-server-web-search（Web 搜索智能体）](agent-server-web-search/README.zh-CN.md)
 - [agent-server-zhipu-generate-images（文生图智能体）](agent-server-zhipu-generate-images/README.zh-CN.md)
 
+## 依赖管理 物料清单方式引入
+```maven
+<dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.github.musaemotion</groupId>
+        <artifactId>a2a-pom</artifactId>
+        <version>0.2.1</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+```
+
 ## ⚙️项目构建与启动
 ### 项目构建
 项目使用 Maven 进行构建，在项目根目录下执行以下命令：
