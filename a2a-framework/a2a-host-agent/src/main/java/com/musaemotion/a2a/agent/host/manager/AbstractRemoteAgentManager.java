@@ -16,11 +16,9 @@
 
 package com.musaemotion.a2a.agent.host.manager;
 
-import com.musaemotion.a2a.common.AgentCard;
-import com.musaemotion.a2a.agent.host.core.A2aRemoteAgentConnections;
-import com.musaemotion.a2a.agent.host.model.service.SearchRemoteAgentDto;
 import com.musaemotion.a2a.agent.client.A2ACardResolver;
-import org.springframework.data.domain.Page;
+import com.musaemotion.a2a.agent.host.core.A2aRemoteAgentConnections;
+import com.musaemotion.a2a.common.AgentCard;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +32,7 @@ import java.util.Optional;
  * @date：2025/4/29 15:26
  * @description：远程智能体
  */
-public abstract class AbstractRemoteAgentManager {
+public abstract class AbstractRemoteAgentManager <T extends AgentCard> {
 
     /**
      * 远程智能体连接
@@ -88,7 +86,7 @@ public abstract class AbstractRemoteAgentManager {
         this.remoteAgentConnections.clear();
 
         // 获取已经存在的智能体
-        List<AgentCard> agentCards = this.listAll();
+        List<AgentCard> agentCards = (List<AgentCard>) this.listAll();
 
         // 重新注册所有的智能体连接
         agentCards.forEach(this::registerRemoteAgentConnections);
@@ -105,40 +103,9 @@ public abstract class AbstractRemoteAgentManager {
     protected abstract void save(AgentCard input);
 
     /**
-     * 根据名称搜索
-     *
-     * @param agentName
+     * 获取所有远程智能体
      * @return
      */
-    public abstract Optional<AgentCard> get(String agentName);
+    public abstract List<T> listAll();
 
-    /**
-     * agent 名称进行删除
-     *
-     * @param id
-     */
-    public abstract void delete(String id);
-
-    /**
-     * 批量删除
-     * @param ids
-     */
-    public abstract void delete(List<String> ids);
-
-    /**
-     * 获取所有
-     *
-     * @return
-     */
-    public abstract List<AgentCard> listAll();
-
-    /**
-     * 分页搜索
-     *
-     * @param searchInput
-     * @param pageNum
-     * @param pageSize
-     * @return
-     */
-    public abstract Page<AgentCard> pageList(SearchRemoteAgentDto searchInput, int pageNum, int pageSize);
 }

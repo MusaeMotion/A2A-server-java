@@ -16,7 +16,7 @@
 
 package com.a2a.demo.agent.client.entity;
 
-import com.musaemotion.a2a.agent.host.model.service.Conversation;
+import com.a2a.demo.agent.client.dto.Conversation;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -80,6 +80,10 @@ public class ConversationEntity {
         return entity;
     }
 
+	/**
+	 *
+	 * @return
+	 */
     public Conversation toDto(){
         Conversation conversation = new Conversation();
         BeanUtils.copyProperties(this, conversation);

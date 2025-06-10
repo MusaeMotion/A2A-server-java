@@ -21,8 +21,8 @@ import com.musaemotion.a2a.common.constant.MediaType;
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -45,7 +45,7 @@ public class MyOllamaAgent implements AgentService {
      * @param a2aServerProperties
      */
     @Autowired
-    public MyOllamaAgent(OllamaChatModel chatModel, A2aServerProperties a2aServerProperties){
+    public MyOllamaAgent(ChatModel chatModel, A2aServerProperties a2aServerProperties){
        this.chatClient = ChatClient.create(chatModel);
        this.a2aServerProperties = a2aServerProperties;
     }

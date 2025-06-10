@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.musaemotion.a2a.agent.host.manager.AbstractRemoteAgentManager;
 import com.musaemotion.a2a.agent.host.model.RemoteAgentInfo;
 import com.musaemotion.a2a.agent.host.provider.UserPromptProvider;
+import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.agent.HostAgentPromptService;
 import com.musaemotion.agent.model.SendMessageRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -144,7 +145,7 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 	 * @return
 	 */
 	private List<RemoteAgentInfo> loadRemoteAgents() {
-		var agents = this.remoteAgentManager.listAll();
+		List<AgentCard> agents = this.remoteAgentManager.listAll();
 		if (CollectionUtils.isEmpty(agents)) {
 			return Lists.newArrayList();
 		}

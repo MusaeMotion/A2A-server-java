@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package com.musaemotion.a2a.agent.host.controller;
+package com.a2a.demo.agent.client.controller;
 
+import com.a2a.demo.agent.client.service.MysqlTaskCenterManager;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
-import com.musaemotion.a2a.agent.host.manager.HostAgentManager;
 import com.musaemotion.a2a.agent.host.model.response.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author：contact@musaemotion.com
@@ -37,7 +42,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(ControllerSetting.TASK)
 public class TaskController {
 
-    private final HostAgentManager hostAgentManager;
+	/**
+	 * 智能体任务管理器
+	 */
+	private final MysqlTaskCenterManager taskCenterManager;
 
     /**
      * 根据对话id获取列表
@@ -45,8 +53,8 @@ public class TaskController {
      * @return
      */
     @GetMapping
-    public ResponseEntity<Result> taskList(@RequestParam(value = "sessionId", required = false) String sessionId) {
-        return ResponseEntity.ok(Result.buildSuccess(this.hostAgentManager.listTaskByConversationId(sessionId)));
+    public ResponseEntity taskList(@RequestParam(value = "sessionId", required = false) String sessionId) {
+        return ResponseEntity.ok(Result.buildSuccess(this.taskCenterManager.getByConversationId(sessionId)));
     }
 
     /**
@@ -56,7 +64,10 @@ public class TaskController {
      */
     @DeleteMapping
     public ResponseEntity deleteTask(@RequestParam("id") String ids) {
-        this.hostAgentManager.deleteTask(ids);
+		if (StringUtils.hasText(ids)) {
+			List<String> id = Arrays.stream(ids.split(",")).collect(Collectors.toList());
+			this.taskCenterManager.removeTask(id);
+		}
         return ResponseEntity.ok(Result.buildSuccess());
     }
 }

@@ -27,5 +27,6 @@ import lombok.Data;
  */
 @Data
 public class RegisterAgentDto {
+	// 注入 url
     private String url;
 }

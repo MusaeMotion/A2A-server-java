@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.musaemotion.a2a.agent.host.model.service;
+package com.a2a.demo.agent.client.dto;
 
 import lombok.Data;
 
@@ -22,19 +22,15 @@ import lombok.Data;
  * @author：contact@musaemotion.com
  * @package：com.musaemotion.a2a.agent.host.model
  * @project：A2A
- * @date：2025/4/29 15:49
+ * @date：2025/5/6 17:22
  * @description：请完善描述
  */
 @Data
-public class SearchRemoteAgentDto {
+public class Conversation {
 
-    /**
-     * 智能体名称
-     */
+    private String id;
+
     private String name;
 
-    /**
-     * 智能体描述
-     */
-    private String description;
+    private Boolean isActive;
 }
