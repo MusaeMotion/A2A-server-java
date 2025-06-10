@@ -119,7 +119,7 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 	@Override
 	public String hostAgentSystemPrompt(Map<String, Object> state) {
 		String systemPrompt = String.format(ROOT_PROMPT_TPL, this.loadRemoteAgentsToString(), getActiveAgent(state));
-		log.error("hostAgentSystemPrompt：{}", systemPrompt);
+		// log.error("hostAgentSystemPrompt：{}", systemPrompt);
 		return systemPrompt;
 	}
 
