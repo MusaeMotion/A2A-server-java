@@ -44,20 +44,33 @@ public class MysqlMessageManager extends AbstractMessageManager {
 
     private final MessageRepository messageRepository;
 
+	/**
+	 * 更新插入消息
+	 * @param message
+	 */
     @Override
     public void upsert(Common.Message message) {
         MessageEntity messageEntity = MessageEntity.newMessage(message);
         this.messageRepository.save(messageEntity);
     }
 
-    @Override
-    public List<Common.Message> listByConversationId(String conversationId) {
+	/**
+	 * 获取交谈相关的所有message, 请按照时间先后顺序获取数据
+	 * @param conversationId
+	 * @return
+	 */
+	public List<Common.Message> listByConversationId(String conversationId) {
         return this.messageRepository.findByConversationId(conversationId).stream()
                 .sorted(Comparator.comparing(MessageEntity::getCreatedAt))
                 .map(MessageEntity::getMessage)
                 .collect(Collectors.toList());
     }
 
+	/**
+	 * 根据消息id获取消息
+	 * @param messageId
+	 * @return
+	 */
     @Override
     public Optional<Common.Message> getByMessageId(String messageId) {
         var op = messageRepository.findById(messageId);
@@ -67,6 +80,11 @@ public class MysqlMessageManager extends AbstractMessageManager {
         return Optional.empty();
     }
 
+	/**
+	 * 根据交谈id获取最新的一条消息
+	 * @param conversationId
+	 * @return
+	 */
     @Override
     public Optional<Common.Message> lastByConversationId(String conversationId) {
         var op = this.messageRepository.findFirstByConversationIdOrderByCreatedAtDesc(conversationId);
@@ -76,6 +94,10 @@ public class MysqlMessageManager extends AbstractMessageManager {
         return Optional.empty();
     }
 
+	/**
+	 * 通过交谈id删除所有相关的消息
+	 * @param conversationId
+	 */
     @Override
     @Transactional(rollbackOn = Exception.class)
     public void deleteByConversationId(String conversationId) {

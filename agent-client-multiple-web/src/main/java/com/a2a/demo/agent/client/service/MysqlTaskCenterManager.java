@@ -49,7 +49,7 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 	}
 
 	/**
-	 *
+	 * 创建任务落库
 	 * @param task
 	 * @return
 	 */
@@ -65,16 +65,31 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 		return taskEntity.toTask();
 	}
 
+	/**
+	 * 判断任务ID是否存在
+	 * @param taskId
+	 * @return
+	 */
 	@Override
 	public Boolean exists(String taskId) {
 		return this.repository.existsById(taskId);
 	}
 
+	/**
+	 * 根据用户输入的消息id获取相关的任务
+	 * @param inputMessageIds
+	 * @return
+	 */
 	@Override
 	public List<Task> listByInputMessageId(List<String> inputMessageIds) {
 		return this.repository.findAllByInputMessageIdIn(inputMessageIds).stream().map(item->item.toTask()).collect(Collectors.toList());
 	}
 
+	/**
+	 * 根据消息id获取相关任务
+	 * @param messageId
+	 * @return
+	 */
 	@Override
 	public Optional<Task> getByMessageId(String messageId) {
 		var optional = this.repository.findByMessageId(messageId);
@@ -84,6 +99,11 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 		return Optional.empty();
 	}
 
+	/**
+	 * 根据任务id获取相关任务
+	 * @param taskId
+	 * @return
+	 */
 	@Override
 	public Optional<Task> getById(String taskId) {
 		var optional = this.repository.findById(taskId);
@@ -93,6 +113,11 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 		return Optional.of(optional.get().toTask());
 	}
 
+	/**
+	 * 根据交谈id获取相关的任务，如果交谈id为空，则返回所有任务
+	 * @param conversationId
+	 * @return
+	 */
 	@Override
 	public List<Task> getByConversationId(String conversationId) {
 
@@ -102,6 +127,10 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 		return this.repository.findAllByOrderByCreatedAtDesc().stream().map(item->item.toTask()).collect(Collectors.toList());
 	}
 
+	/**
+	 * 根据交谈id删除任务
+	 * @param conversationId
+	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public void deleteByConversationId(String conversationId) {
@@ -109,7 +138,7 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 	}
 
 	/**
-	 *
+	 * 根据任务id删除任务
 	 * @param taskIds
 	 */
 	@Override
@@ -121,7 +150,7 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 	}
 
 	/**
-	 *
+	 * 更新插入任务
 	 * @param task
 	 */
 	@Override

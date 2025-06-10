@@ -37,13 +37,6 @@ public abstract class AbstractMessageManager {
     public abstract void upsert(Common.Message message);
 
     /**
-     * 获取交谈相关的所有message, 请按照时间先后顺序获取数据
-     * @param conversationId
-     * @return
-     */
-    public abstract List<Common.Message> listByConversationId(String conversationId);
-
-    /**
      * 获取一条消息
      * @param messageId
      * @return

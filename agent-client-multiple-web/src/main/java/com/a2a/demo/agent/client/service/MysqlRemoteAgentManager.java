@@ -16,19 +16,19 @@
 
 package com.a2a.demo.agent.client.service;
 
+import com.a2a.demo.agent.client.dto.AgentCardExtend;
+import com.a2a.demo.agent.client.dto.SearchRemoteAgent;
 import com.a2a.demo.agent.client.entity.RemoteAgentEntity;
 import com.a2a.demo.agent.client.repository.RemoteAgentRepository;
 import com.google.common.collect.Lists;
-import com.musaemotion.a2a.common.AgentCard;
-import com.musaemotion.a2a.agent.host.model.service.SearchRemoteAgentDto;
 import com.musaemotion.a2a.agent.host.manager.AbstractRemoteAgentManager;
+import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class MysqlRemoteAgentManager extends AbstractRemoteAgentManager {
+public class MysqlRemoteAgentManager extends AbstractRemoteAgentManager<AgentCardExtend> {
 
     private RemoteAgentRepository repository;
 
@@ -61,39 +61,66 @@ public class MysqlRemoteAgentManager extends AbstractRemoteAgentManager {
         this.repository = repository;
     }
 
-    /**
-     *
-     * @param input
-     */
-    @Transactional(rollbackFor = Exception.class)
+	/**
+	 * 保存落库
+	 * @param input
+	 */
+	@Transactional(rollbackFor = Exception.class)
     protected void save(AgentCard input) {
         var op = this.repository.findByName(input.getName());
         RemoteAgentEntity remoteAgent = null;
         if (op.isPresent()) {
-          log.warn("该智能体已经存在, 更新操作");
-          remoteAgent = (RemoteAgentEntity) op.get();
-          BeanUtils.copyProperties(input, remoteAgent);
+          remoteAgent = op.get().from(input);
         }else{
           remoteAgent = RemoteAgentEntity.newRemoteAgent(GuidUtils.createGuid(), input);
         }
-
         this.repository.save(remoteAgent);
     }
 
-    /**
-     *
-     * @param agentName
-     * @return
-     */
-    public Optional<AgentCard> get(String agentName) {
-        var op = this.repository.findByName(agentName);
+	/**
+	 * 获取当前AgentCard
+	 * @param id
+	 * @return
+	 */
+	public Optional<AgentCardExtend> getById(String id) {
+        var op = this.repository.findById(id);
         if (op.isEmpty()) {
            return Optional.empty();
         }
         return Optional.of(
-                op.get().getAgentCard()
+				op.get().toAgentCard()
         );
     }
+	/**
+	 * 获取当前AgentCard
+	 * @param Id
+	 * @return
+	 */
+	public void changeAgentEnable(String Id) {
+		var op = this.repository.findById(Id);
+		if (op.isEmpty()) {
+			return;
+		}
+		RemoteAgentEntity remoteAgent = op.get();
+		remoteAgent.setEnable(!remoteAgent.getEnable());
+		this.repository.save(remoteAgent);
+	}
+
+	/**
+	 * 修改AgentCard
+	 * @param Id
+	 * @param input
+	 */
+	public void updateAgentCard(String Id, AgentCard input) {
+		var op = this.repository.findById(Id);
+		if (op.isEmpty()) {
+			return;
+		}
+		RemoteAgentEntity remoteAgent = op.get();
+		remoteAgent.setAgentCard(input);
+		remoteAgent.setDescription(input.getDescription());
+		this.repository.save(remoteAgent);
+	}
 
     /**
      *
@@ -108,7 +135,6 @@ public class MysqlRemoteAgentManager extends AbstractRemoteAgentManager {
      * 批量删除
      * @param ids
      */
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
         ids.forEach(id -> {
@@ -117,21 +143,21 @@ public class MysqlRemoteAgentManager extends AbstractRemoteAgentManager {
     }
 
     /**
-     *
+     * 获取所有AgentCard
      * @return
      */
-    public List<AgentCard> listAll() {
-        return this.repository.findAll().stream().map(item->item.toAgentCard()).collect(Collectors.toList());
+    public List<AgentCardExtend> listAll() {
+        return this.repository.findAll().stream().filter(item->item.getEnable()).map(item->item.toAgentCard()).collect(Collectors.toList());
     }
 
     /**
-     *
+     * 远程智能体分页
      * @param searchInput
      * @param pageNum
      * @param pageSize
      * @return
      */
-    public Page<AgentCard> pageList(SearchRemoteAgentDto searchInput, int pageNum, int pageSize) {
+    public Page<AgentCardExtend> pageList(SearchRemoteAgent searchInput, int pageNum, int pageSize) {
 
         Specification specification = new Specification<RemoteAgentEntity>() {
             @Override

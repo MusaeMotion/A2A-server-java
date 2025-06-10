@@ -8,7 +8,7 @@ If you want to implement your own single-responsibility agent, you can use the f
 <dependency>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a-agent-server</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
 </dependency>
 ```
 

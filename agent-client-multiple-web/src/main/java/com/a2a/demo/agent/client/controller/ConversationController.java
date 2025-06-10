@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-package com.musaemotion.a2a.agent.host.controller;
+package com.a2a.demo.agent.client.controller;
 
+import com.a2a.demo.agent.client.service.MysqlConversationManager;
+import com.a2a.demo.agent.client.service.MysqlMessageManager;
+import com.a2a.demo.agent.client.service.MysqlTaskCenterManager;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
+import com.musaemotion.a2a.agent.host.model.response.CommonMessageExt;
 import com.musaemotion.a2a.agent.host.model.response.Result;
-import com.musaemotion.a2a.agent.host.manager.HostAgentManager;
+import com.musaemotion.a2a.common.base.Common;
+import com.musaemotion.a2a.common.base.Task;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author：contact@musaemotion.com
@@ -38,15 +48,18 @@ import org.springframework.web.bind.annotation.*;
 public class ConversationController {
 
 
-    private final HostAgentManager hostAgentManager;
+	private final MysqlConversationManager conversationManager;
 
+	private final MysqlMessageManager messageManager;
+
+	private final MysqlTaskCenterManager taskCenterManager;
     /**
      * 获取交谈列表
      * @return
      */
     @GetMapping
     public ResponseEntity list() {
-        return ResponseEntity.ok(Result.buildSuccess(this.hostAgentManager.listConversation()));
+        return ResponseEntity.ok(Result.buildSuccess(this.conversationManager.list()));
     }
 
     /**
@@ -55,8 +68,11 @@ public class ConversationController {
      * @return
      */
     @DeleteMapping("/{conversationId}")
+	@Transactional(rollbackOn = Exception.class)
     public ResponseEntity delete(@PathVariable String conversationId) {
-        this.hostAgentManager.deleteConversation(conversationId);
+		this.conversationManager.delete(conversationId);
+		this.messageManager.deleteByConversationId(conversationId);
+		this.taskCenterManager.deleteByConversationId(conversationId);
         return ResponseEntity.ok(Result.buildSuccess());
     }
 
@@ -68,7 +84,7 @@ public class ConversationController {
     public ResponseEntity create() {
         return ResponseEntity.ok(
                 Result.buildSuccess(
-                        this.hostAgentManager.createConversation()
+						this.conversationManager.create("")
                 )
         );
     }
@@ -80,9 +96,30 @@ public class ConversationController {
      */
     @GetMapping("/{conversationId}/messages")
     public ResponseEntity messages(@PathVariable String conversationId) {
-        return ResponseEntity.ok(Result.buildSuccess(
-                this.hostAgentManager.listMessage(conversationId)
-        ));
+
+		var messages = this.messageManager.listByConversationId(conversationId);
+
+		List<CommonMessageExt> newMessages = messages.stream().map(item->CommonMessageExt.fromMessage(item)).collect(Collectors.toUnmodifiableList());
+
+		List<String> messageIds = messages.stream()
+				.filter(item->item.getLastMessageId()!=null)
+				.map(Common.Message::getLastMessageId).distinct()
+				.collect(Collectors.toUnmodifiableList());
+
+		List<Task> tasks = this.taskCenterManager.listByInputMessageId(messageIds);
+		newMessages.forEach(message->{
+			var ts =  tasks.stream().filter(task -> task.getInputMessageId().equals(message.getLastMessageId())).collect(Collectors.toUnmodifiableList());
+			if(!CollectionUtils.isEmpty(ts)){
+				message.setTask(ts);
+			}
+
+		});
+
+        return ResponseEntity.ok(
+				Result.buildSuccess(
+				  newMessages
+				)
+		);
     }
 
 }

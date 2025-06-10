@@ -41,7 +41,6 @@ public interface MessageRepository extends JpaRepository<MessageEntity, String>,
      */
      List<MessageEntity> findByConversationId(String conversationId);
 
-
     /**
      * 删除对话相关的所有消息
      * @param conversationId

@@ -16,10 +16,6 @@
 
 package com.musaemotion.a2a.agent.host.manager;
 
-import com.musaemotion.a2a.agent.host.model.service.Conversation;
-
-import java.util.List;
-
 /**
  * @author：contact@musaemotion.com
  * @package：com.musaemotion.a2a.agent.host.service
@@ -27,13 +23,7 @@ import java.util.List;
  * @date：2025/5/6 17:21
  * @description：请完善描述
  */
-public abstract class AbstractConversationManager<T extends Conversation> {
-
-    /**
-     * 创建一个交谈
-     * @return
-     */
-    public abstract T create(String conversationName);
+public abstract class AbstractConversationManager {
 
     /**
      * 判断是否存在
@@ -42,14 +32,4 @@ public abstract class AbstractConversationManager<T extends Conversation> {
      */
     public abstract Boolean exist(String conversationId);
 
-    /**
-     * 删除一个交谈信息
-     * @param conversationId
-     */
-    public abstract void delete(String conversationId);
-
-    /**
-     * 获取交谈列表
-     */
-    public abstract List<T> list();
 }
