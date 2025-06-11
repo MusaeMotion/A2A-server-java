@@ -45,7 +45,7 @@ public class SseEmitterManager {
 		if (emitters.containsKey(key)) {
 			return emitters.get(key);
 		}
-		log.warn("subscribe emitter for key: {}", key);
+		log.info("subscribe emitter for key: {}", key);
 		// TODO 暂不设置超时，后续完善客户端心跳
 		SseEmitter sseEmitter = new SseEmitter(0L);
 		subscribe(key, sseEmitter);
@@ -97,14 +97,14 @@ public class SseEmitterManager {
 
 		if (emitter != null) {
 			try {
-				log.warn("pushData emitter for key: {}", key);
+				log.info("pushData emitter for key: {}", key);
 				emitter.send(SseEmitter.event().id(String.valueOf(System.currentTimeMillis())).data(data, MediaType.TEXT_PLAIN));
 			} catch (Exception e) {
 				log.error("Failed to send data to sessionId: {} with {}", key, e.getMessage());
 				emitters.remove(key);
 			}
 		} else {
-			log.warn("No emitter found for sessionId: {}", key);
+			log.info("No emitter found for sessionId: {}", key);
 		}
 	}
 
@@ -115,7 +115,7 @@ public class SseEmitterManager {
 	 */
 	public static void removeEmitter(String conversationId, String inputMessageId) {
 		String key = buildKey(conversationId, inputMessageId);
-		log.warn("Removing emitter for key: {}", key);
+		log.info("Removing emitter for key: {}", key);
 		emitters.remove(key);
 	}
 }

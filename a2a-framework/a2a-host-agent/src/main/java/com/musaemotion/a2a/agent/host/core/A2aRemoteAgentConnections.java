@@ -160,7 +160,7 @@ public class A2aRemoteAgentConnections {
 				callback.sendTaskCallback(taskStatusUpdateEvent);
 				taskModel.set(Task.from(taskStatusUpdateEvent));
 				if (taskStatusUpdateEvent.getDone()) {
-					log.error("任务状态更新完成");
+					log.info("任务状态更新完成");
 				}
 			}
 			/**

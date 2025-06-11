@@ -89,8 +89,6 @@ public class ConsoleClientCommand implements Runnable {
         Boolean continueLoop = true;
         while (continueLoop) {
             String taskId = GuidUtils.createShortRandomGuid();
-            log.warn("=========  开始一个新的任务 ======== {}", taskId);
-
             continueLoop = completeTask(taskId, scanner);
 
             // 如果启动聊天记录，主动拉取聊天记录打印

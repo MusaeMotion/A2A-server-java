@@ -195,7 +195,6 @@ public class A2aClient {
                         sink.complete();
                     },
                     () -> {
-                        log.info("A2aClient Stream completed.");
                         sink.complete();
                     });
         });

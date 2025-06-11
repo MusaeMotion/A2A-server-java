@@ -154,7 +154,6 @@ public class PushNotificationServer {
      */
     private Mono<ServerResponse> handleValidationCheck(ServerRequest request) {
         String validationToken = request.queryParam("validationToken").orElse(null);
-        // log.info("push notification verification received => {} ", validationToken);
         if (validationToken == null) {
             return ServerResponse.status(HttpStatus.BAD_REQUEST).build();
         }
@@ -169,7 +168,6 @@ public class PushNotificationServer {
     private Mono<ServerResponse> handleNotification(ServerRequest request) {
         return request.bodyToMono(String.class)
                 .flatMap(data -> {
-                    // log.warn("push notification received => {} ", data);
                     String authHeader = request.headers().firstHeader(AUTH_HEADER_NAME);
                     Boolean valid = Boolean.FALSE;
                     try {
@@ -179,7 +177,6 @@ public class PushNotificationServer {
                         return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                     }
                     if (valid) {
-						// log.warn("签名验证通过，接受到推送过来的数据 => {} ", data);
 						if (notificationConsumer != null) {
 							notificationConsumer.processMessage(data);
 						}
@@ -190,7 +187,7 @@ public class PushNotificationServer {
 
                 })
                 .onErrorResume(e -> {
-                    log.info("error verifying push notification: {}", e.getMessage());
+                    log.error("error verifying push notification: {}", e.getMessage());
                     e.printStackTrace();
                     return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 });

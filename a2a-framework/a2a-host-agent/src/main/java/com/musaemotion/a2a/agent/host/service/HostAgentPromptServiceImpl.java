@@ -107,7 +107,6 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 	 */
 	@Override
 	public String userPrompt(SendMessageRequest input) {
-		// log.warn("userPrompt called");
 		if(this.userPromptProvider == null) {
 			return "";
 		}
@@ -116,9 +115,7 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 
 	@Override
 	public String hostAgentSystemPrompt(Map<String, Object> state) {
-		String systemPrompt = String.format(ROOT_PROMPT_TPL,  getActiveAgent(state));
-		// log.error("hostAgentSystemPrompt：{}", systemPrompt);
-		return systemPrompt;
+		return String.format(ROOT_PROMPT_TPL,  getActiveAgent(state));
 	}
 
 
