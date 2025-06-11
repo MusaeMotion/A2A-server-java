@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.musaemotion</groupId>
 		<artifactId>a2a</artifactId>
-		<version>0.2.2</version>
+		<version>0.2.3</version>
 		<relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>com.musaemotion.demo</groupId>
@@ -51,10 +51,10 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-ollama</artifactId>
-        </dependency>
+		<dependency>
+		  <groupId>org.springframework.ai</groupId>
+		  <artifactId>spring-ai-starter-model-ollama</artifactId>
+	    </dependency>
 
 		<dependency>
             <groupId>com.vladmihalcea</groupId>

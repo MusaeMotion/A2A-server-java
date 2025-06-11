@@ -292,7 +292,10 @@ public class HostAgent implements ToolContextStateService {
 	 */
 	@Tool(description = "列出可用于委派任务可用的 remote agent")
 	public String listRemoteAgents() {
-		return this.hostAgentPromptService.loadRemoteAgentsToString();
+
+		String remoteAgents = this.hostAgentPromptService.loadRemoteAgentsToString();
+		// log.error("listRemoteAgents:{}", remoteAgents);
+		return remoteAgents;
 	}
 
 	/**
@@ -319,7 +322,7 @@ public class HostAgent implements ToolContextStateService {
 		// 获取当前调度的智能体连接对象
 		A2aRemoteAgentConnections client = (A2aRemoteAgentConnections) this.remoteAgentManager.getRemoteAgentConnections(agentName)
 				.orElseThrow(() -> new RuntimeException("Agent " + agentName + " not found"));
-
+		log.error("sendTask:{},{}", agentName, message);
 		// 判断智能体连接是否存在
 		if (client == null) {
 			throw new IllegalArgumentException("Client not available for " + agentName);
@@ -434,12 +437,19 @@ public class HostAgent implements ToolContextStateService {
 			state.put(A2AToolCallingManager.RETURN_DIRECT, true);
 			// 如果任务 状态是 WORKING 或 INPUT_REQUIRED, 消息内容就在 task.getStatus().getMessage()里，远程智能响应作为状态的一部分返回 message 格式。
 			response.addAll(taskStatus.getMessage().getParts());
+			Optional<Task> opTask = this.taskCenterManager.getById(result.getId());
+			opTask.get().getStatus().setState(TaskState.INPUT_REQUIRED);
+			opTask.get().setArtifacts(Lists.newArrayList(Common.Artifact.builder().lastChunk(Boolean.TRUE).parts(Lists.newArrayList(taskStatus.getMessage().getParts())).build()));
+			this.taskCenterManager.updateTask(opTask.get());
+
 		}
 		if (taskStatus.getState().equals(TaskState.FAILED) ) {
 			state.put(A2AToolCallingManager.RETURN_DIRECT, true);
 			response.add(new Common.TextPart("智能体 " + agentName + " 任务： " + result.getId() + " 运行失败"));
 			Optional<Task> opTask = this.taskCenterManager.getById(result.getId());
-			opTask.get().setStatus(Common.TaskStatus.builder().state(TaskState.FAILED).build());
+			opTask.get().getStatus().setState(TaskState.FAILED);
+			opTask.get().setArtifacts(Lists.newArrayList(Common.Artifact.builder().lastChunk(Boolean.TRUE).parts(Lists.newArrayList(result.getStatus().getMessage().getParts())).build()));
+
 			this.taskCenterManager.updateTask(opTask.get());
 		}
 		// 如果 task 状态 COMPLETED，则在生产工作件里的part包装数据

@@ -39,6 +39,6 @@ public class RemoteAgentInfo {
 	private String description;
 
 	// 能力
-	private List<AgentSkillVo> skills;
+	private List<AgentSkillVo> agentSkills;
 
 }
