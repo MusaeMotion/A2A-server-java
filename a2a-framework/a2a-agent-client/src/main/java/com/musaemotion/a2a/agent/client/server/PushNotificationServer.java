@@ -75,15 +75,19 @@ public class PushNotificationServer {
     // 消息消费者
 	private INotificationConsumer notificationConsumer;
 
+	// 外部通知地址
+	private String externalUrl;
+
     /**
      * @param host 通知服务的host
      * @param port 通知服务的端口
      */
-    public PushNotificationServer(InetAddress host, int port, INotificationConsumer notificationConsumer) {
+    public PushNotificationServer(InetAddress host, int port, INotificationConsumer notificationConsumer, String externalUrl) {
         this.host = host;
         this.port = port;
         this.agentUrls = Maps.newHashMap();
 		this.notificationConsumer = notificationConsumer;
+		this.externalUrl = externalUrl;
     }
 
     /**
@@ -122,19 +126,26 @@ public class PushNotificationServer {
     }
 
 
-    /**
-     * 获取通知服务的url路径
-     * @return
-     */
-    public String getNotifyServerUrl(){
-        return String.format(
-                NOTIFY_URL_TPL,
-                this.getHost().getHostAddress(),
-                this.getPort(),
-                PushNotificationServer.NOTIFY_PATH
-        );
+	/**
+	 * 获取外部访问url
+	 * @return
+	 */
+	public String getExternalUrl(){
+        return this.externalUrl.replaceAll("/+$", "")+"/"+PushNotificationServer.NOTIFY_PATH;
     }
 
+	/**
+	 * 获取通知服务的url路径
+	 * @return
+	 */
+	public String getNotifyServerUrl(){
+		return String.format(
+				NOTIFY_URL_TPL,
+				this.getHost().getHostAddress(),
+				this.getPort(),
+				PushNotificationServer.NOTIFY_PATH
+		);
+	}
 
     /**
      * 构建通知服务路由

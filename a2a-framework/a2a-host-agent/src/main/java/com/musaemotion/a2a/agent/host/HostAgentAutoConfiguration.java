@@ -78,7 +78,8 @@ public class HostAgentAutoConfiguration {
         PushNotificationServer pushNotificationServer = new PushNotificationServer(
                 InetAddress.getByName(uri.getHost()),
                 uri.getPort(),
-				notificationConsumer
+				notificationConsumer,
+				a2aHostAgentProperties.getExternalUrl()
         );
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.submit(pushNotificationServer::strat);

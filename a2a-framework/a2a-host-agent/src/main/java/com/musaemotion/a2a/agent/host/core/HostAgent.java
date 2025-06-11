@@ -386,7 +386,7 @@ public class HostAgent implements ToolContextStateService {
 				Arrays.asList(MediaType.TEXT, MediaType.TEXT_PLAIN, MediaType.IMAGE_PNG),
 				sendMetadata,
 				// 如果通知服务启动，设置通知服务的地址
-				pushNotificationServer ==null?"": pushNotificationServer.getNotifyServerUrl()
+				pushNotificationServer ==null?"": pushNotificationServer.getExternalUrl()
 		);
 	}
 

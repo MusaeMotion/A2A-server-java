@@ -33,8 +33,15 @@ public class A2aHostAgentProperties {
 
     /**
      * 通知服务url地址，如果为空则不启动通知服务
+	 * url 作为本地启动时绑定的主机地址和端口
      */
     private String notifyUrl;
+
+	/**
+	 * 发送给远程智能体回调访问的外部地址
+	 * 如果是在docker环境下，这个地址可以是宿主机绑定的地址和端口
+	 */
+	private String externalUrl;
 
     /**
      * 默认启动远程智能体地址列表

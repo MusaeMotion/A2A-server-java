@@ -73,7 +73,8 @@ public class AgentClientCliApplication implements CommandLineRunner {
 							public void processMessage(String message) {
 								log.info("通知处理：{}", message);
 							}
-						}
+						},
+						argsModel.getNotificationEndpoint()
                 );
                 // 注册到通知里面
                 pushNotificationServer.registerAgent(card.getName(), argsModel.getAgentUrl());
