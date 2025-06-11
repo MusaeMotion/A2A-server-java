@@ -84,8 +84,6 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 		* **Prioritize Recent Interaction:** Focus primarily on the most recent parts of the conversation when processing requests.
 		* **Active Agent Prioritization:** If an active agent is already engaged, route subsequent related requests to that agent using the         appropriate task update tool.
 		
-        Agents:
-        %s
         
         Current agent: %s
         """;
@@ -118,7 +116,7 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 
 	@Override
 	public String hostAgentSystemPrompt(Map<String, Object> state) {
-		String systemPrompt = String.format(ROOT_PROMPT_TPL, this.loadRemoteAgentsToString(), getActiveAgent(state));
+		String systemPrompt = String.format(ROOT_PROMPT_TPL,  getActiveAgent(state));
 		// log.error("hostAgentSystemPrompt：{}", systemPrompt);
 		return systemPrompt;
 	}
@@ -154,7 +152,7 @@ public class HostAgentPromptServiceImpl implements HostAgentPromptService {
 			remoteAgentInfos.add(
 					RemoteAgentInfo.builder().agentName(agentCard.getName())
 							.description(agentCard.getDescription())
-							.skills(AgentSkillVo.fromList(agentCard.getSkills()))
+							.agentSkills(AgentSkillVo.fromList(agentCard.getSkills()))
 							.build()
 			);
 		});

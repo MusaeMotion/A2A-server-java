@@ -26,8 +26,8 @@ spring:
       chat:
         options:
           model: 'gemma3:4b'
-      base-url: 'http://192.168.10.100:11434'
-      # base-url: 'http://127.0.0.1:11434'
+      #base-url: 'http://192.168.10.100:11434'
+      base-url: 'http://127.0.0.1:11434'
       init:
         pull-model-strategy: WHEN_MISSING
         chat:
