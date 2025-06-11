@@ -79,7 +79,6 @@ public class PushNotificationReceiverAuth extends PushNotificationAuth {
         JWKSelector selector = new JWKSelector(JWKMatcher.forJWSHeader(signedJWT.getHeader()));
         Object claimAgentName = signedJWT.getJWTClaimsSet().getClaim(CLAIM_AGENT_NAME);
         if (claimAgentName == null) {
-            log.error("迭代所有 Endpoint");
             for (Map.Entry<String, String> entry : this.agentJwkEndpoint.entrySet()) {
                 String value = entry.getValue();
                 JWKSource<SecurityContext> jwkSource = new RemoteJWKSet<>(new URL(value));
@@ -90,7 +89,6 @@ public class PushNotificationReceiverAuth extends PushNotificationAuth {
             }
             return Lists.newArrayList();
         } else {
-           // log.error("自己调整的方式直接定位 Endpoint");
             String agentName = (String) claimAgentName;
             if (!this.agentJwkEndpoint.containsKey(agentName)) {
                 throw new RuntimeException("该智能体还未注册到通知服务");
@@ -144,7 +142,7 @@ public class PushNotificationReceiverAuth extends PushNotificationAuth {
 
         if(!verify) {
             // 签名验证不通过
-            log.info("Push notification not verified");
+            log.warn("Push notification not verified");
             return Boolean.FALSE;
         }
         // 判断token是否过期

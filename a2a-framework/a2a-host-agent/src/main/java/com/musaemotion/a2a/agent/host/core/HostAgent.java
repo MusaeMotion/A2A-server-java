@@ -292,10 +292,7 @@ public class HostAgent implements ToolContextStateService {
 	 */
 	@Tool(description = "列出可用于委派任务可用的 remote agent")
 	public String listRemoteAgents() {
-
-		String remoteAgents = this.hostAgentPromptService.loadRemoteAgentsToString();
-		// log.error("listRemoteAgents:{}", remoteAgents);
-		return remoteAgents;
+		return this.hostAgentPromptService.loadRemoteAgentsToString();
 	}
 
 	/**
@@ -322,7 +319,6 @@ public class HostAgent implements ToolContextStateService {
 		// 获取当前调度的智能体连接对象
 		A2aRemoteAgentConnections client = (A2aRemoteAgentConnections) this.remoteAgentManager.getRemoteAgentConnections(agentName)
 				.orElseThrow(() -> new RuntimeException("Agent " + agentName + " not found"));
-		log.error("sendTask:{},{}", agentName, message);
 		// 判断智能体连接是否存在
 		if (client == null) {
 			throw new IllegalArgumentException("Client not available for " + agentName);

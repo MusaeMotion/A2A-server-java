@@ -83,7 +83,7 @@ public class PushNotificationSenderService extends PushNotificationAuth {
                     return isVerified;
                 }
             } catch (Exception e) {
-                log.warn("verifyPushNotificationUrl Error during sending push-notification for URL {}: {}", url, e.getMessage());
+                log.error("verifyPushNotificationUrl Error during sending push-notification for URL {}: {}", url, e.getMessage());
                 return false;
             }
         });
@@ -204,14 +204,14 @@ public class PushNotificationSenderService extends PushNotificationAuth {
                 try (CloseableHttpResponse response = httpClient.execute(request)) {
                     // 签名验证失败
                     if (response.getStatusLine().getStatusCode() >= 400) {
-                        log.warn("Error sending push-notification for URL {}: {}", url, response.getStatusLine().getReasonPhrase());
+                        log.info("Error sending push-notification for URL {}: {}", url, response.getStatusLine().getReasonPhrase());
                     } else {
                         // 完成正常推送
                         log.info("Push-notification sent for URL: {}", url);
                     }
                 }
             } catch (Exception e) {
-                log.warn("sendPushNotification Error during sending push-notification for URL {}: {}", url, e.getMessage());
+                log.error("sendPushNotification Error during sending push-notification for URL {}: {}", url, e.getMessage());
             }
         });
     }

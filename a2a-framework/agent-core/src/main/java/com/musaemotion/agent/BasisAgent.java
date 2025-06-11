@@ -139,7 +139,6 @@ public class BasisAgent<T extends SendMessageRequest> {
 		StringBuffer stringBuffer = new StringBuffer(hostAgentPromptService.userPrompt(input));
 		stringBuffer.append("\n");
 		stringBuffer.append(PartUtils.getTextContent(input.getParams()));
-		// log.warn("UserPrompt text: {}", stringBuffer.toString());
 		return stringBuffer.toString();
 	}
 
@@ -249,7 +248,7 @@ public class BasisAgent<T extends SendMessageRequest> {
 				.toolContext(toolContext)
 				.stream()
 				.chatResponse()
-				.doOnComplete(() ->  log.info("BasisAgent 智能体完成"))
+				.doOnComplete(() ->  log.info("BasisAgent 智能体stream响应完成"))
 				.doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
 				.onErrorResume((error) -> {
 					var generation = new Generation(

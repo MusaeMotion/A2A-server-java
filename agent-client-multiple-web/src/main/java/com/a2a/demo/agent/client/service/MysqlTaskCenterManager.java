@@ -57,7 +57,6 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 	public Task addTask(Task task) {
 		var op = this.repository.findById(task.getId());
 		if (op.isPresent()) {
-			log.warn("该任务已经存在");
 			return op.get().toTask();
 		}
 		TaskEntity taskEntity = TaskEntity.newTaskEntity(task.getId(), task);
@@ -157,7 +156,6 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 	public void updateTask(Task task) {
 		var op = this.repository.findById(task.getId());
 		if (op.isEmpty()) {
-			log.warn("该任务不存在");
 			return;
 		}
 		TaskEntity taskEntity = op.get();

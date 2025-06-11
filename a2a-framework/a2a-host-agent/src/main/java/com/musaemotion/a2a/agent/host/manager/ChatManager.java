@@ -324,9 +324,7 @@ public class ChatManager {
 		var message = CommonMessageExt.fromMessage(agnetMessage);
 		String lastMessageId = agnetMessage.getLastMessageId();
 		if (StringUtils.hasText(lastMessageId)) {
-			//log.error("loadTask：{}", lastMessageId);
 			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
-			//log.error("loadTask tasks：{}", tasks.size());
 			message.setTask(tasks);
 		}
 		return message;

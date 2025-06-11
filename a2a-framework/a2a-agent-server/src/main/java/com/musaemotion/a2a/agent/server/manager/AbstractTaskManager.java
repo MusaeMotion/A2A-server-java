@@ -134,7 +134,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 		Optional<Common.PushNotificationConfig> optional = this.getPushNotificationInfoForStore(task.getId());
 		if (optional.isEmpty()) {
-			// log.info("No push notification info found for task {}", task.getId());
 			return CompletableFuture.completedFuture(null);
 		}
 		Common.PushNotificationConfig pushNotificationConfig = optional.get();
@@ -142,7 +141,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		Map<String, Object> map = objectMapper.convertValue(task, TypeFactory.defaultInstance().constructMapType(Map.class, String.class, Object.class));
 		return CompletableFuture.runAsync((Runnable) () -> {
 			this.pushNotificationSenderService.sendPushNotification(pushNotificationConfig.getUrl(), map, this.agentService.agentName());
-			// log.info("推送消息:{} , 推送任务Id：{} ", pushNotificationConfig.getUrl(), task.getId());
 		});
 
 	}
@@ -222,7 +220,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 * @param taskSendParams
 	 */
 	protected void upsertTask(TaskSendParams taskSendParams) {
-		// log.info("Upserting task {}", taskSendParams.getId());
+
 		Optional<Task> optionalTask = this.getTaskForStore(taskSendParams.getId());
 		Task task = null;
 		if (optionalTask.isEmpty()) {
@@ -233,7 +231,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 					.history(Lists.newArrayList(taskSendParams.getMessage()))
 					.metadata(taskSendParams.getMetadata())
 					.build();
-			// log.info("Upserting task SUBMITTED {}", taskSendParams.getId());
 		} else {
 			task = optionalTask.get();
 			// 追加消息
@@ -332,7 +329,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	@Override
 	public GetTaskResponse onGetTask(GetTaskRequest request) {
-		log.error("Getting task {}", request.getParams().getId());
 		TaskQueryParams taskQueryParams = request.getParams();
 		lock.lock();
 		try {
@@ -434,7 +430,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	@Override
 	public JSONRPCMessage onSendTask(SendTaskRequest request) {
 		log.info("request task {}", request.getParams().getId());
-		// log.error("request data {}", request.toString());
 		// 验证请求
 		Optional<JSONRPCResponse> optionalError = this.validateRequest(request.getParams(), request.getId());
 		if (optionalError.isPresent()) {
@@ -569,7 +564,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
                                  */
 							},
 							err -> {
-								log.info("出现错误：{}", err.getMessage());
+								log.error("出现错误：{}", err.getMessage());
 								fluxSink.next(
 										SendTaskStreamingResponse.buildErrorResponse(
 												request.getId(),
@@ -579,7 +574,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 								fluxSink.complete();
 
 							}, () -> {
-								log.error("执行完成");
+								// log.info("执行完成");
 								AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText(buffer.toString(), agentResponseStatus.get());
 //                              BeanOutputConverter<AgentGeneralResponse> converter = new BeanOutputConverter<>(AgentGeneralResponse.class);
 //								AgentGeneralResponse agentGeneralResponse = converter.convert(buffer.toString());
@@ -616,7 +611,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 													new InternalA2aError("智能体未按照要求返回"))
 									);
 								}
-								// log.info("最终结果{}", buffer.toString());
 								fluxSink.complete();
 							});
 				} catch (Exception e) {
@@ -624,7 +618,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 					log.error("处理异常");
 				} finally {
 					executor.shutdown(); // 关闭线程池
-					log.error("关闭线程池");
 				}
 			});
 
