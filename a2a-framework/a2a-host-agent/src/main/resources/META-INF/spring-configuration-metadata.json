@@ -6,6 +6,11 @@
       "description": "通知服务url地址，如果为空则不启动通知服务"
     },
     {
+      "name": "musaemotion.a2a.host-agent.external-url",
+      "type": "java.lang.String",
+      "description": "发送给远程智能体回调访问的外部地址, 如果是在docker环境下，这个地址可以是宿主机绑定的地址和端口"
+    },
+    {
       "name": "musaemotion.a2a.host-agent.remote-agent-addresses",
       "type": "java.util.List<java.lang.String>",
       "description": "默认启动远程智能体地址列表"

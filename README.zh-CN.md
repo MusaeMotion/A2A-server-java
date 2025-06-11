@@ -63,7 +63,7 @@
       <dependency>
         <groupId>io.github.musaemotion</groupId>
         <artifactId>a2a-pom</artifactId>
-        <version>0.2.5</version>
+        <version>0.2.6</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.musaemotion</groupId>
-	<version>0.2.5</version>
+	<version>0.2.6</version>
     <artifactId>a2a-framework</artifactId>
     <packaging>pom</packaging>
 
@@ -178,6 +178,7 @@
 	<!-- sonatype 要求的插件 -->
 	<build>
 		<plugins>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
