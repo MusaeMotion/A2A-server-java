@@ -66,6 +66,7 @@ spring:
         chat:
           additional-models:
             - qwen3:8b
+
   ######################################
   # spring starter database 配置, 请使用自己的数据库配置
   ######################################

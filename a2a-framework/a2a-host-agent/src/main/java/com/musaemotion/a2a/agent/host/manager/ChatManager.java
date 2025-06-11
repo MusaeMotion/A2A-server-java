@@ -324,7 +324,9 @@ public class ChatManager {
 		var message = CommonMessageExt.fromMessage(agnetMessage);
 		String lastMessageId = agnetMessage.getLastMessageId();
 		if (StringUtils.hasText(lastMessageId)) {
+			//log.error("loadTask：{}", lastMessageId);
 			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
+			//log.error("loadTask tasks：{}", tasks.size());
 			message.setTask(tasks);
 		}
 		return message;
@@ -391,9 +393,10 @@ public class ChatManager {
 					try {
 						messages.add(agnetMessage);
 						// 加载任务消息
-						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason"))) {
+						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason")) || !assistantMessage.getMetadata().containsKey("finishReason")) {
 							agnetMessage = loadTask(agnetMessage);
 						}
+
 
 					} catch (Exception e) {
 						agnetMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));

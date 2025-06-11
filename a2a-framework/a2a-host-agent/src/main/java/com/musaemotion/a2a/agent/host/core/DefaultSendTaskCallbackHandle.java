@@ -50,7 +50,10 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 		Optional<Task> optionalTask = this.taskCenterManager.getById(newTask.getId());
 		if (optionalTask.isPresent()) {
 			Task oldTask = optionalTask.get();
-			oldTask.setStatus(newTask.getStatus());
+			oldTask.getStatus().setState(newTask.getStatus().getState());
+			// 可以合并一些getMetadata 内容
+			// oldTask.getStatus().getMessage().getMetadata().putAll(newTask.getStatus().getMessage().getMetadata());
+			// oldTask.setStatus(newTask.getStatus());
 			if(newTask.getArtifacts()!=null) {
 				// 返回多个产出结果工件
 				newTask.getArtifacts().forEach(artifact -> {

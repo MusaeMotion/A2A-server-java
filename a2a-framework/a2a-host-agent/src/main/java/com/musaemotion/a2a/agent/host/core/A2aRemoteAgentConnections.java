@@ -16,9 +16,11 @@
 
 package com.musaemotion.a2a.agent.host.core;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.IMetadata;
+import com.musaemotion.a2a.common.constant.TaskState;
 import com.musaemotion.a2a.common.event.TaskArtifactUpdateEvent;
 import com.musaemotion.a2a.common.event.TaskEvent;
 import com.musaemotion.a2a.common.event.TaskStatusUpdateEvent;
@@ -73,6 +75,18 @@ public class A2aRemoteAgentConnections {
 		this.agentCard = agentCard;
 	}
 
+	/**
+	 * 构建错误Task
+	 * @param taskSendParams
+	 * @param errorMessage
+	 * @return
+	 */
+	private Task buildErrorTask(TaskSendParams taskSendParams, String errorMessage) {
+		Task task = Task.from(taskSendParams);
+		task.setStatus(Common.TaskStatus.builder().state(TaskState.FAILED).build());
+		task.getStatus().getMessage().setParts(Lists.newArrayList(new Common.TextPart(errorMessage)));
+		return task;
+	}
 
 	/**
 	 * agent 支持 call
@@ -84,7 +98,8 @@ public class A2aRemoteAgentConnections {
 		SendTaskRequest sendTaskRequest = SendTaskRequest.newInstance(taskSendParams);
 		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest);
 		if(sendTaskResponse.getResult() == null && sendTaskResponse.getError() != null) {
-			throw new RuntimeException(sendTaskResponse.getError().getMessage());
+			// throw new RuntimeException(sendTaskResponse.getError().getMessage());
+			return buildErrorTask(taskSendParams, sendTaskResponse.getError().getMessage());
 		}
 		// 合并任务相关的元数据
 		this.mergeMetadata(sendTaskResponse.getResult(), taskSendParams);
@@ -121,6 +136,7 @@ public class A2aRemoteAgentConnections {
 		responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
 			if (sendTaskStreamingResponse.getError() != null) {
 				log.error("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
+				taskModel.set(buildErrorTask(taskSendParams,  sendTaskStreamingResponse.getError().getMessage()));
 				return;
 			}
 			if (sendTaskStreamingResponse.getResult() instanceof TaskEvent taskEvent) {
