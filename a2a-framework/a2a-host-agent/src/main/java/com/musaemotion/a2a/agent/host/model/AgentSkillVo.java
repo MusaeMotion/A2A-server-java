@@ -17,7 +17,7 @@ import java.util.List;
 public class AgentSkillVo {
 
 	/**
-	 * 名称
+	 * skillName 和 agentCard 的 name 不要重复，会影响 大模型推理的注意力，从而产生工具调用幻觉
 	 */
 	private String name;
 
@@ -25,6 +25,7 @@ public class AgentSkillVo {
 	 * 描述
 	 */
 	private String description;
+
 	/**
 	 * tags
 	 */

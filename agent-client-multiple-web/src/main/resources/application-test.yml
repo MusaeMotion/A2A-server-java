@@ -1,6 +1,10 @@
 server:
   port: ${port:10001}
 
+# 本机docker环境
+# 本机ip
+local-ip: 192.168.10.242
+
 ######################################
 # Common Observability
 ######################################
@@ -26,7 +30,7 @@ management:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: http://localhost:9411/api/v2/spans
+      endpoint: http://${local-ip}:9411/api/v2/spans
   endpoint:
     health:
       show-details: always
@@ -56,23 +60,24 @@ spring:
     # Host Agent: Spring AI 模型配置
     ######################################
     ollama:
-      base-url: 'http://192.168.10.100:11434'
-      # base-url: 'http://127.0.0.1:11434'
+      #base-url: 'http://192.168.10.100:11434'
+      base-url: 'http://127.0.0.1:11434'
       chat:
         options:
-          model: 'qwen3:8b'
+          model: 'qwen3:14b'
       init:
         pull-model-strategy: WHEN_MISSING
         chat:
           additional-models:
             - qwen3:8b
+
   ######################################
   # spring starter database 配置, 请使用自己的数据库配置
   ######################################
   datasource:
-    url: jdbc:mysql://localhost:3306/a2a?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${local-ip}/a2a?useSSL=false&serverTimezone=Asia/Shanghai
     username: a2a_user
-    password: a2a_Usera2o
+    password: a2a_usera2o
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       minimum-idle: 5
@@ -107,7 +112,10 @@ spring:
 musaemotion:
   a2a:
     host-agent:
-      notify-url: http://localhost:5000
+      # 通知服务绑定的地址
+      notify-url: http://127.0.0.1:5000
+      # 发送给远程智能体，回调通知的外部地址
+      external-url: http://${local-ip}:5000
       # 默认需要加载到注册中心的远程智能体, 请一定保证该地址智能体存在并且已启动，否则会异常
       remote-agent-addresses:
       #  - http://127.0.0.1:9999/
