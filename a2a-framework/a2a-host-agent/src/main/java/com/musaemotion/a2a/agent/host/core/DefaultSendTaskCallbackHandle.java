@@ -76,7 +76,7 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 	public void sendTaskCallback(TaskStatusUpdateEvent taskStatusUpdateEvent) {
 
 		Task oleTask = this.addOrGetTask(taskStatusUpdateEvent);
-
+        // 这里会通知完成
 		oleTask.setStatus(taskStatusUpdateEvent.getStatus());
 
 		// 添加消息栈关系，消息之间前后关系

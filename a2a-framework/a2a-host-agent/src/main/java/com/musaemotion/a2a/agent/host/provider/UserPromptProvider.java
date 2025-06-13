@@ -2,6 +2,8 @@ package com.musaemotion.a2a.agent.host.provider;
 
 import com.musaemotion.agent.model.SendMessageRequest;
 
+import java.util.Map;
+
 /**
  * @author labidc@hotmail.com
  * @version 1.0.0
@@ -10,6 +12,10 @@ import com.musaemotion.agent.model.SendMessageRequest;
  */
 public interface UserPromptProvider {
 
-
-	 String getUserPrompt(SendMessageRequest input);
+	/**
+	 * 用户提示词提供者
+	 * @param sendMessageRequestMetadata
+	 * @return
+	 */
+	String getUserPrompt(Map<String, Object> sendMessageRequestMetadata);
 }

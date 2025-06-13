@@ -39,7 +39,7 @@ import java.util.List;
 public class AgentGeneralResponse {
 
     /**
-     * 状态
+     * 智能体运行的状态
      */
     private AgentResponseStatus status;
 

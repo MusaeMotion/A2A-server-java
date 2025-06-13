@@ -19,6 +19,7 @@ package com.musaemotion.a2a.agent.server.properties;
 import com.google.common.collect.Lists;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.AgentSkill;
+import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.constant.MediaType;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -75,7 +76,7 @@ public class A2aServerProperties {
     /**
      * agent 能力
      */
-    private AgentCard.AgentAuthentication authentication;
+    private Common.AgentAuthentication authentication;
 
     /**
      * 默认输入类型

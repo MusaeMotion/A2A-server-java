@@ -22,7 +22,7 @@ import com.musaemotion.a2a.agent.host.ext.A2AToolCallingManager;
 import com.musaemotion.a2a.agent.host.ext.MyToolExecutionExceptionProcessor;
 import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
 import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
-import com.musaemotion.agent.HostAgentPromptService;
+import com.musaemotion.agent.AgentPromptProvider;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -57,11 +57,11 @@ public class HostAgentAutoConfiguration {
      * @return
      */
     @Bean(value = "toolCallingManager")
-    public A2AToolCallingManager toolCallingManager(HostAgentPromptService hostAgentPromptService, @Autowired(required = false) ObservationRegistry observationRegistry) {
+    public A2AToolCallingManager toolCallingManager(AgentPromptProvider agentPromptProvider, @Autowired(required = false) ObservationRegistry observationRegistry) {
         return A2AToolCallingManager.builder()
                 .toolExecutionExceptionProcessor(new MyToolExecutionExceptionProcessor())
                 .observationRegistry(observationRegistry == null ? ObservationRegistry.NOOP : observationRegistry)
-                .hostAgentPromptService(hostAgentPromptService)
+                .hostAgentPromptService(agentPromptProvider)
                 .build();
     }
 

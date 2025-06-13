@@ -36,7 +36,7 @@ public interface MetaDataKey {
 	String CUR_AGENT_NAME = "agentName";
 
 	/**
-	 * 就是 conversation_id 交谈id
+	 * 就是 conversation_id 交谈id, 暂时没用，后续其实可以扩展成，也应该是MAIN_TASK_ID
 	 */
 	String SESSION_ID = "session_id";
 

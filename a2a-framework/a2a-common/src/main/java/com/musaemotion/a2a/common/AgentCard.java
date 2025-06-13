@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.Lists;
+import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.constant.MediaType;
 import lombok.*;
 
@@ -77,7 +78,7 @@ public class AgentCard implements Serializable {
     /**
      * agent 该智能体的授权模式
      */
-    private AgentAuthentication authentication;
+    private Common.AgentAuthentication authentication;
 
     /**
      * 默认输入类型
@@ -112,18 +113,13 @@ public class AgentCard implements Serializable {
      */
     public record AgentCapabilities(boolean streaming, boolean pushNotifications, boolean stateTransitionHistory) { }
 
-    /**
-     * agent 访问授权设置
-	 * TODO 暂时没有做授权相关的设置, schemes 是授权的方式， credentials 是授权的token,
-     * TODO hostAgent 访问该智能体的时候，使用 schemes 是授权的方式， credentials 是授权的token,进行访问, 后续来完善，暂时都未设置
-     * TODO Common.AgentAuthentication 是同一个对象后面来修改调整到一起
-     * @param schemes
-     * @param credentials
-     */
-    public record AgentAuthentication(List<String> schemes, String credentials) {}
 
-
-    public String toJson() throws JsonProcessingException {
+	/**
+	 * to Json
+	 * @return
+	 * @throws JsonProcessingException
+	 */
+	public String toJson() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         return mapper.writeValueAsString(this);

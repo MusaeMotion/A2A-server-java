@@ -76,15 +76,21 @@ public class A2aRemoteAgentConnections {
 	}
 
 	/**
-	 * 构建错误Task
+	 * 构建task错误
 	 * @param taskSendParams
 	 * @param errorMessage
 	 * @return
 	 */
 	private Task buildErrorTask(TaskSendParams taskSendParams, String errorMessage) {
 		Task task = Task.from(taskSendParams);
-		task.setStatus(Common.TaskStatus.builder().state(TaskState.FAILED).build());
-		task.getStatus().getMessage().setParts(Lists.newArrayList(new Common.TextPart(errorMessage)));
+		// 修改成失败状态，错误状态
+		task.getStatus().setState(TaskState.FAILED);
+		// 生成错误工件内容，错误消息
+		task.setArtifacts(Lists.newArrayList(
+				Common.Artifact.builder().lastChunk(Boolean.TRUE).parts(
+						Lists.newArrayList(new Common.TextPart(errorMessage))
+				).build()
+		));
 		return task;
 	}
 
@@ -136,7 +142,7 @@ public class A2aRemoteAgentConnections {
 		responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
 			if (sendTaskStreamingResponse.getError() != null) {
 				log.error("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
-				taskModel.set(buildErrorTask(taskSendParams,  sendTaskStreamingResponse.getError().getMessage()));
+				taskModel.set(buildErrorTask(taskSendParams, sendTaskStreamingResponse.getError().getMessage()));
 				return;
 			}
 			if (sendTaskStreamingResponse.getResult() instanceof TaskEvent taskEvent) {

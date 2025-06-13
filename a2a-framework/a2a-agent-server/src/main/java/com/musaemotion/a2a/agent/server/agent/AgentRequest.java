@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author：contact@musaemotion.com
@@ -32,6 +33,7 @@ import java.util.List;
 @Data
 @Builder
 public class AgentRequest {
+
     /**
      * 文本消息
      */
@@ -46,4 +48,9 @@ public class AgentRequest {
      * 多模态文件列表
      */
     private List<Common.Part> parts;
+
+	/**
+	 * 请求响应
+	 */
+	private Map<String, Object> metadata;
 }

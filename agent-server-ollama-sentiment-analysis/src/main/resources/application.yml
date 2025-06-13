@@ -35,6 +35,7 @@ spring:
           additional-models:
             - qwen2.5:latest
 
+
 card-url: 'http://127.0.0.1'
 ######################################
 #  musaemotion A2A Card 配置
@@ -60,6 +61,14 @@ musaemotion:
       # name 只能使用英文
       name: 'SentimentAnalysis'
       description: '情感分析是否正向反向'
+      # 智能体提供者
+      provider:
+        organization: '位元灵感'
+        url: 'http://www.musaemotion.com/'
+      authentication:
+        schemes: ''
+        credentials: ''
+
 
 
 

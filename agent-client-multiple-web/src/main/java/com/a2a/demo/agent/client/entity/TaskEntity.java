@@ -66,7 +66,7 @@ public class TaskEntity {
 	private String messageId;
 
 	/**
-	 * 智能体 card 信息
+	 * 任务详情
 	 */
 	@Type(JsonType.class)
 	@Column(length = 1000, columnDefinition = "json")
@@ -105,7 +105,8 @@ public class TaskEntity {
 	 */
 	public static TaskEntity updateTaskInfo(TaskEntity curTaskEntity, Task source){
 		Task target = curTaskEntity.getTaskInfo();
-		target.setStatus(source.getStatus());
+		// target.setStatus(source.getStatus());
+		target.getStatus().setState(source.getStatus().getState());
 		if(target.getMetadata() == null){
 			target.setMetadata(Maps.newConcurrentMap());
 		}

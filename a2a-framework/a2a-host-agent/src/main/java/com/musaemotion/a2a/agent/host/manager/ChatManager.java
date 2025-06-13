@@ -19,6 +19,9 @@ package com.musaemotion.a2a.agent.host.manager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
@@ -32,7 +35,7 @@ import com.musaemotion.a2a.common.base.Task;
 import com.musaemotion.a2a.common.constant.MessageRole;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.common.utils.JsonUtils;
-import com.musaemotion.agent.HostAgentPromptService;
+import com.musaemotion.agent.AgentPromptProvider;
 import com.musaemotion.agent.model.SendMessageRequest;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -97,7 +100,7 @@ public class ChatManager {
 	/**
 	 * host Agent 提示词service
 	 */
-	private HostAgentPromptService hostAgentPromptService;
+	private AgentPromptProvider agentPromptProvider;
 
 	/**
 	 * hostAgent 配置
@@ -129,7 +132,7 @@ public class ChatManager {
 				.taskCenterManager(this.taskCenterManager)
 				.messageManager(this.messageManager)
 				.observationRegistry(this.observationRegistry)
-				.hostAgentPromptService(this.hostAgentPromptService)
+				.hostAgentPromptService(this.agentPromptProvider)
 				.chatMemoryRepository(this.chatMemoryRepository)
 				.chatModel(chatModel)
 				.sendTaskCallback(new DefaultSendTaskCallbackHandle(this.taskCenterManager))
@@ -146,13 +149,13 @@ public class ChatManager {
 	 * @param pushNotificationServer
 	 */
 	@Autowired
-	public ChatManager(ChatModel chatModel, A2aHostAgentProperties a2aHostAgentProperties, AbstractRemoteAgentManager remoteAgentManager, AbstractConversationManager abstractConversationManager, AbstractMessageManager abstractMessageManager, AbstractTaskCenterManager abstractTaskCenterManager, HostAgentPromptService hostAgentPromptService, @Autowired(required = false) PushNotificationServer pushNotificationServer, @Autowired(required = false) ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
+	public ChatManager(ChatModel chatModel, A2aHostAgentProperties a2aHostAgentProperties, AbstractRemoteAgentManager remoteAgentManager, AbstractConversationManager abstractConversationManager, AbstractMessageManager abstractMessageManager, AbstractTaskCenterManager abstractTaskCenterManager, AgentPromptProvider agentPromptProvider, @Autowired(required = false) PushNotificationServer pushNotificationServer, @Autowired(required = false) ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
 		this.conversationManager = abstractConversationManager;
 		this.messageManager = abstractMessageManager;
 		this.pushNotificationServer = pushNotificationServer;
 		this.taskCenterManager = abstractTaskCenterManager;
 		this.observationRegistry = observationRegistry;
-		this.hostAgentPromptService = hostAgentPromptService;
+		this.agentPromptProvider = agentPromptProvider;
 		if (this.observationRegistry == null) {
 			this.observationRegistry = ObservationRegistry.NOOP;
 		}
@@ -211,35 +214,45 @@ public class ChatManager {
 	 */
 	private Common.Message sanitizeResponseMessage(AssistantMessage assistantMessage, Common.Message userMessage, String messageId) {
 		Common.Message message = null;
+		// 这里也是响应内容，该逻辑是应对直接返回的消息，比如错误，或者输入内容的消息
 		if (JsonUtils.isJsonString(assistantMessage.getText())) {
 			message = Common.Message.builder()
 					.role(MessageRole.AGENT)
 					.metadata(assistantMessage.getMetadata())
 					.parts(Lists.newArrayList())
 					.build();
+			// 表示输出结果，直接结束，表示完成STOP
+			assistantMessage.getMetadata().put("finishReason", "STOP");
 			try {
 				JsonNode jsonNode = new ObjectMapper().readTree(assistantMessage.getText());
-				Common.Message finalMessage = message;
-				jsonNode.forEach(json -> {
-					if (json.has(ARTIFACT_FILE_URL) || json.has(ARTIFACT_FILE_ID)) {
-						Common.FilePart filePart = new Common.FilePart();
-						filePart.setFile(Common.FileContent.builder()
-								.uri(json.get(ARTIFACT_FILE_URL) == null ? "" : json.get(ARTIFACT_FILE_URL).textValue())
-								.name(json.get(ARTIFACT_FILE_ID) == null ? "" : json.get(ARTIFACT_FILE_ID).textValue())
-								.mimeType(json.get(ARTIFACT_MIME_TYPE) == null ? "" : json.get(ARTIFACT_MIME_TYPE).textValue())
-								.build());
-						finalMessage.getParts().add(filePart);
-						return;
-					}
-					if (json.has("type") && json.get("type").textValue().equals("text")) {
-						finalMessage.getParts().add(new ObjectMapper().convertValue(json, Common.TextPart.class));
-						return;
-					}
-					Common.DataPart dataPart = new Common.DataPart();
-					dataPart.setData(new ObjectMapper().convertValue(json, Map.class));
-					finalMessage.getParts().add(dataPart);
 
-				});
+
+				Common.Message finalMessage = message;
+				if(jsonNode instanceof ArrayNode){
+					jsonNode.forEach(json -> {
+						if (json.has(ARTIFACT_FILE_URL) || json.has(ARTIFACT_FILE_ID)) {
+							Common.FilePart filePart = new Common.FilePart();
+							filePart.setFile(Common.FileContent.builder()
+									.uri(json.get(ARTIFACT_FILE_URL) == null ? "" : json.get(ARTIFACT_FILE_URL).textValue())
+									.name(json.get(ARTIFACT_FILE_ID) == null ? "" : json.get(ARTIFACT_FILE_ID).textValue())
+									.mimeType(json.get(ARTIFACT_MIME_TYPE) == null ? "" : json.get(ARTIFACT_MIME_TYPE).textValue())
+									.build());
+							finalMessage.getParts().add(filePart);
+							return;
+						}
+						if (json.has("type") && json.get("type").textValue().equals("text")) {
+							finalMessage.getParts().add(new ObjectMapper().convertValue(json, Common.TextPart.class));
+							return;
+						}
+						Common.DataPart dataPart = new Common.DataPart();
+						dataPart.setData(new ObjectMapper().convertValue(json, Map.class));
+						finalMessage.getParts().add(dataPart);
+
+					});
+				}else{
+					finalMessage.getParts().add(new Common.TextPart(jsonNode.toString()));
+				}
+
 			} catch (JsonProcessingException e) {
 				throw new RuntimeException("响应内容反序列化失败");
 			}
@@ -257,18 +270,22 @@ public class ChatManager {
 	}
 
 	/**
-	 * 构建工具上下文
-	 *
+	 * 构建工具上下文信息，如果有的
 	 * @param input
 	 * @return
 	 */
 	private Map<String, Object> buildToolContext(SendMessageRequest input) {
+
 		Map<String, Object> state = new HashMap<>();
 		state.put(INPUT_MESSAGE_METADATA, input.getMetadata());
-		state.put(SESSION_ID, input.getConversationId());
+		state.put(CONVERSATION_ID, input.getConversationId());
+		// 主任务Id, 用于后续异步任务主Id使用
 		state.put(MAIN_TASK_ID, GuidUtils.createGuid());
+
+		// 工具上下文
 		Map<String, Object> toolContext = new HashMap<>();
 		toolContext.put(STATE, state);
+
 		return toolContext;
 	}
 
@@ -348,15 +365,14 @@ public class ChatManager {
 	}
 
 	/**
-	 * 同步请求消息
-	 *
+	 * 同步请求
 	 * @param input
 	 * @return
 	 */
 	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input) {
 		var hostAgent = this.buildHostAgent();
 		Common.Message userMessage = this.sendBefore(input);
-		AssistantMessage assistantMessage = hostAgent.call(input, this.buildToolContext(input));
+		AssistantMessage assistantMessage = hostAgent.call(input, this.buildToolContext(input), Lists.newArrayList());
 		Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
 		var message = loadTask(agnetMessage);
 		// 删除删除通知sse
@@ -369,15 +385,14 @@ public class ChatManager {
 
 
 	/**
-	 * 发送流请求
-	 *
+	 * 流请求
 	 * @param input
 	 * @return
 	 */
 	public Flux<SendMessageResponse> stream(SendMessageRequest input) {
 		var hostAgent = this.buildHostAgent();
 		Common.Message userMessage = this.sendBefore(input);
-		Flux<AssistantMessage> fluxAssistantMessage = hostAgent.stream(input, this.buildToolContext(input));
+		Flux<AssistantMessage> fluxAssistantMessage = hostAgent.stream(input, this.buildToolContext(input), Lists.newArrayList());
 		String messageId = GuidUtils.createGuid();
 		List<Common.Message> messages = Lists.newArrayList();
 		return fluxAssistantMessage.doFinally(i -> {
@@ -394,7 +409,6 @@ public class ChatManager {
 						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason")) || !assistantMessage.getMetadata().containsKey("finishReason")) {
 							agnetMessage = loadTask(agnetMessage);
 						}
-
 
 					} catch (Exception e) {
 						agnetMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));
