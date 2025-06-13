@@ -109,7 +109,7 @@ musaemotion:
   a2a:
     host-agent:
       # 通知服务绑定的地址
-      notify-url: http://localhost:5000
+      notify-url: http://0.0.0.0:5000
       # 发送给远程智能体，回调通知的外部地址
       external-url: http://localhost:5000
       # 默认需要加载到注册中心的远程智能体, 请一定保证该地址智能体存在并且已启动，否则会异常

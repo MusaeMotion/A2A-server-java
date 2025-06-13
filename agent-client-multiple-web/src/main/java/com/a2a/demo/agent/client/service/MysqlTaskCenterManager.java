@@ -161,5 +161,6 @@ public class MysqlTaskCenterManager extends AbstractTaskCenterManager {
 		TaskEntity taskEntity = op.get();
 		taskEntity = TaskEntity.updateTaskInfo(taskEntity, task);
 		this.repository.save(taskEntity);
+		log.info("updateTask:{}", taskEntity.toString());
 	}
 }

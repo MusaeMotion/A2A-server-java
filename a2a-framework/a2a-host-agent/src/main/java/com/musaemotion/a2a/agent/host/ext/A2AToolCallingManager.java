@@ -16,12 +16,11 @@
 
 package com.musaemotion.a2a.agent.host.ext;
 
-import com.musaemotion.agent.HostAgentPromptService;
+import com.musaemotion.agent.AgentPromptProvider;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -84,10 +83,10 @@ public class A2AToolCallingManager implements ToolCallingManager {
 
 	private ToolCallingObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
-	private final HostAgentPromptService hostAgentPromptService;
+	private final AgentPromptProvider agentPromptProvider;
 
 	public A2AToolCallingManager(ObservationRegistry observationRegistry, ToolCallbackResolver toolCallbackResolver,
-								 ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, HostAgentPromptService hostAgentPromptService) {
+								 ToolExecutionExceptionProcessor toolExecutionExceptionProcessor, AgentPromptProvider agentPromptProvider) {
 		Assert.notNull(observationRegistry, "observationRegistry cannot be null");
 		Assert.notNull(toolCallbackResolver, "toolCallbackResolver cannot be null");
 		Assert.notNull(toolExecutionExceptionProcessor, "toolCallExceptionConverter cannot be null");
@@ -95,7 +94,7 @@ public class A2AToolCallingManager implements ToolCallingManager {
 		this.observationRegistry = observationRegistry;
 		this.toolCallbackResolver = toolCallbackResolver;
 		this.toolExecutionExceptionProcessor = toolExecutionExceptionProcessor;
-		this.hostAgentPromptService = hostAgentPromptService;
+		this.agentPromptProvider = agentPromptProvider;
 	}
 
 	@Override
@@ -302,7 +301,7 @@ public class A2AToolCallingManager implements ToolCallingManager {
 		private ToolExecutionExceptionProcessor toolExecutionExceptionProcessor = DEFAULT_TOOL_EXECUTION_EXCEPTION_PROCESSOR;
 
 
-		private HostAgentPromptService hostAgentPromptService;
+		private AgentPromptProvider agentPromptProvider;
 
 		private Builder() {
 		}
@@ -318,8 +317,8 @@ public class A2AToolCallingManager implements ToolCallingManager {
 		}
 
 		public A2AToolCallingManager.Builder hostAgentPromptService(
-				HostAgentPromptService hostAgentPromptService) {
-			this.hostAgentPromptService = hostAgentPromptService;
+				AgentPromptProvider agentPromptProvider) {
+			this.agentPromptProvider = agentPromptProvider;
 			return this;
 		}
 		public A2AToolCallingManager.Builder toolExecutionExceptionProcessor(
@@ -330,7 +329,7 @@ public class A2AToolCallingManager implements ToolCallingManager {
 
 		public A2AToolCallingManager build() {
 			return new A2AToolCallingManager(this.observationRegistry, this.toolCallbackResolver,
-					this.toolExecutionExceptionProcessor, hostAgentPromptService);
+					this.toolExecutionExceptionProcessor, agentPromptProvider);
 		}
 
 	}
