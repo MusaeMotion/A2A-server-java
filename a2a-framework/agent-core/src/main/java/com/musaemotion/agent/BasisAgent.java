@@ -30,7 +30,6 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
@@ -41,12 +40,10 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MimeType;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 /**
  * @author：contact@musaemotion.com
@@ -58,6 +55,10 @@ import java.util.stream.Collectors;
 @Builder
 @Slf4j
 public class BasisAgent<T extends SendMessageRequest> {
+
+	/**
+	 * 开始请求时间
+	 */
 	public static final String BEGIN_TIME = "beginTime";
 
     /**
@@ -102,11 +103,6 @@ public class BasisAgent<T extends SendMessageRequest> {
     @Builder.Default
     private Integer chatMemorySize = 10;
 
-    /**
-     * 聊天记录顾问，默认是内存聊天, 添加到系统提示词不太合适，会影响我本自己设计的提示词和host Agent 提示词
-     */
-    // @Builder.Default
-    // private AbstractChatMemoryAdvisor promptChatMemory = new PromptChatMemoryAdvisor(new InMemoryChatMemory())
 
     /**
      * 提示词内存存储方案
@@ -116,12 +112,8 @@ public class BasisAgent<T extends SendMessageRequest> {
     /**
      * 系统提示词请在该接口实现
      */
-    private HostAgentPromptService hostAgentPromptService;
+    private AgentPromptProvider agentPromptProvider;
 
-    /**
-     * 调用模型前上下文回调
-     */
-    private ToolContextStateService toolContextStateService;
 
     /**
      * 工具列表
@@ -135,8 +127,8 @@ public class BasisAgent<T extends SendMessageRequest> {
 	 * @param input
 	 * @return
 	 */
-	private String buildUserPromptText(T input) {
-		StringBuffer stringBuffer = new StringBuffer(hostAgentPromptService.userPrompt(input));
+	private String buildUserPrompt(T input) {
+		StringBuffer stringBuffer = new StringBuffer(agentPromptProvider.userPrompt(input.getMetadata()));
 		stringBuffer.append("\n");
 		stringBuffer.append(PartUtils.getTextContent(input.getParams()));
 		return stringBuffer.toString();
@@ -148,7 +140,7 @@ public class BasisAgent<T extends SendMessageRequest> {
      * @param userText
      * @return
      */
-    protected ChatClient.ChatClientRequestSpec buildChatClientParams(String userText, List<FileInfo> files, Map<String, Object> toolContext){
+    protected ChatClient.ChatClientRequestSpec buildChatClientParams(String userText, List<FileInfo> files){
         List<Media> medias;
         if(!CollectionUtils.isEmpty(files)){
             medias = files.stream().map(item-> {
@@ -171,28 +163,24 @@ public class BasisAgent<T extends SendMessageRequest> {
             }
         });
 
-        if(toolContextStateService != null){
-            toolContextStateService.initStateForToolContext((Map<String, Object>) toolContext.get(STATE));
-        }
-
-        // 入口请求构建系统提示词
-        chat = chat.system(hostAgentPromptService.hostAgentSystemPrompt((Map<String, Object>) toolContext.get(STATE)));
 
 		return chat;
     }
 
-    /**
-     * 日志顾问
-     * @return
-     */
+
+	/**
+	 * 构建日志顾问
+	 * @return
+	 */
     private SimpleLoggerAdvisor loggerAdvisor(){
         return new SimpleLoggerAdvisor();
     }
 
-    /**
-     * 构建顾问
-     * @return
-     */
+	/**
+	 * 构建顾问
+	 * @param input
+	 * @return
+	 */
     public List<Advisor> buildAdvisor(T input) {
         List<Advisor> advisors = Lists.newArrayList();
         advisors.add(loggerAdvisor());
@@ -212,17 +200,19 @@ public class BasisAgent<T extends SendMessageRequest> {
     }
 
 
-    /**
-     *
-     * @param input
-     * @param toolContext
-     * @return
-     */
-    public AssistantMessage call(T input, Map<String, Object> toolContext) {
-        ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(input.getContent(), Lists.newArrayList(), toolContext);
+	/**
+	 * 同步调用
+	 * @param input 输入内容
+	 * @param toolContext 工具上下文
+	 * @param files 附件内容
+	 * @return
+	 */
+	public AssistantMessage call(T input, Map<String, Object> toolContext, List<FileInfo> files) {
+        ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(input.getContent(), files);
+		chatClientRequestSpec = chatClientRequestSpec.system(agentPromptProvider.systemPrompt(toolContext, input.getMetadata()));
         ChatResponse chatResponse = chatClientRequestSpec.advisors(buildAdvisor(input))
                 .user(
-						buildUserPromptText(input)
+						buildUserPrompt(input)
 				)
 				// 1.0.0 版本之后可以直接提供工具也可以设置工具提供者
 				.toolCallbacks(this.toolCallbacks)
@@ -235,13 +225,15 @@ public class BasisAgent<T extends SendMessageRequest> {
 
 
 	/**
-	 * stream请求
-	 * @param input
-	 * @param toolContext
+	 * stream 调用
+	 * @param input 输入内容
+	 * @param toolContext 工具上下文
+	 * @param files 附件内容
 	 * @return
 	 */
-	public Flux<AssistantMessage> stream(T input, Map<String, Object> toolContext) {
-		ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPromptText(input), Lists.newArrayList(), toolContext);
+	public Flux<AssistantMessage> stream(T input, Map<String, Object> toolContext, List<FileInfo> files) {
+		ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPrompt(input), files);
+		chatClientRequestSpec = chatClientRequestSpec.system(agentPromptProvider.systemPrompt(toolContext, input.getMetadata()));
 		return chatClientRequestSpec
 				.advisors(buildAdvisor(input))
 				.toolCallbacks(this.toolCallbacks)

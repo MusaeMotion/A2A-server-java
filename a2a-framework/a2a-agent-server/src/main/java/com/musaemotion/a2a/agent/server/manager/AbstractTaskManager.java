@@ -496,7 +496,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 	/**
 	 * 发送任务流模式，留给具体实现方法去实现
-	 * hostAgent 拿到该结果，会转换成use角色再取请求获取确认信息
+	 * hostAgent 拿到具体智能体的响应内容 AgentGeneralResponse 是我们自己智能体的交换数据的响应内容格式，最后会转换成A2A协议的格式内容返回给智能体
 	 * @param request
 	 * @return
 	 */
@@ -576,8 +576,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 							}, () -> {
 								// log.info("执行完成");
 								AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText(buffer.toString(), agentResponseStatus.get());
-//                              BeanOutputConverter<AgentGeneralResponse> converter = new BeanOutputConverter<>(AgentGeneralResponse.class);
-//								AgentGeneralResponse agentGeneralResponse = converter.convert(buffer.toString());
+
 								if (agentGeneralResponse != null) {
 									List<Common.Artifact> artifacts = Lists.newArrayList();
 									// 获取content 里面的内容
@@ -595,7 +594,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 												.build();
 										fluxSink.next(SendTaskStreamingResponse.buildResponse(request.getId(), taskArtifactUpdateEvent));
 									});
-
 									var taskStatusUpdateEvent = TaskStatusUpdateEvent.builder()
 											.status(taskStatus)
 											.id(params.getId())

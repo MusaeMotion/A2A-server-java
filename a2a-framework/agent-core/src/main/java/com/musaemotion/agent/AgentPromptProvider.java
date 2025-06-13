@@ -16,8 +16,6 @@
 
 package com.musaemotion.agent;
 
-import com.musaemotion.agent.model.SendMessageRequest;
-
 import java.util.Map;
 
 /**
@@ -27,26 +25,21 @@ import java.util.Map;
  * @date：2025/4/28 13:26
  * @description：主机智能体提示词
  */
-public interface HostAgentPromptService {
+public interface AgentPromptProvider {
 
 	/**
-	 * 根据用户交谈发送的请求 使用 metadata 里面信息处理一些自己的业务逻辑
-	 * 并且构造 userPrompt 内容
-	 * @param input
+	 * 请求消息的metadata
+	 * @param sendMessageRequestMetadata
 	 * @return
 	 */
-	String userPrompt(SendMessageRequest input);
+	String userPrompt(Map<String, Object>  sendMessageRequestMetadata);
 
 	/**
-	 * 获取系统提示词
-	 * @param state
+	 * 系统提示词
+	 * @param toolContext 工具上下文对象
+	 * @param sendMessageRequestMetadata 其他传递的上下文对象
 	 * @return
 	 */
-	String hostAgentSystemPrompt(Map<String, Object> state);
+	String systemPrompt(Map<String, Object> toolContext, Map<String, Object>  sendMessageRequestMetadata);
 
-    /**
-     * 远程智能体列表
-     * @return
-     */
-   String loadRemoteAgentsToString();
 }

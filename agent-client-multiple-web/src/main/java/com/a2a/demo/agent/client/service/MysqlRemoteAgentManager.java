@@ -119,6 +119,7 @@ public class MysqlRemoteAgentManager extends AbstractRemoteAgentManager<AgentCar
 		RemoteAgentEntity remoteAgent = op.get();
 		remoteAgent.setAgentCard(input);
 		remoteAgent.setDescription(input.getDescription());
+		remoteAgent.setAddress(input.getUrl());
 		this.repository.save(remoteAgent);
 	}
 

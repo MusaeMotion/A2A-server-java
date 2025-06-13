@@ -20,6 +20,7 @@ import com.musaemotion.a2a.common.base.Common;
 import lombok.Data;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author：contact@musaemotion.com
@@ -30,32 +31,53 @@ import java.util.Map;
  */
 @Data
 public class SendMessageRequest {
-    // 消息参数
-    private Common.Message params;
 
+	/**
+	 * 消息体
+	 */
+	private Common.Message params;
+
+	/**
+	 * 交谈id
+	 * @return
+	 */
     public String getConversationId() {
         return this.params.getConversationId();
     }
 
+	/**
+	 * 消息id
+	 * @return
+	 */
     public String getMessageId() {
         return this.params.getMessageId();
     }
 
+	/**
+	 * 上一次消息id
+	 * @return
+	 */
     public String getLastMessageId() {
         return this.params.getLastMessageId();
     }
 
-    /**
-     * 默认part第一条文本消息消息为用户输入内容
-     * @return
-     */
-    public String getContent() {
-        if (this.params.getParts().get(0) instanceof Common.TextPart) {
-            return ((Common.TextPart) this.params.getParts().get(0)).getText();
-        }
-        throw new RuntimeException("该类型不支持该方法");
-    }
+	/**
+	 * 获取消息文本内容
+	 * @return
+	 */
+	public String getContent() {
+		var textParts =  this.params.getParts().stream().filter(part -> part instanceof Common.TextPart).collect(Collectors.toUnmodifiableList());
+		if(textParts.isEmpty()) {
+			throw new RuntimeException("该类型不支持该方法");
+		}
+		// 默认取第一条文本消息作为上下文处理消息
+		return ((Common.TextPart) textParts.get(0)).getText();
+	}
 
+	/**
+	 * mataData
+	 * @return
+	 */
     public Map<String, Object> getMetadata() {
         return this.params.getMetadata();
     }

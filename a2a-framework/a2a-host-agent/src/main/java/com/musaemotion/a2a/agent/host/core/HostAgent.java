@@ -16,12 +16,16 @@
 
 package com.musaemotion.a2a.agent.host.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
 import com.musaemotion.a2a.agent.host.ext.A2AToolCallingManager;
 import com.musaemotion.a2a.agent.host.manager.AbstractMessageManager;
 import com.musaemotion.a2a.agent.host.manager.AbstractRemoteAgentManager;
 import com.musaemotion.a2a.agent.host.manager.AbstractTaskCenterManager;
+import com.musaemotion.a2a.agent.host.model.AgentSkillVo;
+import com.musaemotion.a2a.agent.host.model.RemoteAgentInfo;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.base.FileBlob;
@@ -34,8 +38,8 @@ import com.musaemotion.a2a.common.request.params.TaskSendParams;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.common.utils.PartUtils;
 import com.musaemotion.agent.BasisAgent;
-import com.musaemotion.agent.HostAgentPromptService;
-import com.musaemotion.agent.ToolContextStateService;
+import com.musaemotion.agent.AgentPromptProvider;
+import com.musaemotion.agent.model.FileInfo;
 import com.musaemotion.agent.model.SendMessageRequest;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +71,7 @@ import static com.musaemotion.agent.BasisAgent.STATE;
  * @description：请完善描述
  */
 @Slf4j
-public class HostAgent implements ToolContextStateService {
+public class HostAgent {
 
 	/**
 	 * 远程智能体地址, 需要使用先必须加载到远程地址当中
@@ -117,7 +121,7 @@ public class HostAgent implements ToolContextStateService {
 	/**
 	 * 远程智能体服务
 	 */
-	private HostAgentPromptService hostAgentPromptService;
+	private AgentPromptProvider agentPromptProvider;
 
 	/**
 	 * 聊天记录
@@ -130,7 +134,7 @@ public class HostAgent implements ToolContextStateService {
 	 * @param pushNotificationServer
 	 * @param chatModel
 	 */
-	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModel chatModel, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, HostAgentPromptService hostAgentPromptService, ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
+	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModel chatModel, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, AgentPromptProvider agentPromptProvider, ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
 		this.remoteAgentAddresses = remoteAgentAddresses;
 		this.callback = callback;
 		this.remoteAgentManager = remoteAgentManager;
@@ -139,7 +143,7 @@ public class HostAgent implements ToolContextStateService {
 		this.taskCenterManager = taskCenterManager;
 		this.messageManager = messageManager;
 		this.observationRegistry = observationRegistry;
-		this.hostAgentPromptService = hostAgentPromptService;
+		this.agentPromptProvider = agentPromptProvider;
 		this.chatMemoryRepository = chatMemoryRepository;
 		this.initHostAgent();
 
@@ -164,8 +168,7 @@ public class HostAgent implements ToolContextStateService {
 				.chatMemoryRepository(this.chatMemoryRepository)
 				.chatClient(ChatClient.create(this.chatModel, this.observationRegistry))
 				.observationRegistry(this.observationRegistry)
-				.hostAgentPromptService(this.hostAgentPromptService)
-				.toolContextStateService(this)
+				.agentPromptProvider(this.agentPromptProvider)
 				.toolCallbacks(Arrays.stream(toolCallbacks).toList())
 				.build();
 	}
@@ -255,34 +258,26 @@ public class HostAgent implements ToolContextStateService {
 	/**
 	 * 同步调用
 	 * @param input
+	 * @param toolContext
+	 * @param files
 	 * @return
 	 */
-	public AssistantMessage call(SendMessageRequest input,  Map<String, Object> toolContext) {
-		return this.basisAgent.call(input, toolContext);
+	public AssistantMessage call(SendMessageRequest input,  Map<String, Object> toolContext, List<FileInfo> files) {
+		return this.basisAgent.call(input, toolContext, files);
 	}
 
 	/**
-	 * 同步调用
+	 * 流调用
 	 * @param input
+	 * @param toolContext
+	 * @param files
 	 * @return
 	 */
-	public Flux<AssistantMessage> stream(SendMessageRequest input,  Map<String, Object> toolContext) {
-		return this.basisAgent.stream(input, toolContext);
+	public Flux<AssistantMessage> stream(SendMessageRequest input,  Map<String, Object> toolContext, List<FileInfo> files) {
+		return this.basisAgent.stream(input, toolContext, files);
 	}
 
-	/**
-	 * 初始化工具上下文内容，写入状态值
-	 * @param state
-	 */
-	@Override
-	public void initStateForToolContext(Map<String, Object> state) {
-		if (!state.containsKey(SESSION_ACTIVE) || !(Boolean) (state.get(SESSION_ACTIVE))) {
-			if (!state.containsKey(SESSION_ID)) {
-				state.put(SESSION_ID, GuidUtils.createShortRandomGuid());
-			}
-			state.put(SESSION_ACTIVE, Boolean.TRUE);
-		}
-	}
+
 
 
 	/**
@@ -292,7 +287,9 @@ public class HostAgent implements ToolContextStateService {
 	 */
 	@Tool(description = "列出可用于委派任务可用的 remote agent")
 	public String listRemoteAgents() {
-		return this.hostAgentPromptService.loadRemoteAgentsToString();
+		String remoteAgents = this.loadRemoteAgentsToString();
+	    log.error("remoteAgents:{}", remoteAgents);
+		return remoteAgents;
 	}
 
 	/**
@@ -315,7 +312,7 @@ public class HostAgent implements ToolContextStateService {
 		Yields:
 		  A dictionary of JSON data.
 	""")
-	public List<Object> sendTask(String agentName, String message, ToolContext toolContext) throws Throwable {
+	public String sendTask(String agentName, String message, ToolContext toolContext) throws Throwable {
 		// 获取当前调度的智能体连接对象
 		A2aRemoteAgentConnections client = (A2aRemoteAgentConnections) this.remoteAgentManager.getRemoteAgentConnections(agentName)
 				.orElseThrow(() -> new RuntimeException("Agent " + agentName + " not found"));
@@ -331,7 +328,7 @@ public class HostAgent implements ToolContextStateService {
 		Task result = client.sendTask(request, this.callback);
 
 		var response = this.sendAfter(request, result, state,  agentName);
-
+        log.error("sendTask:{}", response.toString());
 		return response;
 	}
 
@@ -353,11 +350,14 @@ public class HostAgent implements ToolContextStateService {
 		}
 		// 写入状态上下当前智能体
 		state.put(CUR_AGENT_NAME, agentName);
+		// 当前智能体是否激活
+		state.put(SESSION_ACTIVE, Boolean.TRUE);
+
 		// 主任务Id
 		state.put(MAIN_TASK_ID, mainTaskId);
 
 		// 获取当前会话id=>交谈id
-		String sessionId = (String) state.get(SESSION_ID);
+		String conversationId = (String) state.get(CONVERSATION_ID);
 		// 创建消息id
 		String messageId = GuidUtils.createShortRandomGuid();
 
@@ -366,7 +366,7 @@ public class HostAgent implements ToolContextStateService {
 
 		Map<String, Object> inputMetadata = (Map<String, Object>) state.get(INPUT_MESSAGE_METADATA);
 		messageMetadata.put(INPUT_MESSAGE_ID, inputMetadata.get(MESSAGE_ID));
-		messageMetadata.put(CONVERSATION_ID, sessionId);
+		messageMetadata.put(CONVERSATION_ID, conversationId);
 		messageMetadata.put(MESSAGE_ID, messageId);
 
 		// 创建发送给远程智能体的消息内容。
@@ -381,7 +381,7 @@ public class HostAgent implements ToolContextStateService {
 		// 构建远程智能体 A2A 请求体
 		return TaskSendParams.newUserTextInstance(
 				taskId,
-				sessionId,
+				conversationId,
 				Common.Message.newMessage(MessageRole.AGENT, parts, messageMetadata),
 				Arrays.asList(MediaType.TEXT, MediaType.TEXT_PLAIN, MediaType.IMAGE_PNG),
 				sendMetadata,
@@ -390,6 +390,38 @@ public class HostAgent implements ToolContextStateService {
 		);
 	}
 
+	/**
+	 * 扩展处理
+	 * @param resultTask 返回的 task
+	 */
+	private void sendAfterPart(Task resultTask, List<Common.Part> parts) {
+
+		Common.TaskStatus resultTaskStatus = resultTask.getStatus();
+
+		Optional<Task> opTask = this.taskCenterManager.getById(resultTask.getId());
+		Task curTask = opTask.get();
+		curTask.getStatus().setState(resultTaskStatus.getState());
+
+		List<Common.Artifact> artifacts = Lists.newArrayList();
+		artifacts.add(Common.Artifact.builder().lastChunk(Boolean.TRUE).parts(Lists.newArrayList()).build());
+		Common.Artifact artifact = artifacts.get(0);
+
+		if (!CollectionUtils.isEmpty(parts)) {
+			artifact.getParts().addAll(parts);
+		}
+
+		if (!CollectionUtils.isEmpty(resultTask.getArtifacts())) {
+			artifact.getParts().addAll(
+					resultTask.getArtifacts().stream().map(item->item.getParts()).flatMap(Collection::stream)
+							.collect(Collectors.toUnmodifiableList())
+			);
+		}
+
+		curTask.setArtifacts(artifacts);
+		resultTask.setArtifacts(artifacts);
+
+		this.taskCenterManager.updateTask(opTask.get());
+	}
 
 	/**
 	 * 消息发送后处理
@@ -399,7 +431,7 @@ public class HostAgent implements ToolContextStateService {
 	 * @param agentName
 	 * @return
 	 */
-	private List<Object> sendAfter(TaskSendParams request, Task result, Map<String, Object> state, String agentName){
+	private String sendAfter(TaskSendParams request, Task result, Map<String, Object> state, String agentName) throws JsonProcessingException {
 		String messageId = request.getMessage().getMessageId();
 		if(result == null){
 			Optional<Task> opTask = this.taskCenterManager.getById(request.getId());
@@ -417,39 +449,31 @@ public class HostAgent implements ToolContextStateService {
 		).contains(result.getStatus().getState()));
 
 		// 远程智能体执行任务的状态
-		Common.TaskStatus taskStatus = result.getStatus();
+		Common.TaskStatus resultTaskStatus = result.getStatus();
 
-		if (taskStatus.getState() == TaskState.CANCELED) {
+		if (resultTaskStatus.getState() == TaskState.CANCELED) {
 			throw new IllegalArgumentException("Agent " + agentName + " task " + result.getId() + " is cancelled");
 		}
 
 		// 包装远程智能体响应的结果。
 		List<Object> response = new ArrayList<>();
-		if (taskStatus.getState().equals(TaskState.WORKING)) {
+		if (resultTaskStatus.getState().equals(TaskState.WORKING)) {
 			// 如果任务 状态是 WORKING 或 INPUT_REQUIRED, 消息内容就在 task.getStatus().getMessage()里，远程智能响应作为状态的一部分返回 message 格式。
-			response.addAll(convertParts(taskStatus.getMessage().getParts()));
+			response.addAll(convertParts(resultTaskStatus.getMessage().getParts()));
 		}
-		if (taskStatus.getState().equals(TaskState.INPUT_REQUIRED)) {
+		if (resultTaskStatus.getState().equals(TaskState.INPUT_REQUIRED)) {
 			state.put(A2AToolCallingManager.RETURN_DIRECT, true);
-			// 如果任务 状态是 WORKING 或 INPUT_REQUIRED, 消息内容就在 task.getStatus().getMessage()里，远程智能响应作为状态的一部分返回 message 格式。
-			response.addAll(taskStatus.getMessage().getParts());
-			Optional<Task> opTask = this.taskCenterManager.getById(result.getId());
-			opTask.get().getStatus().setState(TaskState.INPUT_REQUIRED);
-			opTask.get().setArtifacts(Lists.newArrayList(Common.Artifact.builder().lastChunk(Boolean.TRUE).parts(Lists.newArrayList(taskStatus.getMessage().getParts())).build()));
-			this.taskCenterManager.updateTask(opTask.get());
-
+			response.addAll(resultTaskStatus.getMessage().getParts());
+			this.sendAfterPart(result, resultTaskStatus.getMessage().getParts());
 		}
-		if (taskStatus.getState().equals(TaskState.FAILED) ) {
+		if (resultTaskStatus.getState().equals(TaskState.FAILED) ) {
 			state.put(A2AToolCallingManager.RETURN_DIRECT, true);
-			response.add(new Common.TextPart("智能体 " + agentName + " 任务： " + result.getId() + " 运行失败"));
-			Optional<Task> opTask = this.taskCenterManager.getById(result.getId());
-			opTask.get().getStatus().setState(TaskState.FAILED);
-			opTask.get().setArtifacts(Lists.newArrayList(Common.Artifact.builder().lastChunk(Boolean.TRUE).parts(Lists.newArrayList(result.getStatus().getMessage().getParts())).build()));
-
-			this.taskCenterManager.updateTask(opTask.get());
+			var part = new Common.TextPart("智能体 " + agentName + " 任务： " + result.getId() + " 运行失败");
+			response.add(part);
+			this.sendAfterPart(result, Lists.newArrayList(part));
 		}
 		// 如果 task 状态 COMPLETED，则在生产工作件里的part包装数据
-		if(taskStatus.getState().equals(TaskState.COMPLETED)) {
+		if(resultTaskStatus.getState().equals(TaskState.COMPLETED)) {
 			// 获取任务相关信息, 因为在远程智能体调用之前，和调用之后，都会有回调创建任务，所以这里能获取到任务相关信息
 			Optional<Task> opTask = this.taskCenterManager.getById(result.getId());
 			Task task = opTask.orElse(null);
@@ -461,7 +485,13 @@ public class HostAgent implements ToolContextStateService {
 			// 把当前消息id 写入上一次消息
 			state.put(LAST_MESSAGE_ID, messageId);
 		}
-		return response;
+		// 当前智能体执行完成
+		state.put(SESSION_ACTIVE, Boolean.FALSE);
+
+		log.error("当前运行智能体: {}", state.get(CUR_AGENT_NAME));
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.writeValueAsString(response);
 	}
 
 	/**
@@ -511,6 +541,44 @@ public class HostAgent implements ToolContextStateService {
 	}
 
 	/**
+	 * 获取当前智能体列表
+	 * @return
+	 */
+	private List<RemoteAgentInfo> loadRemoteAgents() {
+		List<AgentCard> agents = this.remoteAgentManager.listAll();
+		if (CollectionUtils.isEmpty(agents)) {
+			return Lists.newArrayList();
+		}
+		List<RemoteAgentInfo> remoteAgentInfos = Lists.newArrayList();
+		agents.forEach(agentCard -> {
+			remoteAgentInfos.add(
+					RemoteAgentInfo.builder().agentName(agentCard.getName())
+							.description(agentCard.getDescription())
+							.agentSkills(AgentSkillVo.fromList(agentCard.getSkills()))
+							.build()
+			);
+		});
+		return remoteAgentInfos;
+	}
+
+	/**
+	 * 获取字符串列表
+	 * @return
+	 */
+	public String loadRemoteAgentsToString() {
+		StringBuffer sb = new StringBuffer();
+		ObjectMapper mapper = new ObjectMapper();
+		this.loadRemoteAgents().forEach(agentInfo -> {
+			try {
+				sb.append(mapper.writeValueAsString(agentInfo)+"\n");
+			} catch (JsonProcessingException e) {
+				throw new RuntimeException(e);
+			}
+		});
+		return sb.toString();
+	}
+
+	/**
 	 * 构建模式
 	 * @return
 	 */
@@ -536,7 +604,7 @@ public class HostAgent implements ToolContextStateService {
 
 		private ObservationRegistry observationRegistry;
 
-		private HostAgentPromptService hostAgentPromptService;
+		private AgentPromptProvider agentPromptProvider;
 
 		private ChatMemoryRepository chatMemoryRepository;
 
@@ -586,8 +654,8 @@ public class HostAgent implements ToolContextStateService {
 			return this;
 		}
 		public HostAgent.Builder hostAgentPromptService(
-				HostAgentPromptService hostAgentPromptService) {
-			this.hostAgentPromptService = hostAgentPromptService;
+				AgentPromptProvider agentPromptProvider) {
+			this.agentPromptProvider = agentPromptProvider;
 			return this;
 		}
 
@@ -603,10 +671,10 @@ public class HostAgent implements ToolContextStateService {
 			Assert.notNull(taskCenterManager, "taskCenterManager 不能为空");
 			Assert.notNull(messageManager, "messageManager 不能为空");
 			Assert.notNull(sendTaskCallback, "sendTaskCallback 不能为空");
-			Assert.notNull(hostAgentPromptService, "hostAgentPromptService 不能为空");
+			Assert.notNull(agentPromptProvider, "hostAgentPromptService 不能为空");
 			Assert.notNull(this.chatMemoryRepository, "chatMemoryRepository 不能为空");
 
-			HostAgent hostAgent = new HostAgent(remoteAgentAddresses, sendTaskCallback, pushNotificationServer, chatModel, remoteAgentManager, taskCenterManager, messageManager, hostAgentPromptService, observationRegistry, chatMemoryRepository);
+			HostAgent hostAgent = new HostAgent(remoteAgentAddresses, sendTaskCallback, pushNotificationServer, chatModel, remoteAgentManager, taskCenterManager, messageManager, agentPromptProvider, observationRegistry, chatMemoryRepository);
 			return hostAgent;
 		}
 
