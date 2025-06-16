@@ -66,7 +66,6 @@ spring:
         chat:
           additional-models:
             - qwen3:8b
-
   ######################################
   # spring starter database 配置, 请使用自己的数据库配置
   ######################################
@@ -101,6 +100,16 @@ spring:
     locations: classpath:db/migration
     table: flyway_schema_history
     enabled: true
+  ######################################
+  #  redis 用于和远程智能体交换智能体的提示词用
+  ######################################
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      timeout: 60000
+      database: 0
+      password: redistest
 
 ######################################
 # musaemotion A2A配置

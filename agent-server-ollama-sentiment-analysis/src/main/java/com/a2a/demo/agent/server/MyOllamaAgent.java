@@ -17,6 +17,7 @@
 package com.a2a.demo.agent.server;
 
 import com.musaemotion.a2a.agent.server.agent.*;
+import com.musaemotion.a2a.agent.server.service.PromptProvider;
 import com.musaemotion.a2a.common.constant.MediaType;
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import lombok.extern.slf4j.Slf4j;
@@ -38,16 +39,17 @@ public class MyOllamaAgent implements AgentService {
 
     private A2aServerProperties a2aServerProperties;
 
-
+	private PromptProvider promptProvider;
     /**
      *
      * @param chatModel
      * @param a2aServerProperties
      */
     @Autowired
-    public MyOllamaAgent(ChatModel chatModel, A2aServerProperties a2aServerProperties){
+    public MyOllamaAgent(ChatModel chatModel, A2aServerProperties a2aServerProperties, PromptProvider promptProvider){
        this.chatClient = ChatClient.create(chatModel);
        this.a2aServerProperties = a2aServerProperties;
+	   this.promptProvider = promptProvider;
     }
 
     /**
@@ -78,7 +80,8 @@ public class MyOllamaAgent implements AgentService {
         return this.chatClient
                 .prompt(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText()))
                 // 默认用的配置文件的描述作为的系统提示词
-                .system(AgentResponsePrompt.buildAgentResponseSystem(a2aServerProperties.getDescription()))
+                // .system(AgentResponsePrompt.buildAgentResponseSystem(a2aServerProperties.getDescription()))
+				.system(AgentResponsePrompt.buildAgentResponseSystem(this.promptProvider.getPrompt()))
                 .stream()
                 .chatResponse()
                 .doOnComplete(()->{})
@@ -100,7 +103,7 @@ public class MyOllamaAgent implements AgentService {
                 // 这里需要严格按照这个方式创建提示词
                 .prompt(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText()))
                 // 可以使用自己的系统提示词
-                .system(AgentResponsePrompt.buildAgentResponseSystem(a2aServerProperties.getDescription()))
+				.system(AgentResponsePrompt.buildAgentResponseSystem(this.promptProvider.getPrompt()))
                 .call().content();
         BeanOutputConverter<AgentTextResponse> converter = new BeanOutputConverter<>(AgentTextResponse.class);
         AgentTextResponse agentTextResponse =  converter.convert(content);

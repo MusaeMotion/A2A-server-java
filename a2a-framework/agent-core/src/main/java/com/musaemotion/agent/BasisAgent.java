@@ -211,10 +211,7 @@ public class BasisAgent<T extends SendMessageRequest> {
         ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(input.getContent(), files);
 		chatClientRequestSpec = chatClientRequestSpec.system(agentPromptProvider.systemPrompt(toolContext, input.getMetadata()));
         ChatResponse chatResponse = chatClientRequestSpec.advisors(buildAdvisor(input))
-                .user(
-						buildUserPrompt(input)
-				)
-				// 1.0.0 版本之后可以直接提供工具也可以设置工具提供者
+                .user(buildUserPrompt(input))
 				.toolCallbacks(this.toolCallbacks)
                 .toolContext(toolContext)
                 .call()

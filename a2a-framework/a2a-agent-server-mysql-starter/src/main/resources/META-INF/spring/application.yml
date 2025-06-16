@@ -1,0 +1,32 @@
+spring:
+  ######################################
+  # spring starter database 配置, 请使用自己的数据库配置
+  ######################################
+  datasource:
+    url: jdbc:mysql://localhost:3306/a2a-agent?useSSL=false&serverTimezone=Asia/Shanghai
+    username: a2a_user
+    password: a2a_usera2o
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+    type: com.zaxxer.hikari.HikariDataSource
+  ######################################
+  #  flyway 数据库版本化配置
+  ######################################
+  flyway:
+    baseline-version: 1.0.0
+    baseline-on-migrate: true
+    encoding: UTF-8
+    clean-disabled: true
+    validate-on-migrate: true
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    driver-class-name: ${spring.datasource.driver-class-name}
+    locations: classpath:db/migration
+    table: flyway_schema_history
+    enabled: true
+

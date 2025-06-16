@@ -93,7 +93,7 @@ public class AgentCard implements Serializable {
     private List<MediaType> defaultOutputModes = Lists.newArrayList(MediaType.TEXT);
 
     /**
-     * 支持的能力
+     * 支持的技能
      */
     @Builder.Default
     private List<AgentSkill> skills = Lists.newArrayList();
@@ -110,8 +110,9 @@ public class AgentCard implements Serializable {
      * @param streaming
      * @param pushNotifications
      * @param stateTransitionHistory
+	 * @param modifyPrompt (非标准a2a原协议内容)
      */
-    public record AgentCapabilities(boolean streaming, boolean pushNotifications, boolean stateTransitionHistory) { }
+    public record AgentCapabilities(boolean streaming, boolean pushNotifications, boolean stateTransitionHistory, boolean modifyPrompt) { }
 
 
 	/**
