@@ -288,7 +288,7 @@ public class HostAgent {
 	@Tool(description = "列出可用于委派任务可用的 remote agent")
 	public String listRemoteAgents() {
 		String remoteAgents = this.loadRemoteAgentsToString();
-	    log.error("remoteAgents:{}", remoteAgents);
+	    // log.error("remoteAgents:{}", remoteAgents);
 		return remoteAgents;
 	}
 

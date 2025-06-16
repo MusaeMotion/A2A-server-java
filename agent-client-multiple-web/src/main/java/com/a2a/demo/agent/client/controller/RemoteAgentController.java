@@ -19,6 +19,7 @@ package com.a2a.demo.agent.client.controller;
 import com.a2a.demo.agent.client.dto.AgentCardExtend;
 import com.a2a.demo.agent.client.dto.SearchRemoteAgent;
 import com.a2a.demo.agent.client.service.MysqlRemoteAgentManager;
+import com.a2a.demo.agent.client.service.RemoteAgentPromptService;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
 import com.musaemotion.a2a.agent.host.manager.RemoteAgentRegistryManager;
 import com.musaemotion.a2a.agent.host.model.response.PageInfo;
@@ -61,6 +62,11 @@ public class RemoteAgentController {
 	 */
 	private final MysqlRemoteAgentManager remoteAgentManager;
 
+	/**
+	 * 远程提示词服务
+	 */
+	private final RemoteAgentPromptService remoteAgentPromptService;
+
 
     /**
      * 注册智能体
@@ -86,6 +92,12 @@ public class RemoteAgentController {
 		pageNum = pageNum - 1;
 		Page<AgentCardExtend> page = this.remoteAgentManager.pageList(searchInput, pageNum, pageSize);
 		PageInfo<AgentCardExtend> pageInfo = PageUtils.springPageToMyPage(page);
+		// 包装提示词
+		pageInfo.setList(
+				pageInfo.getList().stream()
+						.map(agentCardExtend -> agentCardExtend.buildPrompt((agentName)->this.remoteAgentPromptService.getRemoteAgentPrompt(agentName)))
+						.collect(Collectors.toUnmodifiableList())
+		);
         return ResponseEntity.ok(Result.buildSuccess(
 				pageInfo
         ));
@@ -136,8 +148,13 @@ public class RemoteAgentController {
 	 * @return
 	 */
 	@PostMapping("/{id}")
-	public ResponseEntity updateAgent(@RequestBody AgentCard input,  @PathVariable String id) {
-		this.remoteAgentManager.updateAgentCard(id, input);
+	public ResponseEntity updateAgent(@RequestBody AgentCardExtend input, @PathVariable String id) {
+		if(input.getCapabilities().modifyPrompt()){
+           this.remoteAgentPromptService.saveRemoteAgentPrompt(input.getName(), input.getAgentPrompt());
+		}
+		AgentCard agentCard = input.toAgentCard();
+		this.remoteAgentManager.updateAgentCard(id, agentCard);
+
 		return ResponseEntity.ok(Result.buildSuccess());
 	}
 }

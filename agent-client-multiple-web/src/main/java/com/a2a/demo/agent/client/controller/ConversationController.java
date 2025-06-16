@@ -76,7 +76,20 @@ public class ConversationController {
         return ResponseEntity.ok(Result.buildSuccess());
     }
 
-    /**
+	/**
+	 * 删除交谈以外的其他信息
+	 * @param conversationId
+	 * @return
+	 */
+	@DeleteMapping("/other/{conversationId}")
+	@Transactional(rollbackOn = Exception.class)
+	public ResponseEntity deleteOther(@PathVariable String conversationId) {
+		this.messageManager.deleteByConversationId(conversationId);
+		this.taskCenterManager.deleteByConversationId(conversationId);
+		return ResponseEntity.ok(Result.buildSuccess());
+	}
+
+	/**
      * 创建一个新的对话
      * @return
      */

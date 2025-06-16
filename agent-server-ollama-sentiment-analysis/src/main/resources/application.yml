@@ -35,6 +35,16 @@ spring:
           additional-models:
             - qwen2.5:latest
 
+  ######################################
+  #  redis 用于和远程智能体交换智能体的提示词用
+  ######################################
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      timeout: 60000
+      database: 0
+      password: redistest
 
 card-url: 'http://127.0.0.1'
 ######################################
@@ -46,6 +56,7 @@ musaemotion:
       capabilities:
         push-notifications: true
         streaming: true
+        modify-prompt : true
       skills:
         - id: 'test-skill'
           name: 'testSkill'

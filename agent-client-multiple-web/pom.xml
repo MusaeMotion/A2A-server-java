@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.musaemotion</groupId>
 		<artifactId>a2a</artifactId>
-		<version>0.2.7</version>
+		<version>0.2.8</version>
 		<relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>com.musaemotion.demo</groupId>
@@ -52,11 +52,9 @@
         </dependency>
 
 		<dependency>
-		  <groupId>org.springframework.ai</groupId>
-		  <artifactId>spring-ai-starter-model-ollama</artifactId>
-	    </dependency>
-
-
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-ollama</artifactId>
+		</dependency>
 
 		<dependency>
             <groupId>com.vladmihalcea</groupId>
@@ -83,6 +81,10 @@
 			<artifactId>flyway-mysql</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
         <!-- 以下 可观察性配置 Observability 注意如果要开启可观察性，请先运行zipkin, 建议使用docker 跑demo,然后取消下面的依赖注释 -->
         <!-- Tracing -->
         <!--<dependency>

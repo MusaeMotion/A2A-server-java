@@ -1,7 +1,5 @@
 package com.musaemotion.a2a.agent.host.provider;
 
-import com.musaemotion.agent.model.SendMessageRequest;
-
 import java.util.Map;
 
 /**
@@ -10,7 +8,7 @@ import java.util.Map;
  * @date 2025/6/4  17:10
  * @description 用户提示词提供者
  */
-public interface UserPromptProvider {
+public interface PromptProvider {
 
 	/**
 	 * 用户提示词提供者
@@ -18,4 +16,11 @@ public interface UserPromptProvider {
 	 * @return
 	 */
 	String getUserPrompt(Map<String, Object> sendMessageRequestMetadata);
+
+	/**
+	 * 系统提示词
+	 * @param sendMessageRequestMetadata
+	 * @return
+	 */
+	String getSystemPrompt(Map<String, Object> sendMessageRequestMetadata);
 }
