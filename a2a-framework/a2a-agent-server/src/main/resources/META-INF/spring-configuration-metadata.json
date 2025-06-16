@@ -53,6 +53,11 @@
       "description": "是否支持推送通知"
     },
     {
+      "name": "musaemotion.a2a.server.capabilities.modify-prompt",
+      "type": "java.lang.Boolean",
+      "description": "是否只是修改提示词，扩展a2a协议字段"
+    },
+    {
       "name": "musaemotion.a2a.server.capabilities.state-transition-history",
       "type": "java.lang.Boolean",
       "description": "是否支持状态转换历史"

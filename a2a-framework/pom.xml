@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.musaemotion</groupId>
-	<version>0.2.7</version>
+	<version>0.2.8</version>
     <artifactId>a2a-framework</artifactId>
     <packaging>pom</packaging>
 
@@ -46,6 +46,10 @@
 		<spring-boot.version>3.4.4</spring-boot.version>
 		<slf4j-api.version>2.0.17</slf4j-api.version>
 		<commons-lang3.version>3.17.0</commons-lang3.version>
+
+		<hibernate-types-60.version>2.21.1</hibernate-types-60.version>
+		<mysql-connector-j.veriosn>9.3.0</mysql-connector-j.veriosn>
+		<flyway-mysql.version>11.5.0</flyway-mysql.version>
 	</properties>
 
 	<dependencyManagement>
@@ -135,6 +139,25 @@
 				<artifactId>commons-lang3</artifactId>
 				<version>${commons-lang3.version}</version>
 			</dependency>
+
+
+			<dependency>
+				<groupId>com.vladmihalcea</groupId>
+				<artifactId>hibernate-types-60</artifactId>
+				<version>${hibernate-types-60.version}</version>
+			</dependency>
+			<!--数据库版本管理-->
+			<dependency>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-mysql</artifactId>
+				<version>${flyway-mysql.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.mysql</groupId>
+				<artifactId>mysql-connector-j</artifactId>
+				<version>${mysql-connector-j.veriosn}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -145,7 +168,8 @@
         <module>agent-core</module>
         <module>a2a-host-agent</module>
         <module>a2a-pom</module>
-    </modules>
+		<module>a2a-agent-server-mysql-starter</module>
+	</modules>
     <dependencies>
 		<dependency>
 			<groupId>junit</groupId>

@@ -397,7 +397,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		log.info("Getting task push notification {}", request.getParams().getId());
 		TaskIdParams taskParams = request.getParams();
 		try {
-			// TODO 这里可能会有异常，后面再来仔细看看python源代码
 			Common.PushNotificationConfig pushNotificationConfig = this.getPushNotificationInfoForStore(taskParams.getId()).get();
 			return GetTaskPushNotificationResponse.buildResponse(request.getId(),
 					TaskPushNotificationConfig.builder()

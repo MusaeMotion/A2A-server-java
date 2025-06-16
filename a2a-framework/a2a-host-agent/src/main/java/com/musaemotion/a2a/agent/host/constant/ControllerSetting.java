@@ -35,6 +35,11 @@ public interface ControllerSetting {
      */
     String CHAT = ROOT_URL + "/chat";
 
+	/**
+	 * 提示词
+	 */
+	String PROMPT = ROOT_URL + "/prompt";
+
     /**
      * 任务
      */

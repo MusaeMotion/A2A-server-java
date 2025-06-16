@@ -134,18 +134,6 @@ public class PushNotificationServer {
         return this.externalUrl.replaceAll("/+$", "")+"/"+PushNotificationServer.NOTIFY_PATH;
     }
 
-	/**
-	 * 获取通知服务的url路径
-	 * @return
-	 */
-	public String getNotifyServerUrl(){
-		return String.format(
-				NOTIFY_URL_TPL,
-				this.getHost().getHostAddress(),
-				this.getPort(),
-				PushNotificationServer.NOTIFY_PATH
-		);
-	}
 
     /**
      * 构建通知服务路由
@@ -205,7 +193,7 @@ public class PushNotificationServer {
     }
 
     /**
-     * 创建一个Nettry服务 Undertow 服务其实也可以
+     * 创建一个Netty服务 Undertow 服务其实也可以
      *
      * @return
      * @throws UnknownHostException

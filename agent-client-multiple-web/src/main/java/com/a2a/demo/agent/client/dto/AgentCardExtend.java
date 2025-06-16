@@ -3,6 +3,9 @@ package com.a2a.demo.agent.client.dto;
 import com.musaemotion.a2a.common.AgentCard;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.beans.BeanUtils;
+
+import java.util.function.Function;
 
 /**
  * @author labidc@hotmail.com
@@ -23,5 +26,30 @@ public class AgentCardExtend extends AgentCard {
 	 * 是否启用
 	 */
 	private Boolean enable;
+
+	/**
+	 * 智能体提示词
+	 */
+	private String agentPrompt;
+
+	/**
+	 * 构造提示词
+	 * @param function
+	 * @return
+	 */
+	public AgentCardExtend buildPrompt(Function<String , String> function) {
+		if(this.getCapabilities().modifyPrompt()) {
+			this.setAgentPrompt(
+					function.apply(this.getName())
+			);
+		}
+		return this;
+	}
+
+	public AgentCard toAgentCard(){
+		AgentCard agentCard = new AgentCard();
+		BeanUtils.copyProperties(this, agentCard);
+		return agentCard;
+	}
 
 }
