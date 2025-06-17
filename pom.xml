@@ -36,7 +36,7 @@
     </properties>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a</artifactId>
-    <version>0.2.8</version>
+    <version>0.2.9</version>
     <name>A2A</name>
     <description>A2A</description>
     <dependencyManagement>

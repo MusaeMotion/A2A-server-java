@@ -25,12 +25,6 @@ public class PromptController {
 	 */
 	private final AgentPromptProviderImpl agentPromptProvider;
 
-	/**
-	 * 通过redis和远程智能体交互
-	 */
-	private final RemoteAgentPromptService remoteAgentPromptService;
-
-
 
 	/**
 	 * 注册智能体

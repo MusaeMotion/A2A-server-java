@@ -30,6 +30,15 @@ import java.util.List;
 @ConfigurationProperties(prefix = "musaemotion.a2a.host-agent")
 public class A2aHostAgentProperties {
 
+	/**
+	 * 模型配置项
+	 */
+	private List<ChatModelConfigItem> chatModelConfigs;
+
+	/**
+	 * 自定义chat-model 提供者
+	 */
+	private Boolean chatModelProvider;
 
     /**
      * 通知服务url地址，如果为空则不启动通知服务
@@ -47,4 +56,14 @@ public class A2aHostAgentProperties {
      * 默认启动远程智能体地址列表
      */
     private List<String> remoteAgentAddresses;
+
+	/**
+	 *
+	 * @param name 设置名称, 名称进行不要重复，有没有做重复判断
+	 * @param baseUrl
+	 * @param apiKey
+	 * @param model
+	 * @param temperature
+	 */
+	public record ChatModelConfigItem(String name, String baseUrl, String apiKey, String model, Double temperature) { }
 }

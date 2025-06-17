@@ -26,15 +26,14 @@ spring:
     ollama:
       chat:
         options:
-          model: 'qwen2.5:latest'
+          model: 'qwen2.5:8b'
       base-url: 'http://192.168.10.100:11434'
       # base-url: 'http://127.0.0.1:11434'
       init:
         pull-model-strategy: WHEN_MISSING
         chat:
           additional-models:
-            - qwen2.5:latest
-
+            - qwen2.5:8b
   ######################################
   #  redis 用于和远程智能体交换智能体的提示词用
   ######################################

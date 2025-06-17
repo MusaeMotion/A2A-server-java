@@ -134,7 +134,7 @@ public class ChatManager {
 				.observationRegistry(this.observationRegistry)
 				.hostAgentPromptService(this.agentPromptProvider)
 				.chatMemoryRepository(this.chatMemoryRepository)
-				.chatModel(chatModel)
+				.chatModel(this.chatModel)
 				.sendTaskCallback(new DefaultSendTaskCallbackHandle(this.taskCenterManager))
 				.build();
 		hostAgent.initHostAgent();

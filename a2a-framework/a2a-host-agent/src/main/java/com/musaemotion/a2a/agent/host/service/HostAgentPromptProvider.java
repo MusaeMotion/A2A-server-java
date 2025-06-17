@@ -38,7 +38,7 @@ import static com.musaemotion.agent.BasisAgent.STATE;
  */
 @Service
 @Slf4j
-public class HostAgentPromptProviderImpl implements AgentPromptProvider {
+public class HostAgentPromptProvider implements AgentPromptProvider {
 
 	/**
 	 * 自定义提示词提供者
@@ -86,7 +86,7 @@ public class HostAgentPromptProviderImpl implements AgentPromptProvider {
 	 * @param promptProvider 用户自定义提示词处理器
 	 */
 	@Autowired
-	public HostAgentPromptProviderImpl(@Autowired(required = false) PromptProvider promptProvider) {
+	public HostAgentPromptProvider(@Autowired(required = false) PromptProvider promptProvider) {
 		this.promptProvider = promptProvider;
 	}
 

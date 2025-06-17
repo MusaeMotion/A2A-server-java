@@ -16,7 +16,9 @@
 
 package com.a2a.demo.agent.client.configuration;
 
-import lombok.RequiredArgsConstructor;
+import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
+import com.musaemotion.a2a.agent.host.service.MemoryYamlChatModelProvider;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -28,5 +30,14 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class HostAgentConfig {
-   // 可以自己实现定义
+
+	/**
+	 * 您可以创建您自己的实现，默认的 MemoryYamlChatModelProvider 只支持基与open ai标准接口的模型
+	 * @param properties
+	 * @return
+	 */
+	@Bean
+    public MemoryYamlChatModelProvider chatModelProvider(A2aHostAgentProperties properties){
+		return new MemoryYamlChatModelProvider(properties);
+	}
 }
