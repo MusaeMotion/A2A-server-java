@@ -106,7 +106,7 @@ public class A2aServerProperties {
      * @param pushNotifications
      * @param stateTransitionHistory
      */
-    public record AgentCapabilities(boolean streaming, boolean pushNotifications, boolean stateTransitionHistory) { }
+    public record AgentCapabilities(boolean streaming, boolean pushNotifications, boolean stateTransitionHistory, boolean modifyPrompt) { }
 
     /**
      * agent 授权相关

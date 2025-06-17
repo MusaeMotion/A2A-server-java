@@ -16,6 +16,7 @@
 
 package com.a2a.demo.agent.client.controller;
 
+import com.a2a.demo.agent.client.dto.Conversation;
 import com.a2a.demo.agent.client.service.MysqlConversationManager;
 import com.a2a.demo.agent.client.service.MysqlMessageManager;
 import com.a2a.demo.agent.client.service.MysqlTaskCenterManager;
@@ -27,6 +28,7 @@ import com.musaemotion.a2a.common.base.Task;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -53,6 +55,8 @@ public class ConversationController {
 	private final MysqlMessageManager messageManager;
 
 	private final MysqlTaskCenterManager taskCenterManager;
+
+	private final ChatMemoryRepository chatMemoryRepository;
     /**
      * 获取交谈列表
      * @return
@@ -61,6 +65,17 @@ public class ConversationController {
     public ResponseEntity list() {
         return ResponseEntity.ok(Result.buildSuccess(this.conversationManager.list()));
     }
+
+
+	/**
+	 * 删除
+ 	 * @param conversationId
+	 */
+	private void deleteConversation(String conversationId) {
+		this.messageManager.deleteByConversationId(conversationId);
+		this.taskCenterManager.deleteByConversationId(conversationId);
+		this.chatMemoryRepository.deleteByConversationId(conversationId);
+	}
 
     /**
      * 删除交谈信息
@@ -71,8 +86,7 @@ public class ConversationController {
 	@Transactional(rollbackOn = Exception.class)
     public ResponseEntity delete(@PathVariable String conversationId) {
 		this.conversationManager.delete(conversationId);
-		this.messageManager.deleteByConversationId(conversationId);
-		this.taskCenterManager.deleteByConversationId(conversationId);
+	    this.deleteConversation(conversationId);
         return ResponseEntity.ok(Result.buildSuccess());
     }
 
@@ -84,8 +98,7 @@ public class ConversationController {
 	@DeleteMapping("/other/{conversationId}")
 	@Transactional(rollbackOn = Exception.class)
 	public ResponseEntity deleteOther(@PathVariable String conversationId) {
-		this.messageManager.deleteByConversationId(conversationId);
-		this.taskCenterManager.deleteByConversationId(conversationId);
+		this.deleteConversation(conversationId);
 		return ResponseEntity.ok(Result.buildSuccess());
 	}
 
