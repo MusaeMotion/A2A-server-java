@@ -36,6 +36,12 @@ public interface ControllerSetting {
     String CHAT = ROOT_URL + "/chat";
 
 	/**
+	 * 基座模型设置
+	 */
+	String CHAT_MODEL = ROOT_URL + "/chat-model";
+
+
+	/**
 	 * 提示词
 	 */
 	String PROMPT = ROOT_URL + "/prompt";

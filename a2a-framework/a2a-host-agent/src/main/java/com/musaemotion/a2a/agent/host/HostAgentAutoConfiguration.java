@@ -18,21 +18,25 @@ package com.musaemotion.a2a.agent.host;
 
 
 import com.musaemotion.a2a.agent.client.INotificationConsumer;
+import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
 import com.musaemotion.a2a.agent.host.ext.A2AToolCallingManager;
 import com.musaemotion.a2a.agent.host.ext.MyToolExecutionExceptionProcessor;
 import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
-import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
+import com.musaemotion.a2a.agent.host.provider.ChatModelProvider;
+import com.musaemotion.a2a.agent.host.service.MemoryYamlChatModelProvider;
 import com.musaemotion.agent.AgentPromptProvider;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
@@ -94,5 +98,18 @@ public class HostAgentAutoConfiguration {
 	public ChatMemoryRepository chatMemoryRepository() {
 	   return new InMemoryChatMemoryRepository();
 	}
+
+
+    /**
+     * 如果配置了 chat-model-provider  = true
+     * @param chatModelProvider
+     * @return
+     */
+    @Bean
+    @Primary
+    @ConditionalOnProperty(prefix = "musaemotion.a2a.host-agent", name = "chat-model-provider", havingValue = "true")
+    public ChatModel chatModel(ChatModelProvider chatModelProvider) {
+        return chatModelProvider.getDefaultChatModel();
+    }
 
 }

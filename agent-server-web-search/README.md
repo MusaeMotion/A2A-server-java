@@ -12,7 +12,7 @@ Add the following Maven dependency to your project:
 <dependency>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a-agent-server</artifactId>
-    <version>0.2.8</version>
+    <version>0.2.9</version>
 </dependency>
 ```
 
