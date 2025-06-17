@@ -1,7 +1,6 @@
 package com.a2a.demo.agent.client.controller;
 
-import com.a2a.demo.agent.client.service.AgentPromptProviderImpl;
-import com.a2a.demo.agent.client.service.RemoteAgentPromptService;
+import com.a2a.demo.agent.client.service.HostAgentPromptProvider;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,7 @@ public class PromptController {
 	/**
 	 * 系统
 	 */
-	private final AgentPromptProviderImpl agentPromptProvider;
+	private final HostAgentPromptProvider hostAgentPromptProvider;
 
 
 	/**
@@ -33,7 +32,7 @@ public class PromptController {
 	 */
 	@PostMapping("/host-agent/system-prompt")
 	public ResponseEntity saveHostAgentSystemPrompt(@RequestBody String input) {
-		this.agentPromptProvider.setSystemPrompt(input);
+		this.hostAgentPromptProvider.setSystemPrompt(input);
 		return ResponseEntity.ok("");
 	}
 
@@ -43,7 +42,7 @@ public class PromptController {
 	 */
 	@GetMapping("/host-agent/system-prompt")
 	public ResponseEntity getHostAgentSystemPrompt() {
-		return ResponseEntity.ok(this.agentPromptProvider.getSystemPrompt());
+		return ResponseEntity.ok(this.hostAgentPromptProvider.getSystemPrompt());
 	}
 
 
