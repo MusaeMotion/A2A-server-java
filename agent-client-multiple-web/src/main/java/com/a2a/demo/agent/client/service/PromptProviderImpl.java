@@ -20,7 +20,7 @@ import static com.musaemotion.a2a.agent.host.service.HostAgentPromptProvider.ROO
  */
 @Service
 @RequiredArgsConstructor
-public class HostAgentPromptProvider implements PromptProvider {
+public class PromptProviderImpl implements PromptProvider {
 
 	private final String SYSTEM_PROMPT_ID = "SYSTEM_PROMPT";
 
