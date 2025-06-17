@@ -20,13 +20,18 @@ import static com.musaemotion.a2a.agent.host.service.HostAgentPromptProvider.ROO
  */
 @Service
 @RequiredArgsConstructor
-public class AgentPromptProviderImpl implements PromptProvider {
+public class HostAgentPromptProvider implements PromptProvider {
 
 	private final String SYSTEM_PROMPT_ID = "SYSTEM_PROMPT";
 
     private final SettingRepository settingRepository;
 
 
+	/**
+	 * 可以根据你自己的情况通过请求上来的meatdata 构建自己的业务逻辑追加提示词在host agent 的user提示词上
+	 * @param sendMessageRequestMetadata
+	 * @return
+	 */
 	@Override
 	public String getUserPrompt(Map<String, Object> sendMessageRequestMetadata) {
 		return "";
