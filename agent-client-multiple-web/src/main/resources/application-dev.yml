@@ -131,10 +131,18 @@ musaemotion:
       chat-model-configs:
         - name: 'Qwen3'
           base-url: https://dashscope.aliyuncs.com/compatible-mode
-          api-key: '填写你自己的key'
+          api-key: '请填写自己的key'
           model: qwen-plus
-        - name: 'Qwen2'
+        - name: 'qwen-max-latest'
           base-url: https://dashscope.aliyuncs.com/compatible-mode
-          api-key: '填写你自己的key'
+          api-key: '请填写自己的key'
+          model: qwen-max-latest
+        - name: 'deepseek-chat'
+          base-url: https://api.deepseek.com
+          api-key: '请填写自己的key'
+          model: deepseek-chat
+        - name: 'qwen-plus'
+          base-url: https://dashscope.aliyuncs.com/compatible-mode
+          api-key: '请填写自己的key'
           model: qwen-plus
 
