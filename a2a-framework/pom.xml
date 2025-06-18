@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.musaemotion</groupId>
-	<version>0.2.10</version>
+	 <version>0.2.11</version>
     <artifactId>a2a-framework</artifactId>
     <packaging>pom</packaging>
 
@@ -46,7 +46,6 @@
 		<spring-boot.version>3.4.4</spring-boot.version>
 		<slf4j-api.version>2.0.17</slf4j-api.version>
 		<commons-lang3.version>3.17.0</commons-lang3.version>
-
 		<hibernate-types-60.version>2.21.1</hibernate-types-60.version>
 		<mysql-connector-j.veriosn>9.3.0</mysql-connector-j.veriosn>
 		<flyway-mysql.version>11.5.0</flyway-mysql.version>
@@ -139,7 +138,6 @@
 				<artifactId>commons-lang3</artifactId>
 				<version>${commons-lang3.version}</version>
 			</dependency>
-
 
 			<dependency>
 				<groupId>com.vladmihalcea</groupId>
