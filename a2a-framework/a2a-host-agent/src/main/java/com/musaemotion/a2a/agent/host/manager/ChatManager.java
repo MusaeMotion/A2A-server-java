@@ -20,8 +20,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
@@ -30,6 +28,7 @@ import com.musaemotion.a2a.agent.host.core.HostAgent;
 import com.musaemotion.a2a.agent.host.model.response.CommonMessageExt;
 import com.musaemotion.a2a.agent.host.model.response.SendMessageResponse;
 import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
+import com.musaemotion.a2a.agent.host.provider.ChatModelProvider;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.base.Task;
 import com.musaemotion.a2a.common.constant.MessageRole;
@@ -41,7 +40,6 @@ import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -108,9 +106,9 @@ public class ChatManager {
 	private A2aHostAgentProperties a2aHostAgentProperties;
 
 	/**
-	 * ChatModel
+	 * 模型提供者
 	 */
-	private ChatModel chatModel;
+	private ChatModelProvider ChatModelProvider;
 
 	/**
 	 * 聊天记录
@@ -134,22 +132,21 @@ public class ChatManager {
 				.observationRegistry(this.observationRegistry)
 				.hostAgentPromptService(this.agentPromptProvider)
 				.chatMemoryRepository(this.chatMemoryRepository)
-				.chatModel(this.chatModel)
+				.chatModelProvider(this.ChatModelProvider)
 				.sendTaskCallback(new DefaultSendTaskCallbackHandle(this.taskCenterManager))
 				.build();
-		hostAgent.initHostAgent();
 		return hostAgent;
 	}
 
 	/**
-	 * @param chatModel
+	 * @param ChatModelProvider
 	 * @param a2aHostAgentProperties
 	 * @param abstractConversationManager
 	 * @param abstractMessageManager
 	 * @param pushNotificationServer
 	 */
 	@Autowired
-	public ChatManager(ChatModel chatModel, A2aHostAgentProperties a2aHostAgentProperties, AbstractRemoteAgentManager remoteAgentManager, AbstractConversationManager abstractConversationManager, AbstractMessageManager abstractMessageManager, AbstractTaskCenterManager abstractTaskCenterManager, AgentPromptProvider agentPromptProvider, @Autowired(required = false) PushNotificationServer pushNotificationServer, @Autowired(required = false) ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
+	public ChatManager(ChatModelProvider ChatModelProvider, A2aHostAgentProperties a2aHostAgentProperties, AbstractRemoteAgentManager remoteAgentManager, AbstractConversationManager abstractConversationManager, AbstractMessageManager abstractMessageManager, AbstractTaskCenterManager abstractTaskCenterManager, AgentPromptProvider agentPromptProvider, @Autowired(required = false) PushNotificationServer pushNotificationServer, @Autowired(required = false) ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
 		this.conversationManager = abstractConversationManager;
 		this.messageManager = abstractMessageManager;
 		this.pushNotificationServer = pushNotificationServer;
@@ -161,7 +158,7 @@ public class ChatManager {
 		}
 		this.remoteAgentManager = remoteAgentManager;
 		this.a2aHostAgentProperties = a2aHostAgentProperties;
-		this.chatModel = chatModel;
+		this.ChatModelProvider = ChatModelProvider;
 		this.chatMemoryRepository = chatMemoryRepository;
 	}
 

@@ -116,6 +116,8 @@ public class SseEmitterManager {
 	public static void removeEmitter(String conversationId, String inputMessageId) {
 		String key = buildKey(conversationId, inputMessageId);
 		log.info("Removing emitter for key: {}", key);
+		var emitter = emitters.get(key);
+		emitter.complete();
 		emitters.remove(key);
 	}
 }

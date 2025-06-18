@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
-import static com.musaemotion.a2a.agent.host.service.HostAgentPromptProvider.ROOT_PROMPT_TPL;
+import static com.musaemotion.a2a.agent.host.provider.DefaultPromptProviderImpl.ROOT_PROMPT_TPL;
 
 /**
  * @author labidc@hotmail.com
@@ -20,13 +20,18 @@ import static com.musaemotion.a2a.agent.host.service.HostAgentPromptProvider.ROO
  */
 @Service
 @RequiredArgsConstructor
-public class AgentPromptProviderImpl implements PromptProvider {
+public class PromptProviderImpl implements PromptProvider {
 
 	private final String SYSTEM_PROMPT_ID = "SYSTEM_PROMPT";
 
     private final SettingRepository settingRepository;
 
 
+	/**
+	 * 可以根据你自己的情况通过请求上来的meatdata 构建自己的业务逻辑追加提示词在host agent 的user提示词上
+	 * @param sendMessageRequestMetadata
+	 * @return
+	 */
 	@Override
 	public String getUserPrompt(Map<String, Object> sendMessageRequestMetadata) {
 		return "";

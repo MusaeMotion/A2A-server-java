@@ -26,6 +26,7 @@ import com.musaemotion.a2a.agent.host.manager.AbstractRemoteAgentManager;
 import com.musaemotion.a2a.agent.host.manager.AbstractTaskCenterManager;
 import com.musaemotion.a2a.agent.host.model.AgentSkillVo;
 import com.musaemotion.a2a.agent.host.model.RemoteAgentInfo;
+import com.musaemotion.a2a.agent.host.provider.ChatModelProvider;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.base.FileBlob;
@@ -46,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
@@ -96,7 +96,7 @@ public class HostAgent {
 	/**
 	 * spring ai chatModel
 	 */
-	private ChatModel chatModel;
+	private ChatModelProvider ChatModelProvider;
 
 	/**
 	 * Agent Card 管理服务
@@ -132,14 +132,14 @@ public class HostAgent {
 	 * @param remoteAgentAddresses
 	 * @param callback
 	 * @param pushNotificationServer
-	 * @param chatModel
+	 * @param ChatModelProvider
 	 */
-	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModel chatModel, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, AgentPromptProvider agentPromptProvider, ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
+	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModelProvider ChatModelProvider, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, AgentPromptProvider agentPromptProvider, ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
 		this.remoteAgentAddresses = remoteAgentAddresses;
 		this.callback = callback;
 		this.remoteAgentManager = remoteAgentManager;
 		this.pushNotificationServer = pushNotificationServer;
-		this.chatModel = chatModel;
+		this.ChatModelProvider = ChatModelProvider;
 		this.taskCenterManager = taskCenterManager;
 		this.messageManager = messageManager;
 		this.observationRegistry = observationRegistry;
@@ -153,7 +153,7 @@ public class HostAgent {
 	 * 创建host智能体
 	 */
 	private void createHostAgent() {
-		Assert.notNull(this.chatModel, "chatModel must not be null");
+		Assert.notNull(this.ChatModelProvider, "chatModelProvider must not be null");
 
 		ToolCallback[] toolCallbacks = ToolCallbacks.from(this);
 		this.basisAgent = BasisAgent.builder()
@@ -166,7 +166,7 @@ public class HostAgent {
 				// 读取两条记忆
 				.chatMemorySize(5)
 				.chatMemoryRepository(this.chatMemoryRepository)
-				.chatClient(ChatClient.create(this.chatModel, this.observationRegistry))
+				.chatClient(ChatClient.create(this.ChatModelProvider.getChatModel(), this.observationRegistry))
 				.observationRegistry(this.observationRegistry)
 				.agentPromptProvider(this.agentPromptProvider)
 				.toolCallbacks(Arrays.stream(toolCallbacks).toList())
@@ -594,7 +594,7 @@ public class HostAgent {
 
 		private PushNotificationServer pushNotificationServer;
 
-		private ChatModel chatModel;
+		private ChatModelProvider ChatModelProvider;
 
 		private AbstractRemoteAgentManager remoteAgentManager;
 
@@ -627,9 +627,9 @@ public class HostAgent {
 			return this;
 		}
 
-		public HostAgent.Builder chatModel(
-				ChatModel chatModel) {
-			this.chatModel = chatModel;
+		public HostAgent.Builder chatModelProvider(
+				ChatModelProvider ChatModelProvider) {
+			this.ChatModelProvider = ChatModelProvider;
 			return this;
 		}
 
@@ -666,7 +666,7 @@ public class HostAgent {
 		}
 
 		public HostAgent build() {
-			Assert.notNull(chatModel, "chatModel 不能为空");
+			Assert.notNull(ChatModelProvider, "chatModelProvider 不能为空");
 			Assert.notNull(remoteAgentManager, "remoteAgentManager 不能为空");
 			Assert.notNull(taskCenterManager, "taskCenterManager 不能为空");
 			Assert.notNull(messageManager, "messageManager 不能为空");
@@ -674,7 +674,7 @@ public class HostAgent {
 			Assert.notNull(agentPromptProvider, "hostAgentPromptService 不能为空");
 			Assert.notNull(this.chatMemoryRepository, "chatMemoryRepository 不能为空");
 
-			HostAgent hostAgent = new HostAgent(remoteAgentAddresses, sendTaskCallback, pushNotificationServer, chatModel, remoteAgentManager, taskCenterManager, messageManager, agentPromptProvider, observationRegistry, chatMemoryRepository);
+			HostAgent hostAgent = new HostAgent(remoteAgentAddresses, sendTaskCallback, pushNotificationServer, ChatModelProvider, remoteAgentManager, taskCenterManager, messageManager, agentPromptProvider, observationRegistry, chatMemoryRepository);
 			return hostAgent;
 		}
 

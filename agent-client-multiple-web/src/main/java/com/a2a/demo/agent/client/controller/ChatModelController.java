@@ -4,6 +4,7 @@ import com.a2a.demo.agent.client.dto.ChatModelMode;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
 import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
 import com.musaemotion.a2a.agent.host.provider.ChatModelProvider;
+import com.musaemotion.a2a.agent.host.provider.MemoryYamlChatModelProviderImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ public class ChatModelController {
 	private ChatModelProvider chatModelProvider;
 
 	@Autowired
-	public ChatModelController(A2aHostAgentProperties a2aHostAgentProperties, @Autowired(required = false) ChatModelProvider chatModelProvider){
+	public ChatModelController(A2aHostAgentProperties a2aHostAgentProperties, ChatModelProvider chatModelProvider){
          this.chatModelProvider = chatModelProvider;
 		 this.a2aHostAgentProperties = a2aHostAgentProperties;
 	}
@@ -38,15 +39,20 @@ public class ChatModelController {
 	 * @return
 	 */
 	@GetMapping("/mode")
-	public ResponseEntity getChatModelMode() {
+	public ResponseEntity getChatModelMode()  {
 		var builder = ChatModelMode.builder().providerMode(this.a2aHostAgentProperties.getChatModelProvider());
 		if (this.a2aHostAgentProperties.getChatModelProvider() != null &&
 				this.a2aHostAgentProperties.getChatModelProvider() &&
 				this.chatModelProvider != null) {
 			builder.provider(this.chatModelProvider.getClass().getName());
 			builder.chatModelConfigs(this.a2aHostAgentProperties.getChatModelConfigs());
-			builder.defaultChatModelKey(this.chatModelProvider.getDefaultChatModelKey());
+			if(chatModelProvider instanceof MemoryYamlChatModelProviderImpl){
+				builder.defaultChatModelKey(((MemoryYamlChatModelProviderImpl)this.chatModelProvider).getDefaultChatModelKey());
+			}
+		}else{
+			builder.provider(this.chatModelProvider.getClass().getName());
 		}
+
 		return ResponseEntity.ok(builder.build());
 	}
 
@@ -56,8 +62,14 @@ public class ChatModelController {
 	 * @return
 	 */
 	@PutMapping("/set-chat-model/{key}")
-	public ResponseEntity setChatModelMode(@PathVariable("key") String key) {
-		this.chatModelProvider.setDefaultChatModelKey(key);
+	public ResponseEntity setChatModelMode(@PathVariable("key") String key)  {
+		if (this.a2aHostAgentProperties.getChatModelProvider() != null &&
+				this.a2aHostAgentProperties.getChatModelProvider() &&
+				this.chatModelProvider != null) {
+			if(this.chatModelProvider instanceof MemoryYamlChatModelProviderImpl){
+				((MemoryYamlChatModelProviderImpl)this.chatModelProvider).setDefaultChatModelKey(key);
+			}
+		}
 		return ResponseEntity.ok("");
 	}
 

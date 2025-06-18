@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.musaemotion.a2a.agent.host.service;
+package com.musaemotion.a2a.agent.host.provider;
 
-import com.musaemotion.a2a.agent.host.provider.PromptProvider;
 import com.musaemotion.agent.AgentPromptProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,12 +37,12 @@ import static com.musaemotion.agent.BasisAgent.STATE;
  */
 @Service
 @Slf4j
-public class HostAgentPromptProvider implements AgentPromptProvider {
+public class DefaultPromptProviderImpl implements AgentPromptProvider {
 
 	/**
 	 * 自定义提示词提供者
 	 */
-	private PromptProvider promptProvider;
+	private PromptProvider PromptProvider;
 
 	/**
 	 * check_pending_task_states 有可能在框架adk内部实现的，因为 adk 会创建一个任务任务列表出来。
@@ -83,11 +82,11 @@ public class HostAgentPromptProvider implements AgentPromptProvider {
 
 
 	/**
-	 * @param promptProvider 用户自定义提示词处理器
+	 * @param PromptProvider 用户自定义提示词处理器
 	 */
 	@Autowired
-	public HostAgentPromptProvider(@Autowired(required = false) PromptProvider promptProvider) {
-		this.promptProvider = promptProvider;
+	public DefaultPromptProviderImpl(@Autowired(required = false) PromptProvider PromptProvider) {
+		this.PromptProvider = PromptProvider;
 	}
 
 	/**
@@ -97,10 +96,10 @@ public class HostAgentPromptProvider implements AgentPromptProvider {
 	 */
 	@Override
 	public String userPrompt(Map<String, Object> sendMessageRequestMetadata) {
-		if (this.promptProvider == null) {
+		if (this.PromptProvider == null) {
 			return "";
 		}
-		return this.promptProvider.getUserPrompt(sendMessageRequestMetadata);
+		return this.PromptProvider.getUserPrompt(sendMessageRequestMetadata);
 	}
 
 	/**
@@ -112,8 +111,8 @@ public class HostAgentPromptProvider implements AgentPromptProvider {
 	@Override
 	public String systemPrompt(Map<String, Object> toolContext, Map<String, Object> sendMessageRequestMetadata) {
 		String systemPrompt = "";
-		if (this.promptProvider != null) {
-			systemPrompt = this.promptProvider.getSystemPrompt(sendMessageRequestMetadata);
+		if (this.PromptProvider != null) {
+			systemPrompt = this.PromptProvider.getSystemPrompt(sendMessageRequestMetadata);
 		}
 		if (StringUtils.isEmpty(systemPrompt)) {
 			systemPrompt = String.format(ROOT_PROMPT_TPL, getActiveAgent((Map<String, Object>) toolContext.get(STATE)));
