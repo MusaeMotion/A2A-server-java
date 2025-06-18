@@ -24,6 +24,7 @@ import com.musaemotion.agent.model.ModelHyperParams;
 import com.musaemotion.agent.model.SendMessageRequest;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.Builder;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -84,6 +85,7 @@ public class BasisAgent<T extends SendMessageRequest> {
     /**
      * ChatClient
      */
+	@Setter
     private ChatClient chatClient;
 
     /**

@@ -1,15 +1,11 @@
-package com.musaemotion.a2a.agent.host.service;
+package com.musaemotion.a2a.agent.host.provider;
 
 import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
-import com.musaemotion.a2a.agent.host.provider.ChatModelProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author labidc@hotmail.com
@@ -18,18 +14,19 @@ import java.util.List;
  * @description yaml文件实现基座智能体切换实现（只支持标准的open ai规范的模型）
  */
 @Slf4j
-public class MemoryYamlChatModelProvider implements ChatModelProvider {
+public class MemoryYamlChatModelProviderImpl implements ChatModelProvider {
 
 
 	private A2aHostAgentProperties a2aHostAgentProperties;
-
 
 	private ChatModel defaultChatModel;
 
 	private String defaultChatModelKey;
 
-
-	public MemoryYamlChatModelProvider(A2aHostAgentProperties a2aHostAgentProperties) {
+	/**
+	 * @param a2aHostAgentProperties
+	 */
+	public MemoryYamlChatModelProviderImpl(A2aHostAgentProperties a2aHostAgentProperties) {
 		this.a2aHostAgentProperties = a2aHostAgentProperties;
 	}
 
@@ -51,20 +48,6 @@ public class MemoryYamlChatModelProvider implements ChatModelProvider {
 
 		return  OpenAiChatModel.builder().openAiApi(openApi).defaultOptions(openAiChatOptions).build();
 	}
-	/**
-	 * 构建聊天模型
-	 * @param configs
-	 * @return
-	 */
-	private List<ChatModel> buildChatModels(List<A2aHostAgentProperties.ChatModelConfigItem> configs) {
-		List<ChatModel> chatModels = new ArrayList<>();
-		configs.forEach(config -> {
-			chatModels.add(
-					buildChatModel(config)
-			);
-		});
-		return chatModels;
-	}
 
 
 
@@ -73,14 +56,20 @@ public class MemoryYamlChatModelProvider implements ChatModelProvider {
 	 * @return
 	 */
 	@Override
-	public ChatModel getDefaultChatModel() {
+	public ChatModel getChatModel()  {
+
 		if(defaultChatModel == null) {
 			return this.setDefaultChatModelKey(this.a2aHostAgentProperties.getChatModelConfigs().get(0).name());
 		}
+		log.info("MemoryYamlChatModelProviderImpl:{}", this.defaultChatModelKey);
 		return this.defaultChatModel;
 	}
 
-	@Override
+	/**
+	 * 设置当前的模型的key
+	 * @param key
+	 * @return
+	 */
 	public ChatModel setDefaultChatModelKey(String key) {
 		var optional = a2aHostAgentProperties.getChatModelConfigs().stream().filter(item -> item.name().equals(key)).findFirst();
 		if (optional.isPresent()) {
@@ -92,8 +81,11 @@ public class MemoryYamlChatModelProvider implements ChatModelProvider {
 		return null;
 	}
 
-	@Override
-	public String getDefaultChatModelKey() {
+	/**
+	 * 获取当前模型的key
+	 * @return
+	 */
+	public String getDefaultChatModelKey()  {
 		if (defaultChatModel == null) {
 			this.setDefaultChatModelKey(this.a2aHostAgentProperties.getChatModelConfigs().get(0).name());
 			return this.defaultChatModelKey;

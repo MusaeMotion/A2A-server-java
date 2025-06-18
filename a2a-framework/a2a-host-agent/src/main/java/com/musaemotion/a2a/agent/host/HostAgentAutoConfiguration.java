@@ -23,10 +23,12 @@ import com.musaemotion.a2a.agent.host.ext.A2AToolCallingManager;
 import com.musaemotion.a2a.agent.host.ext.MyToolExecutionExceptionProcessor;
 import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
 import com.musaemotion.a2a.agent.host.provider.ChatModelProvider;
-import com.musaemotion.a2a.agent.host.service.MemoryYamlChatModelProvider;
+import com.musaemotion.a2a.agent.host.provider.DefaultChatModelProviderImpl;
+import com.musaemotion.a2a.agent.host.provider.MemoryYamlChatModelProviderImpl;
 import com.musaemotion.agent.AgentPromptProvider;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
@@ -36,7 +38,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
@@ -46,6 +47,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Slf4j
 @Configuration
 @Component
 @EnableConfigurationProperties({
@@ -100,16 +102,26 @@ public class HostAgentAutoConfiguration {
 	}
 
 
-    /**
-     * 如果配置了 chat-model-provider  = true
-     * @param chatModelProvider
-     * @return
-     */
-    @Bean
-    @Primary
-    @ConditionalOnProperty(prefix = "musaemotion.a2a.host-agent", name = "chat-model-provider", havingValue = "true")
-    public ChatModel chatModel(ChatModelProvider chatModelProvider) {
-        return chatModelProvider.getDefaultChatModel();
-    }
+	/**
+	 * 您可以创建您自己的实现，默认的 MemoryYamlChatModelProvider 只支持基与open ai标准接口的模型
+	 * @param properties
+	 * @return
+	 */
+	@Bean
+	@ConditionalOnProperty(prefix = "musaemotion.a2a.host-agent", name = "chat-model-provider", havingValue = "true")
+	public ChatModelProvider memoryYamlChatModelProvider(A2aHostAgentProperties properties){
+		return new MemoryYamlChatModelProviderImpl(properties);
+	}
+
+	/**
+	 * 未配置构造默认模型提供者
+	 * @param chatModel
+	 * @return
+	 */
+	@Bean
+	@ConditionalOnProperty(prefix = "musaemotion.a2a.host-agent", name = "chat-model-provider", havingValue = "false", matchIfMissing = true)
+	public ChatModelProvider defaultChatModelProvider(ChatModel chatModel) {
+		return new DefaultChatModelProviderImpl(chatModel);
+	}
 
 }

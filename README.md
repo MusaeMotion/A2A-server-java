@@ -64,7 +64,7 @@ This project is an implementation of the A2A protocol based on the Java Spring f
       <dependency>
         <groupId>io.github.musaemotion</groupId>
         <artifactId>a2a-pom</artifactId>
-        <version>0.2.9</version>
+        <version>0.2.10</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

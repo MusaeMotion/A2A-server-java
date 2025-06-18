@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
-import static com.musaemotion.a2a.agent.host.service.HostAgentPromptProvider.ROOT_PROMPT_TPL;
+import static com.musaemotion.a2a.agent.host.provider.DefaultPromptProviderImpl.ROOT_PROMPT_TPL;
 
 /**
  * @author labidc@hotmail.com
