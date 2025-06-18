@@ -56,24 +56,23 @@ spring:
     # Host Agent: Spring AI 模型配置
     ######################################
     ollama:
-      #base-url: 'http://192.168.10.100:11434'
-      base-url: 'http://127.0.0.1:11434'
+      base-url: 'http://192.168.10.100:11434'
+      # base-url: 'http://127.0.0.1:11434'
       chat:
         options:
-          model: 'qwen3:14b'
+          model: 'qwen3:8b'
       init:
         pull-model-strategy: WHEN_MISSING
         chat:
           additional-models:
             - qwen3:8b
-
   ######################################
   # spring starter database 配置, 请使用自己的数据库配置
   ######################################
   datasource:
-    url: jdbc:mysql://localhost:3306/a2a?useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/a2a?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: a2a_user
-    password: a2a_usera2o
+    password: a2a_Usera2o
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       minimum-idle: 5
@@ -101,6 +100,16 @@ spring:
     locations: classpath:db/migration
     table: flyway_schema_history
     enabled: true
+  ######################################
+  #  redis 用于和远程智能体交换智能体的提示词用
+  ######################################
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      timeout: 60000
+      database: 0
+      password: redistest
 
 ######################################
 # musaemotion A2A配置
@@ -109,9 +118,30 @@ musaemotion:
   a2a:
     host-agent:
       # 通知服务绑定的地址
-      notify-url: http://localhost:5000
+      notify-url: http://0.0.0.0:5000
       # 发送给远程智能体，回调通知的外部地址
       external-url: http://localhost:5000
       # 默认需要加载到注册中心的远程智能体, 请一定保证该地址智能体存在并且已启动，否则会异常
       remote-agent-addresses:
       #  - http://127.0.0.1:9999/
+      # 注意改配置为true，则通过默认实现 ChatModelProvider 机型设置模型配置，如果你有自己的实现，请自己实现 ChatModelProvider
+      chat-model-provider: true
+      # MemoryYamlChatModelProvider（ChatModelProvider 的默认实现） 默认实现的配置
+      chat-model-configs:
+        - name: 'Qwen3'
+          base-url: https://dashscope.aliyuncs.com/compatible-mode
+          api-key: '使用自己的Key'
+          model: qwen-plus
+        - name: 'qwen-max-latest'
+          base-url: https://dashscope.aliyuncs.com/compatible-mode
+          api-key: '使用自己的Key'
+          model: qwen-max-latest
+        - name: 'deepseek-chat'
+          base-url: https://api.deepseek.com
+          api-key: '使用自己的Key'
+          model: deepseek-chat
+        - name: 'qwen-plus'
+          base-url: https://dashscope.aliyuncs.com/compatible-mode
+          api-key: '使用自己的Key'
+          model: qwen-plus
+
