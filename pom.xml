@@ -32,11 +32,12 @@
         <micrometer.veriosn>1.14.5</micrometer.veriosn>
         <opentelemetry.instrumentation.version>2.15.0</opentelemetry.instrumentation.version>
 		<flyway-mysql.version>11.5.0</flyway-mysql.version>
+
         <url>http://www.musaemotion.com/</url>
     </properties>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a</artifactId>
-    <version>0.2.10</version>
+     <version>0.2.11</version>
     <name>A2A</name>
     <description>A2A</description>
     <dependencyManagement>
@@ -123,6 +124,8 @@
                 <artifactId>mysql-connector-j</artifactId>
                 <version>${mysql-connector-j.veriosn}</version>
             </dependency>
+
+
         </dependencies>
     </dependencyManagement>
     <profiles>
@@ -137,7 +140,7 @@
             <!-- 本地开发环境 -->
             <id>dev</id>
             <properties>
-                <profiles.active>dev</profiles.active>
+				<profiles.active>dev</profiles.active>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -147,7 +150,7 @@
             <!-- 测试环境 -->
             <id>test</id>
             <properties>
-                <profiles.active>test</profiles.active>
+				<profiles.active>dev</profiles.active>
             </properties>
         </profile>
     </profiles>
