@@ -457,7 +457,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 			this.sendTaskNotification(task);
 		}
 
-		String query = PartUtils.getTextContent(params.getMessage());
+		String query = PartUtils.getFirstOneTextContentByMessage(params.getMessage());
 
 		try {
 			// 智能体调用
@@ -516,7 +516,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 				return Flux.just(SendTaskResponse.buildInvalidParamsError(request.getId(), new InvalidParamsError("Push notification URL is invalid")));
 			}
 		}
-		String query = PartUtils.getTextContent(params.getMessage());
+		String query = PartUtils.getFirstOneTextContentByMessage(params.getMessage());
 		return Flux.create(fluxSink -> {
 
 			ExecutorService executor = Executors.newSingleThreadExecutor();

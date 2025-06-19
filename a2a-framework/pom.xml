@@ -53,30 +53,17 @@
 
 	<dependencyManagement>
 		<dependencies>
+
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcprov-jdk18on</artifactId>
 				<version>${bcprov.version}</version>
 			</dependency>
+
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-dependencies</artifactId>
 				<version>${spring-boot.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>io.micrometer</groupId>
-				<artifactId>micrometer-bom</artifactId>
-				<version>${micrometer.veriosn}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>io.opentelemetry.instrumentation</groupId>
-				<artifactId>opentelemetry-instrumentation-bom</artifactId>
-				<version>${opentelemetry.instrumentation.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -139,16 +126,11 @@
 				<version>${commons-lang3.version}</version>
 			</dependency>
 
+			<!--a2a-agent-server-mysql-starter 包使用-->
 			<dependency>
 				<groupId>com.vladmihalcea</groupId>
 				<artifactId>hibernate-types-60</artifactId>
 				<version>${hibernate-types-60.version}</version>
-			</dependency>
-			<!--数据库版本管理-->
-			<dependency>
-				<groupId>org.flywaydb</groupId>
-				<artifactId>flyway-mysql</artifactId>
-				<version>${flyway-mysql.version}</version>
 			</dependency>
 
 			<dependency>

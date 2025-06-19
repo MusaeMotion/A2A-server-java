@@ -89,7 +89,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
-        <!-- 以下 可观察性配置 Observability 注意如果要开启可观察性，请先运行zipkin, 建议使用docker 跑demo,然后取消下面的依赖注释 -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<!-- 以下 可观察性配置 Observability 注意如果要开启可观察性，请先运行zipkin, 建议使用docker 跑demo,然后取消下面的依赖注释 -->
         <!-- Tracing -->
         <!--<dependency>
             <groupId>io.micrometer</groupId>

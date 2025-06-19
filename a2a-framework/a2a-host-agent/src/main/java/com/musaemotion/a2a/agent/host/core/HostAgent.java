@@ -509,7 +509,7 @@ public class HostAgent {
 			if (optional.isPresent() && optional.get().getStatus().getState() == TaskState.COMPLETED) {
 				Task task = optional.get();
 				parts.addAll(
-						PartUtils.filterPartNoText(
+						PartUtils.getFilePartByParts(
 								task.getArtifacts().stream().map(Common.Artifact::getParts).flatMap(Collection::stream).collect(Collectors.toList())
 						)
 				);
@@ -520,7 +520,7 @@ public class HostAgent {
 		String inputMessageId = messageMetadata.get(INPUT_MESSAGE_ID).toString();
 		Optional<Common.Message> optionalMessage = this.messageManager.getByMessageId(inputMessageId);
 		if (optionalMessage.isPresent()) {
-			parts.addAll(PartUtils.filterMessagePartNoText(optionalMessage.get()));
+			parts.addAll(PartUtils.getFilePartByMessage(optionalMessage.get()));
 		}
 		return parts;
 	}
