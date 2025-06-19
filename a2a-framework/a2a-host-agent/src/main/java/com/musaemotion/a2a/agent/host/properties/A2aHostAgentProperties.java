@@ -58,7 +58,7 @@ public class A2aHostAgentProperties {
     private List<String> remoteAgentAddresses;
 
 	/**
-	 *
+	 * 模型配置
 	 * @param name 设置名称, 名称进行不要重复，有没有做重复判断
 	 * @param baseUrl
 	 * @param apiKey
