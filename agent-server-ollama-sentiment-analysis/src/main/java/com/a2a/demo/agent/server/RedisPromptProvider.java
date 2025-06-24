@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
  */
 public class RedisPromptProvider implements PromptProvider {
 
-	/**
-	 * redis 远程智能体提示前缀和host-agent统一
-	 */
-	private static String REDIS_PROMPT_PREFIX_TPL = "PROMPT:%s";
+
 
     private static final Logger logger = LoggerFactory.getLogger(RedisPromptProvider.class);
 

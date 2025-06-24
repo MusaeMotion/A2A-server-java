@@ -18,6 +18,7 @@ package com.musaemotion.a2a.agent.host.core;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.musaemotion.a2a.agent.host.listener.RemoteAgentRunningStreamPublisher;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.IMetadata;
 import com.musaemotion.a2a.common.constant.TaskState;
@@ -33,6 +34,7 @@ import com.musaemotion.a2a.common.response.SendTaskResponse;
 import com.musaemotion.a2a.common.response.SendTaskStreamingResponse;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.agent.client.A2aClient;
+import com.musaemotion.a2a.common.utils.PartUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.ConnectableFlux;
@@ -66,13 +68,20 @@ public class A2aRemoteAgentConnections {
 	@Getter
 	private AgentCard agentCard;
 
+
+	/**
+	 * 运行流监听
+	 */
+	private RemoteAgentRunningStreamPublisher runningStreamListener;
+
 	/**
 	 * agentCard,
 	 * @param agentCard
 	 */
-	public A2aRemoteAgentConnections(AgentCard agentCard){
+	public A2aRemoteAgentConnections(AgentCard agentCard, RemoteAgentRunningStreamPublisher runningStreamListener){
 		this.a2aClient = new A2aClient(agentCard);
 		this.agentCard = agentCard;
+		this.runningStreamListener = runningStreamListener;
 	}
 
 	/**
@@ -81,7 +90,7 @@ public class A2aRemoteAgentConnections {
 	 * @param errorMessage
 	 * @return
 	 */
-	private Task buildErrorTask(TaskSendParams taskSendParams, String errorMessage) {
+	private Task buildFailedTask(TaskSendParams taskSendParams, String errorMessage) {
 		Task task = Task.from(taskSendParams);
 		// 修改成失败状态，错误状态
 		task.getStatus().setState(TaskState.FAILED);
@@ -104,8 +113,7 @@ public class A2aRemoteAgentConnections {
 		SendTaskRequest sendTaskRequest = SendTaskRequest.newInstance(taskSendParams);
 		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest);
 		if(sendTaskResponse.getResult() == null && sendTaskResponse.getError() != null) {
-			// throw new RuntimeException(sendTaskResponse.getError().getMessage());
-			return buildErrorTask(taskSendParams, sendTaskResponse.getError().getMessage());
+			return buildFailedTask(taskSendParams, sendTaskResponse.getError().getMessage());
 		}
 		// 合并任务相关的元数据
 		this.mergeMetadata(sendTaskResponse.getResult(), taskSendParams);
@@ -142,7 +150,7 @@ public class A2aRemoteAgentConnections {
 		responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
 			if (sendTaskStreamingResponse.getError() != null) {
 				log.error("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
-				taskModel.set(buildErrorTask(taskSendParams, sendTaskStreamingResponse.getError().getMessage()));
+				taskModel.set(buildFailedTask(taskSendParams, sendTaskStreamingResponse.getError().getMessage()));
 				return;
 			}
 			if (sendTaskStreamingResponse.getResult() instanceof TaskEvent taskEvent) {
@@ -162,19 +170,27 @@ public class A2aRemoteAgentConnections {
 				if (message.getMetadata().containsKey(MESSAGE_ID)) {
 					message.getMetadata().put(LAST_MESSAGE_ID, message.getMetadata().get(MESSAGE_ID));
 				}
-				// message.getMetadata().put(MESSAGE_ID, GuidUtils.createShortRandomGuid());
+
 				callback.sendTaskCallback(taskStatusUpdateEvent);
 				taskModel.set(Task.from(taskStatusUpdateEvent));
+				/*
 				if (taskStatusUpdateEvent.getDone()) {
 					log.info("任务状态更新完成");
-				}
+				} */
+				// log.error("taskStatusUpdateEvent： {}", taskStatusUpdateEvent);
 			}
-			/**
-			 * 工件更新
-			 */
+
 			if (sendTaskStreamingResponse.getResult() instanceof TaskArtifactUpdateEvent taskArtifactUpdateEvent) {
-				callback.sendTaskCallback(taskArtifactUpdateEvent);
-				taskModel.set(Task.from(taskArtifactUpdateEvent));
+				// 最后一条消息, 并且不是新增消息，表示完整消息
+				if(taskArtifactUpdateEvent.getArtifact().getLastChunk() && !taskArtifactUpdateEvent.getArtifact().getAppend()) {
+					callback.sendTaskCallback(taskArtifactUpdateEvent);
+					taskModel.set(Task.from(taskArtifactUpdateEvent));
+				}else {
+					String text = PartUtils.getFirstOneTextContentByParts(taskArtifactUpdateEvent.getArtifact().getParts());
+					// log.error("taskArtifactUpdateEvent： {}", text);
+					// 调用监听器
+					this.runningStreamListener.publisher(text, taskArtifactUpdateEvent.getId(), taskSendParams.getMetadata());
+				}
 			}
 		});
 		responseConnectableFlux.connect();

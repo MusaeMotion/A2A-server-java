@@ -33,6 +33,19 @@ spring:
         chat:
           additional-models:
             - gemma3:4b
+    ######################################
+    # Host Agent: Spring AI 模型配置 阿里千问 openai接口规范
+    ######################################
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: 用自己的key
+      chat:
+        # 默认llm text to text 路径
+        # completions-path: '/v1/chat/completions'
+        base-url: ${spring.ai.openai.base-url}
+        api-key: ${spring.ai.openai.api-key}
+        options:
+          model: 'qwen-vl-max-latest'
 
 card-url: 'http://127.0.0.1'
 ######################################
@@ -42,8 +55,8 @@ musaemotion:
   a2a:
     server:
       capabilities:
-        push-notifications: false
-        streaming: false
+        push-notifications: true
+        streaming: true
       skills:
         - id: 'visionSkill'
           name: 'visionSkill'

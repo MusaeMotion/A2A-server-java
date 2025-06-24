@@ -24,6 +24,7 @@ package com.musaemotion.a2a.common.base;
  * @description：请完善描述
  */
 public class FilePart {
+
     private FileBlob inlineData;
 
     public FilePart(FileBlob inlineData) {

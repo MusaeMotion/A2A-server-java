@@ -29,13 +29,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
 import static com.musaemotion.a2a.common.constant.MetaDataKey.INPUT_MESSAGE_ID;
 import static com.musaemotion.a2a.common.constant.MetaDataKey.MESSAGE_ID;
-
 /**
  * @author：contact@musaemotion.com
  * @package：com.musaemotion.a2a.common
@@ -112,6 +112,39 @@ public class Task implements Serializable, IMetadata {
 				.metadata(taskSendParams.getMetadata())
 				.history(Lists.newArrayList(taskSendParams.getMessage()))
 				.build();
+	}
+
+	/**
+	 * 拷贝一个消息对象
+	 */
+	public Task copyNotification(){
+		Task task = new Task();
+		task.setId(this.getId());
+		task.setSessionId(this.getSessionId());
+		task.setMetadata(this.getMetadata());
+		// 清空工件
+		task.setArtifacts(Lists.newArrayList());
+		// 历史记录清空
+		task.setHistory(Lists.newArrayList());
+
+
+		if(this.getStatus()!=null){
+			var taskStatusBuilder = Common.TaskStatus.builder()
+					.state(this.getStatus().getState())
+					.timestamp(this.getStatus().getTimestamp());
+			if(this.getStatus().getMessage()!=null){
+				taskStatusBuilder.message(
+						Common.Message.newMessage(
+								this.getStatus().getMessage().getRole(),
+								Lists.newArrayList(),
+								this.getStatus().getMessage().getMetadata()
+						)
+				);
+			}
+			task.setStatus(taskStatusBuilder.build());
+		}
+
+		return task;
 	}
 
 	/**

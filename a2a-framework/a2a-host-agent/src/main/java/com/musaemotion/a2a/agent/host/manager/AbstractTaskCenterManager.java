@@ -34,11 +34,7 @@ import java.util.List;
  */
 public abstract class AbstractTaskCenterManager {
 
-	/**
-	 * 智能体相互调用过程中，消息id关系，后面选择落库。
-	 */
-	@Getter
-	private Map<String, String> nextId = new HashMap<String, String>();
+
 
 	/**
 	 * 处理工件使用的map

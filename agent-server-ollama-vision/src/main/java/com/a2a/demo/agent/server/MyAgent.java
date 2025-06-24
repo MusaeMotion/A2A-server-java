@@ -16,28 +16,28 @@
 
 package com.a2a.demo.agent.server;
 
-import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.agent.server.agent.*;
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import com.musaemotion.a2a.agent.server.utils.MediaUtils;
+import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.constant.MediaType;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.content.Media;
 import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-public class MyOllamaAgent implements AgentService {
+public class MyAgent implements AgentService {
 
     private ChatClient chatClient;
 
@@ -48,7 +48,7 @@ public class MyOllamaAgent implements AgentService {
      * @param a2aServerProperties
      */
     @Autowired
-    public MyOllamaAgent(OllamaChatModel chatModel, A2aServerProperties a2aServerProperties){
+    public MyAgent(ChatModel chatModel, A2aServerProperties a2aServerProperties){
        this.chatClient = ChatClient.create(chatModel);
        this.a2aServerProperties = a2aServerProperties;
     }
@@ -78,7 +78,25 @@ public class MyOllamaAgent implements AgentService {
      */
     @Override
     public Flux<AgentGeneralResponse> stream(AgentRequest agentRequest) {
-        throw new NotImplementedException("该智能体未实现");
+		// 过滤出文件对象
+		List<Common.FilePart> fileParts = agentRequest.getParts().stream()
+				.filter(item->item instanceof Common.FilePart)
+				.map(item->(Common.FilePart)item).collect(Collectors.toUnmodifiableList());
+
+		List<Media> medias = MediaUtils.filePartToMedia(fileParts);
+
+		return this.chatClient
+				.prompt()
+				.user(u-> u.text(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText())).media(medias.toArray(new Media[0])))
+				.system(AgentResponsePrompt.buildAgentResponseSystem(this.a2aServerProperties.getDescription()+", 请用中文回复核心问题。"))
+				.stream()
+				.chatResponse()
+				.doOnComplete(()->{})
+				.map(chatResponse -> {
+					String content = chatResponse.getResult().getOutput().getText();
+					return AgentGeneralResponse.fromText(content, AgentResponseStatus.WORKING);
+				})
+				.concatWith(Mono.just(AgentGeneralResponse.fromText("", AgentResponseStatus.COMPLETED)));
     }
 
     /**
@@ -103,7 +121,7 @@ public class MyOllamaAgent implements AgentService {
                 .prompt()
                 .user(u-> u.text(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText())).media(medias.toArray(new Media[0])))
                 // 可以使用自己的系统提示词
-                .system(AgentResponsePrompt.buildAgentResponseSystem(a2aServerProperties.getDescription()+", 请用中文回复核心问题。"))
+                .system(AgentResponsePrompt.buildAgentResponseSystem(this.a2aServerProperties.getDescription()+", 请用中文回复核心问题。"))
                 .call().content();
         log.info("结果：{}", content);
         BeanOutputConverter<AgentTextResponse> converter = new BeanOutputConverter<>(AgentTextResponse.class);

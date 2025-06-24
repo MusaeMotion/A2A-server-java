@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.musaemotion.a2a.agent.server.agent.AgentGeneralResponse;
 import com.musaemotion.a2a.agent.server.agent.AgentRequest;
 import com.musaemotion.a2a.agent.server.agent.AgentResponseStatus;
@@ -116,7 +117,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 			if (!isVerified) {
 				return Boolean.FALSE;
 			}
-			// 调用父类的方法设置推送通知信息
+			// 调用父类的方法设置推送通知信息, 发送通知时会检查有配置才可以发送通知
 			return this.setPushNotificationInfoToStore(taskId, notificationConfig);
 
 		} catch (Exception e) {
@@ -137,8 +138,10 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 			return CompletableFuture.completedFuture(null);
 		}
 		Common.PushNotificationConfig pushNotificationConfig = optional.get();
+		// TODO 暂时解决方案 拷贝一个发送消息通知的task 对象，只需要保持任务基础消息，减少消息内容大小
+		Task notiTask = task.copyNotification();
 		ObjectMapper objectMapper = new ObjectMapper();
-		Map<String, Object> map = objectMapper.convertValue(task, TypeFactory.defaultInstance().constructMapType(Map.class, String.class, Object.class));
+		Map<String, Object> map = objectMapper.convertValue(notiTask, TypeFactory.defaultInstance().constructMapType(Map.class, String.class, Object.class));
 		return CompletableFuture.runAsync((Runnable) () -> {
 			this.pushNotificationSenderService.sendPushNotification(pushNotificationConfig.getUrl(), map, this.agentService.agentName());
 		});
@@ -219,7 +222,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 * 如果对应的【任务】不存在则创建一个【任务】
 	 * @param taskSendParams
 	 */
-	protected void upsertTask(TaskSendParams taskSendParams) {
+	protected Task upsertTask(TaskSendParams taskSendParams) {
 
 		Optional<Task> optionalTask = this.getTaskForStore(taskSendParams.getId());
 		Task task = null;
@@ -238,6 +241,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		}
 		// 更新状态
 		this.setTaskToStore(taskSendParams.getId(), task);
+		return task;
 	}
 
 
@@ -247,7 +251,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 * @param agentGeneralResponse
 	 * @return
 	 */
-	protected SendTaskResponse processAgentResponse(SendTaskRequest sendTaskRequest, AgentGeneralResponse agentGeneralResponse) {
+	protected SendTaskResponse onSendTaskProcessAgentResponse(SendTaskRequest sendTaskRequest, AgentGeneralResponse agentGeneralResponse) {
 		TaskSendParams taskSendParams = sendTaskRequest.getParams();
 		String taskId = taskSendParams.getId();
 		Integer historyLength = taskSendParams.getHistoryLength();
@@ -272,10 +276,15 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 				taskStatus,
 				artifacts.size() > 0 ? artifacts : null
 		);
-		// 追加历史信息
-		Task taskResult = this.appendTaskHistory(task, historyLength);
+
 		// 发送通知
 		this.sendTaskNotification(task);
+
+		// 追加历史信息
+		Task taskResult = this.appendTaskHistory(task, historyLength);
+
+        // 存储当前任务状态
+		this.setTaskToStore(taskSendParams.getId(), task);
 		// 返回追加后task
 		return SendTaskResponse.buildResponse(sendTaskRequest.getId(), taskResult);
 	}
@@ -287,7 +296,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 * @param artifacts
 	 * @return
 	 */
-	private Common.TaskStatus buildTaskStatus(
+	private Common.TaskStatus onSendTaskSubscribeBuildTaskStatus(
 			String taskId,
 			AgentGeneralResponse agentGeneralResponse,
 			List<Common.Artifact> artifacts) {
@@ -318,7 +327,8 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		// 发送通知消息
 		this.sendTaskNotification(task);
 
-
+		// 存储当前任务状态
+		this.setTaskToStore(taskId, task);
 		return taskStatus;
 	}
 
@@ -435,18 +445,10 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 			return optionalError.get();
 		}
 		// 更新插入任务
-		this.upsertTask(request.getParams());
+		Task task = this.upsertTask(request.getParams());
 
-		// 验证设置通知配置
+        // 验证设置通知配置
 		var params = request.getParams();
-
-		// 更新任务状态
-		Task task = this.updateTask(
-				params.getId(),
-				Common.TaskStatus.builder().state(TaskState.WORKING).build(),
-				Lists.newArrayList()
-		);
-
 		// 任务发起智能体推送通知配置存在并且该智能支持推动
 		if (params.getPushNotification() != null && this.a2aServerProperties.getCapabilities().pushNotifications()) {
 			//设置推送配置信息，并且验证消息服务器是否可用
@@ -457,7 +459,16 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 			this.sendTaskNotification(task);
 		}
 
-		String query = PartUtils.getTextContent(params.getMessage());
+		// 更新任务状态
+		task = this.updateTask(
+				params.getId(),
+				Common.TaskStatus.builder().state(TaskState.WORKING).build(),
+				Lists.newArrayList()
+		);
+
+
+
+		String query = PartUtils.messagePartsToString(params.getMessage());
 
 		try {
 			// 智能体调用
@@ -467,7 +478,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 					.parts(params.getMessage().getParts())
 					.build());
 
-			return this.processAgentResponse(request, result);
+			return this.onSendTaskProcessAgentResponse(request, result);
 		} catch (Exception e) {
 			log.error("Error invoking agent: ", e.getMessage());
 			throw new RuntimeException("Error invoking agent: " + e.getMessage());
@@ -506,7 +517,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 			return Flux.just(optionalError.get());
 		}
 		// 保存任务, 任务状态是提交中
-		this.upsertTask(request.getParams());
+		Task task = this.upsertTask(request.getParams());
 
 		// 验证设置通知配置
 		TaskSendParams params = request.getParams();
@@ -515,8 +526,11 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 				// 通知报错，则返回了异常
 				return Flux.just(SendTaskResponse.buildInvalidParamsError(request.getId(), new InvalidParamsError("Push notification URL is invalid")));
 			}
+			// 发送通知 TaskState.SUBMITTED
+			this.sendTaskNotification(task);
 		}
-		String query = PartUtils.getTextContent(params.getMessage());
+
+		String query = PartUtils.messagePartsToString(params.getMessage());
 		return Flux.create(fluxSink -> {
 
 			ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -543,24 +557,21 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 								} catch (JsonProcessingException e) {
 									throw new RuntimeException(e);
 								}
-                                /*
-                                不需要实时提交内容
-                                CommonModel.TaskStatus taskStatus = this.buildTaskStatus(
-                                        params.getId(),
-                                        buffer.toString(),
-                                        Lists.newArrayList(),
-                                        AgentResponseStatus.WORKING
-                                );
 
-                                // 更新事件
-                                var taskUpdateEvent = TaskStatusUpdateEvent.builder()
-                                        .status(taskStatus)
-                                        .id(params.getId())
-                                        .done(Boolean.FALSE)
-                                        .build();
+								// 生产出工件流返回响应
+								TaskArtifactUpdateEvent taskArtifactUpdateEvent = TaskArtifactUpdateEvent.builder()
+										.id(params.getId())
+										.artifact(Common.Artifact.builder()
+												.parts(agentResponse.getParts())
+												.append(Boolean.TRUE)
+												.lastChunk(Boolean.FALSE)
+												.metadata(Maps.newHashMap())
+												.build()
+										)
+										.build();
+								fluxSink.next(SendTaskStreamingResponse.buildResponse(request.getId(), taskArtifactUpdateEvent));
 
-                                fluxSink.next(SendTaskStreamingResponse.buildResponse(params.getId(), taskUpdateEvent));
-                                 */
+
 							},
 							err -> {
 								log.error("出现错误：{}", err.getMessage());
@@ -579,7 +590,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 								if (agentGeneralResponse != null) {
 									List<Common.Artifact> artifacts = Lists.newArrayList();
 									// 获取content 里面的内容
-									Common.TaskStatus taskStatus = this.buildTaskStatus(
+									Common.TaskStatus taskStatus = this.onSendTaskSubscribeBuildTaskStatus(
 											params.getId(),
 											agentGeneralResponse,
 											artifacts
@@ -600,7 +611,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 											.build();
 
 									fluxSink.next(SendTaskStreamingResponse.buildResponse(request.getId(), taskStatusUpdateEvent));
-								}else{
+								} else {
 									log.error("智能体未按照要求返回");
 									fluxSink.next(
 											SendTaskStreamingResponse.buildErrorResponse(

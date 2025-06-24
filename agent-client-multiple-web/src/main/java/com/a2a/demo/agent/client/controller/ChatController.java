@@ -18,21 +18,30 @@ package com.a2a.demo.agent.client.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.musaemotion.a2a.agent.host.constant.AppEventType;
+import com.musaemotion.a2a.agent.host.event.AgentAppEvent;
 import com.musaemotion.a2a.agent.host.manager.SseEmitterManager;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
+import com.musaemotion.a2a.agent.host.model.AgentRunningStreamModel;
 import com.musaemotion.a2a.agent.host.model.response.Result;
 import com.musaemotion.a2a.agent.host.model.response.SendMessageResponse;
 import com.musaemotion.a2a.agent.host.manager.ChatManager;
 import com.musaemotion.a2a.common.base.Task;
+import com.musaemotion.a2a.common.constant.MetaDataKey;
 import com.musaemotion.agent.model.SendMessageRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -54,16 +63,34 @@ public class ChatController {
     private final ChatManager chatManager;
 
 	/**
+	 * 对象映射转换器
+	 */
+	private ObjectMapper mapper = new ObjectMapper();
+
+	/**
 	 * 通知监听
 	 * @param event
 	 */
 	@EventListener
-	public void handleNotification(String event) throws JsonProcessingException {
-		ObjectMapper mapper = new ObjectMapper();
-		Task task = mapper.readValue(event, Task.class);
-		log.info("收到消息: {}", event);
-		// 删除删除通知sse
-		SseEmitterManager.pushData(task.getSessionId(), task.getInputMessageId() , event);
+	public void handleNotification(AgentAppEvent event) throws JsonProcessingException {
+		// 通知消息
+		if (event.getEventType().equals(AppEventType.NOTIFICATION)) {
+			Task task = mapper.readValue(event.getMessage(), Task.class);
+			SseEmitterManager.pushData(task.getSessionId(), task.getInputMessageId(), AppEventType.NOTIFICATION.name(), event.getAgentName(), event.getMessage());
+		}
+		// 运行流内容
+		if (event.getEventType().equals(AppEventType.RUNNING)) {
+			AgentRunningStreamModel runningStreamModel = mapper.readValue(event.getMessage(), AgentRunningStreamModel.class);
+			Map<String, String> data = new HashMap<>();
+			data.put("text", runningStreamModel.getText());
+			SseEmitterManager.pushData(
+					runningStreamModel.getMetadata().get(MetaDataKey.CONVERSATION_ID).toString(),
+					runningStreamModel.getMetadata().get(MetaDataKey.INPUT_MESSAGE_ID).toString(),
+					AppEventType.RUNNING.name(),
+					event.getAgentName(),
+					new Gson().toJson(data)
+			);
+		}
 	}
 
 	/**

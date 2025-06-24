@@ -18,6 +18,7 @@ package com.musaemotion.a2a.agent.server;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -26,7 +27,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @ComponentScan("com.musaemotion.a2a.agent.server")
 @RequiredArgsConstructor
-@EnableJpaRepositories
+@EntityScan(basePackages = "com.musaemotion.a2a.agent.server.entity")
+@EnableJpaRepositories("com.musaemotion.a2a.agent.server.repository")
 @EnableTransactionManagement
 public class AgentServerMysqlJapAutoConfiguration {
 

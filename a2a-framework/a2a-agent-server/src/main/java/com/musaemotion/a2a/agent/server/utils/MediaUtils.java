@@ -43,22 +43,19 @@ public class MediaUtils {
 	 */
 	public static List<Media> filePartToMedia(List<Common.FilePart> fileParts) {
         List<Media> medias = new ArrayList<>();
-
         fileParts.forEach(filePart->{
             Common.FileContent fileContent = filePart.getFile();
             if (StringUtils.hasText(fileContent.getUri())) {
-
 				medias.add(Media.builder()
 						.mimeType(new MimeType(filePart.getType()))
 						.data(URI.create(fileContent.getUri()))
 						.build());
-
             }
             if (StringUtils.hasText(fileContent.getBytes())) {
                 int commaIndex = fileContent.getBytes().indexOf(',');
                 byte[] decodedBytes;
                 if (commaIndex == -1) {
-                    decodedBytes =  DatatypeConverter.parseBase64Binary(fileContent.getBytes());
+                    decodedBytes = DatatypeConverter.parseBase64Binary(fileContent.getBytes());
                 } else {
                     decodedBytes = DatatypeConverter.parseBase64Binary(fileContent.getBytes().substring(commaIndex + 1));
                 }
