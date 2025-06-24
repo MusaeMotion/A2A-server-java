@@ -96,7 +96,7 @@ public class HostAgent {
 	/**
 	 * spring ai chatModel
 	 */
-	private ChatModelProvider ChatModelProvider;
+	private ChatModelProvider chatModelProvider;
 
 	/**
 	 * Agent Card 管理服务
@@ -132,14 +132,14 @@ public class HostAgent {
 	 * @param remoteAgentAddresses
 	 * @param callback
 	 * @param pushNotificationServer
-	 * @param ChatModelProvider
+	 * @param chatModelProvider
 	 */
-	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModelProvider ChatModelProvider, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, AgentPromptProvider agentPromptProvider, ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
+	public HostAgent(List<String> remoteAgentAddresses, SendTaskCallbackHandle callback, PushNotificationServer pushNotificationServer, ChatModelProvider chatModelProvider, AbstractRemoteAgentManager remoteAgentManager, AbstractTaskCenterManager taskCenterManager, AbstractMessageManager messageManager, AgentPromptProvider agentPromptProvider, ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
 		this.remoteAgentAddresses = remoteAgentAddresses;
 		this.callback = callback;
 		this.remoteAgentManager = remoteAgentManager;
 		this.pushNotificationServer = pushNotificationServer;
-		this.ChatModelProvider = ChatModelProvider;
+		this.chatModelProvider = chatModelProvider;
 		this.taskCenterManager = taskCenterManager;
 		this.messageManager = messageManager;
 		this.observationRegistry = observationRegistry;
@@ -153,7 +153,7 @@ public class HostAgent {
 	 * 创建host智能体
 	 */
 	private void createHostAgent() {
-		Assert.notNull(this.ChatModelProvider, "chatModelProvider must not be null");
+		Assert.notNull(this.chatModelProvider, "chatModelProvider must not be null");
 
 		ToolCallback[] toolCallbacks = ToolCallbacks.from(this);
 		this.basisAgent = BasisAgent.builder()
@@ -166,7 +166,7 @@ public class HostAgent {
 				// 读取两条记忆
 				.chatMemorySize(5)
 				.chatMemoryRepository(this.chatMemoryRepository)
-				.chatClient(ChatClient.create(this.ChatModelProvider.getChatModel(), this.observationRegistry))
+				.chatClient(ChatClient.create(this.chatModelProvider.getChatModel(), this.observationRegistry))
 				.observationRegistry(this.observationRegistry)
 				.agentPromptProvider(this.agentPromptProvider)
 				.toolCallbacks(Arrays.stream(toolCallbacks).toList())
@@ -328,7 +328,7 @@ public class HostAgent {
 		Task result = client.sendTask(request, this.callback);
 
 		var response = this.sendAfter(request, result, state,  agentName);
-        log.error("sendTask:{}", response.toString());
+        log.info("sendTask:{}", response.toString());
 		return response;
 	}
 
@@ -368,6 +368,7 @@ public class HostAgent {
 		messageMetadata.put(INPUT_MESSAGE_ID, inputMetadata.get(MESSAGE_ID));
 		messageMetadata.put(CONVERSATION_ID, conversationId);
 		messageMetadata.put(MESSAGE_ID, messageId);
+
 
 		// 创建发送给远程智能体的消息内容。
 		List<Common.Part> parts = Lists.newArrayList();
@@ -488,7 +489,7 @@ public class HostAgent {
 		// 当前智能体执行完成
 		state.put(SESSION_ACTIVE, Boolean.FALSE);
 
-		log.error("当前运行智能体: {}", state.get(CUR_AGENT_NAME));
+		log.info("当前运行智能体: {}", state.get(CUR_AGENT_NAME));
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		return objectMapper.writeValueAsString(response);

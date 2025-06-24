@@ -29,20 +29,9 @@ import org.springframework.context.annotation.ComponentScan;
 @RequiredArgsConstructor
 public class AgentServerSentimentAnalysisApplication {
 
-  private final MyOllamaAgent agent;
-
-  private final PushNotificationSenderService pushNotificationSenderService;
-
-  private final A2aServerProperties serverProperties;
 
   public static void main(String[] args) {
     SpringApplication.run(AgentServerSentimentAnalysisApplication.class, args);
   }
-
-  @Bean
-  public MyTaskManager taskManager() {
-    return new MyTaskManager(this.agent, this.pushNotificationSenderService,this.serverProperties);
-  }
-
 
 }

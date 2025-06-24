@@ -19,6 +19,7 @@ package com.musaemotion.a2a.agent.client.notification;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.musaemotion.a2a.agent.client.VerifyPushNotificationDto;
 import com.nimbusds.jose.KeySourceException;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.JWK;
@@ -108,62 +109,62 @@ public class PushNotificationReceiverAuth extends PushNotificationAuth {
      * @return
      * @throws Exception
      */
-    public boolean verifyPushNotification(String rawAuthHeader, String rawRequestBody) throws Exception {
+    public VerifyPushNotificationDto verifyPushNotification(String rawAuthHeader, String rawRequestBody) throws Exception {
 
-        if(!StringUtils.hasText(rawAuthHeader) || !rawAuthHeader.startsWith(AUTH_HEADER_PREFIX)) {
-            return Boolean.FALSE;
-        }
+		if (!StringUtils.hasText(rawAuthHeader) || !rawAuthHeader.startsWith(AUTH_HEADER_PREFIX)) {
+			return VerifyPushNotificationDto.builder().success(false).agentName("").build();
+		}
 
-        // 获取 token
-        String jwtToken = rawAuthHeader.substring(AUTH_HEADER_PREFIX.length()).trim();
+		// 获取 token
+		String jwtToken = rawAuthHeader.substring(AUTH_HEADER_PREFIX.length()).trim();
 
-        // 把 token 转换成 签名jwt 对象
-        SignedJWT signedJWT = SignedJWT.parse(jwtToken);
+		// 把 token 转换成 签名jwt 对象
+		SignedJWT signedJWT = SignedJWT.parse(jwtToken);
 
-        // 获取到对应的 jwk 信息
-        List<JWK> matchingJwk = this.getCurJwk(signedJWT);
+		// 获取到对应的 jwk 信息
+		List<JWK> matchingJwk = this.getCurJwk(signedJWT);
 
-        // 为找到，抛出异常
-        if (matchingJwk.isEmpty()) {
-            throw new RuntimeException("No matching JWK found");
-        }
+		// 为找到，抛出异常
+		if (matchingJwk.isEmpty()) {
+			throw new RuntimeException("No matching JWK found");
+		}
 
-        // 找到，判断是不是 RSK Key
-        JWK selectedJwk = matchingJwk.get(0);
-        if (!(selectedJwk instanceof RSAKey)) {
-            throw new RuntimeException("Selected JWK is not an RSA key");
-        }
+		// 找到，判断是不是 RSK Key
+		JWK selectedJwk = matchingJwk.get(0);
+		if (!(selectedJwk instanceof RSAKey)) {
+			throw new RuntimeException("Selected JWK is not an RSA key");
+		}
 
-        // 把找到的Jwk 信息强制转换成 RSAKey
-        RSAKey rsaKey = (RSAKey) selectedJwk;
+		// 把找到的Jwk 信息强制转换成 RSAKey
+		RSAKey rsaKey = (RSAKey) selectedJwk;
 
-        // 验证 从 jwkSource 获取到的 jwk 信息 与 jwtToken 构建的signedJWT, 进行签名验证。
-        Boolean verify = signedJWT.verify(new RSASSAVerifier(rsaKey));
+		// 验证 从 jwkSource 获取到的 jwk 信息 与 jwtToken 构建的signedJWT, 进行签名验证。
+		Boolean verify = signedJWT.verify(new RSASSAVerifier(rsaKey));
 
-        if(!verify) {
-            // 签名验证不通过
-            log.warn("Push notification not verified");
-            return Boolean.FALSE;
-        }
-        // 判断token是否过期
-        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-        // 验证请求体的 SHA256 哈希值
-        String requestBodySha256 = calculateRequestBodySha256(rawRequestBody);
-        String tokenRequestBodySha256 = claimsSet.getStringClaim(CLAIM_BODY);
-        // 验证 body 是否通过
-        if (!requestBodySha256.equals(tokenRequestBodySha256)) {
-            throw new IllegalArgumentException("Invalid request body");
-        }
+		if (!verify) {
+			// 签名验证不通过
+			log.warn("Push notification not verified");
+			return VerifyPushNotificationDto.builder().success(false).agentName("").build();
+		}
+		// 判断token是否过期
+		JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+		// 验证请求体的 SHA256 哈希值
+		String requestBodySha256 = calculateRequestBodySha256(rawRequestBody);
+		String tokenRequestBodySha256 = claimsSet.getStringClaim(CLAIM_BODY);
+		// 验证 body 是否通过
+		if (!requestBodySha256.equals(tokenRequestBodySha256)) {
+			throw new IllegalArgumentException("Invalid request body");
+		}
 
-        Date iat = claimsSet.getDateClaim(CLAIM_TIME);
-        Date currentTime =  new Date();
-        long differenceInMillis = Math.abs(currentTime.getTime() - iat.getTime());
-        long fiveMinutesInMillis = 5 * 60 * 1000; // 5 minutes in milliseconds
+		Date iat = claimsSet.getDateClaim(CLAIM_TIME);
+		Date currentTime = new Date();
+		long differenceInMillis = Math.abs(currentTime.getTime() - iat.getTime());
+		long fiveMinutesInMillis = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-        if (differenceInMillis > fiveMinutesInMillis) {
-            throw new IllegalArgumentException("Token is expired");
-        }
-
-        return Boolean.TRUE;
-    }
+		if (differenceInMillis > fiveMinutesInMillis) {
+			throw new IllegalArgumentException("Token is expired");
+		}
+		Object claimAgentName = signedJWT.getJWTClaimsSet().getClaim(CLAIM_AGENT_NAME);
+		return VerifyPushNotificationDto.builder().success(true).agentName(claimAgentName != null ? claimAgentName.toString() : "").build();
+	}
 }

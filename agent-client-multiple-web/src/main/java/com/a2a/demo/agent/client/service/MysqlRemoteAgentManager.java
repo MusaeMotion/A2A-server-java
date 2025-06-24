@@ -21,6 +21,7 @@ import com.a2a.demo.agent.client.dto.SearchRemoteAgent;
 import com.a2a.demo.agent.client.entity.RemoteAgentEntity;
 import com.a2a.demo.agent.client.repository.RemoteAgentRepository;
 import com.google.common.collect.Lists;
+import com.musaemotion.a2a.agent.host.listener.RemoteAgentRunningStreamPublisher;
 import com.musaemotion.a2a.agent.host.manager.AbstractRemoteAgentManager;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.utils.GuidUtils;
@@ -56,8 +57,14 @@ public class MysqlRemoteAgentManager extends AbstractRemoteAgentManager<AgentCar
 
     private RemoteAgentRepository repository;
 
+	/**
+	 *
+	 * @param repository
+	 * @param runningStreamListeners
+	 */
     @Autowired
-    public MysqlRemoteAgentManager(RemoteAgentRepository repository){
+    public MysqlRemoteAgentManager(RemoteAgentRepository repository, List<RemoteAgentRunningStreamPublisher> runningStreamListeners){
+		super(runningStreamListeners);
         this.repository = repository;
     }
 

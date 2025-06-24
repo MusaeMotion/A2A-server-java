@@ -42,11 +42,6 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 	 */
 	@Override
 	public void sendTaskCallback(Task newTask) {
-
-
-		// 添加消息栈关系，消息之间前后关系
-		this.insertIdTrace(newTask.getStatus().getMessage());
-
 		Optional<Task> optionalTask = this.taskCenterManager.getById(newTask.getId());
 		if (optionalTask.isPresent()) {
 			Task oldTask = optionalTask.get();
@@ -76,11 +71,10 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 	public void sendTaskCallback(TaskStatusUpdateEvent taskStatusUpdateEvent) {
 
 		Task oleTask = this.addOrGetTask(taskStatusUpdateEvent);
+
         // 这里会通知完成
 		oleTask.setStatus(taskStatusUpdateEvent.getStatus());
 
-		// 添加消息栈关系，消息之间前后关系
-		this.insertIdTrace(taskStatusUpdateEvent.getStatus().getMessage());
 		// 给当前任务添加历史记录
 		this.insertMessageHistory(oleTask, taskStatusUpdateEvent.getStatus().getMessage());
 
@@ -103,22 +97,6 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 
 
 	/**
-	 * 消息栈
-	 * @param message
-	 */
-	private void insertIdTrace(Common.Message message) {
-		if (message == null) {
-			return;
-		}
-		String messageId = message.getMessageId();
-		String lastMessageId = message.getLastMessageId();
-		if (messageId != null && lastMessageId != null) {
-			// 建立上一条和下一条的关系
-			this.taskCenterManager.getNextId().put(lastMessageId, messageId);
-		}
-	}
-
-	/**
 	 * 状态更新，有可能是初始化创建
 	 * @param input
 	 * @return
@@ -139,7 +117,6 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 			this.taskCenterManager.addTask(newTask);
 			return newTask;
 		}
-
 		return optionalTask.get();
 	}
 

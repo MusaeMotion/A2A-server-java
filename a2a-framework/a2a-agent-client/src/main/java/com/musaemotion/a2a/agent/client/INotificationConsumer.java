@@ -8,5 +8,10 @@ package com.musaemotion.a2a.agent.client;
  */
 public interface INotificationConsumer {
 
-	void processMessage(String message);
+	/**
+	 *
+	 * @param message
+	 * @param agentName
+	 */
+	void processMessage(String message,String agentName);
 }

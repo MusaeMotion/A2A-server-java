@@ -36,7 +36,7 @@ import org.springframework.context.annotation.ComponentScan;
 @RequiredArgsConstructor
 public class AgentServerVisionApplication {
 
-    private final MyOllamaAgent agent;
+    private final MyAgent agent;
 
     private final PushNotificationSenderService pushNotificationSenderService;
 

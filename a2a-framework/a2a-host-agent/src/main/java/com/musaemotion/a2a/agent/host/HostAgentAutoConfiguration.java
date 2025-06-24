@@ -44,6 +44,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -79,12 +80,13 @@ public class HostAgentAutoConfiguration {
      */
     @Bean("pushNotificationServer")
     @ConditionalOnProperty(name = "musaemotion.a2a.host-agent.notify-url")
-    public PushNotificationServer pushNotificationServer(@Autowired A2aHostAgentProperties a2aHostAgentProperties, @Autowired INotificationConsumer notificationConsumer) throws URISyntaxException, UnknownHostException {
+    public PushNotificationServer pushNotificationServer(@Autowired A2aHostAgentProperties a2aHostAgentProperties, @Autowired List<INotificationConsumer> notificationConsumers) throws URISyntaxException, UnknownHostException {
         URI uri = new URI(a2aHostAgentProperties.getNotifyUrl());
         PushNotificationServer pushNotificationServer = new PushNotificationServer(
                 InetAddress.getByName(uri.getHost()),
                 uri.getPort(),
-				notificationConsumer,
+				// 默认通知消费者，会调用 ApplicationEventPublisher 消息 ,demo host-agent项目 ChatController 有处理该消息的示例，推送给前端。
+				notificationConsumers,
 				a2aHostAgentProperties.getExternalUrl()
         );
         ExecutorService executorService = Executors.newSingleThreadExecutor();

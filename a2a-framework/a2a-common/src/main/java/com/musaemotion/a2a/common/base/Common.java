@@ -46,7 +46,7 @@ public class Common {
 
 
 	/**
-	 * 消息内容分片，文本，文件，数据，返回工件，和请求消息体内容载体
+	 * 实际内容载体对象，文件、文本、数据。
 	 */
 	@Data
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -57,23 +57,26 @@ public class Common {
 	})
 	public static abstract class Part implements Serializable {
 		/**
-		 * Part类型
+		 * 载体类型
 		 */
 		protected String type;
+
 		/**
-		 * map
+		 * 载体其他信息
 		 */
 		private Map<String, Object> metadata;
 
 	}
 
 	/**
-	 * 文本消息
+	 * 消息文本部分
 	 */
 	@Data
 	@EqualsAndHashCode(callSuper=true)
 	public static class TextPart extends Part {
+		// 文本内容
 		private String text;
+
 		public TextPart() {
 			this.type = "text";
 			this.text = "";
@@ -90,12 +93,12 @@ public class Common {
 	}
 
 	/**
-	 * 文件消息
+	 * 消息文件部分
 	 */
 	@Data
 	@EqualsAndHashCode(callSuper=true)
 	public static class FilePart extends Part {
-
+		// 文件内容
 		private FileContent file;
 
 		public FilePart() {
@@ -110,7 +113,6 @@ public class Common {
 		public String toString() {
 			return this.file.bytes;
 		}
-
 
 		public static FilePart newFilePart(FileContent file) {
 			return new FilePart(file);
@@ -148,7 +150,9 @@ public class Common {
 	@Data
 	@EqualsAndHashCode(callSuper=true)
 	public static class DataPart extends Part {
+		// data 内容
 		private Map<String, Object> data;
+
 		public DataPart() {
 			this.type = "data";
 			this.data = new HashMap<>();
@@ -200,7 +204,7 @@ public class Common {
 	}
 
 	/**
-	 * 请求消息
+	 * 消息格式
 	 */
 	@Data
 	@Builder
@@ -308,7 +312,7 @@ public class Common {
 	}
 
 	/**
-	 * 产物，生产出来的内容，产出的内容载体，响应通过这个处理
+	 * 产物工件，远程智能体返回的内容载体（由Part组成）
 	 */
 	@Data
 	@Builder

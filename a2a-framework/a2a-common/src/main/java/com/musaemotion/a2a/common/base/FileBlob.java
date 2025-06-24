@@ -24,7 +24,9 @@ package com.musaemotion.a2a.common.base;
  * @description：请完善描述
  */
 public class FileBlob {
+
     private String mimeType;
+
     private byte[] data;
 
     public FileBlob(String mimeType, byte[] data) {

@@ -16,28 +16,37 @@
 
 package com.musaemotion.a2a.agent.client.server;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.musaemotion.a2a.agent.client.INotificationConsumer;
+import com.musaemotion.a2a.agent.client.VerifyPushNotificationDto;
 import com.musaemotion.a2a.agent.client.notification.PushNotificationReceiverAuth;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.embedded.netty.NettyReactiveWebServerFactory;
 import org.springframework.boot.web.reactive.server.AbstractReactiveWebServerFactory;
 import org.springframework.boot.web.reactive.server.ReactiveWebServerFactory;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferLimitException;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.server.reactive.HttpHandler;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import static com.musaemotion.a2a.common.notification.PushNotificationAuth.AUTH_HEADER_NAME;
 
@@ -72,8 +81,8 @@ public class PushNotificationServer {
     // 智能体名称和智能体url对
     private Map<String, String> agentUrls;
 
-    // 消息消费者
-	private INotificationConsumer notificationConsumer;
+    // 消息消费者列表，可以注册多个消费者
+	private List<INotificationConsumer> notificationConsumers;
 
 	// 外部通知地址
 	private String externalUrl;
@@ -82,11 +91,11 @@ public class PushNotificationServer {
      * @param host 通知服务的host
      * @param port 通知服务的端口
      */
-    public PushNotificationServer(InetAddress host, int port, INotificationConsumer notificationConsumer, String externalUrl) {
+    public PushNotificationServer(InetAddress host, int port, List<INotificationConsumer> notificationConsumers, String externalUrl) {
         this.host = host;
         this.port = port;
         this.agentUrls = Maps.newHashMap();
-		this.notificationConsumer = notificationConsumer;
+		this.notificationConsumers = notificationConsumers;
 		this.externalUrl = externalUrl;
     }
 
@@ -113,6 +122,7 @@ public class PushNotificationServer {
      * 启动web服务
      */
     public void strat()  {
+
         HttpHandler httpHandler = RouterFunctions.toHttpHandler(this.notificationRoutes());
         ReactiveWebServerFactory factory = null;
         try {
@@ -140,10 +150,10 @@ public class PushNotificationServer {
      * @return
      */
     public RouterFunction<ServerResponse> notificationRoutes() {
-        return RouterFunctions.route()
-                .GET(NOTIFY_PATH, this::handleValidationCheck)
-                .POST(NOTIFY_PATH, this::handleNotification)
-                .build();
+		return RouterFunctions.route()
+				.GET(NOTIFY_PATH, this::handleValidationCheck)
+				.POST(NOTIFY_PATH, this::handleNotification)
+				.build();
     }
 
     /**
@@ -159,38 +169,61 @@ public class PushNotificationServer {
         return ServerResponse.ok().contentType(MediaType.TEXT_PLAIN).bodyValue(validationToken);
     }
 
-    /**
-     * 处理通知
-     * @param request
-     * @return
-     */
-    private Mono<ServerResponse> handleNotification(ServerRequest request) {
-        return request.bodyToMono(String.class)
-                .flatMap(data -> {
-                    String authHeader = request.headers().firstHeader(AUTH_HEADER_NAME);
-                    Boolean valid = Boolean.FALSE;
-                    try {
-                        valid = this.pushNotificationReceiverAuth.verifyPushNotification(authHeader, data);
-                    } catch (Exception e) {
-                        log.error("处理通知出现错误: {}", e.getMessage());
-                        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                    }
-                    if (valid) {
-						if (notificationConsumer != null) {
-							notificationConsumer.processMessage(data);
-						}
-						return ServerResponse.ok().build();
-					}
-                    log.warn("签名验证失败，接受到推送过来的数据 => {} ", data);
-                    return ServerResponse.status(HttpStatus.UNAUTHORIZED).build();
 
-                })
-                .onErrorResume(e -> {
-                    log.error("error verifying push notification: {}", e.getMessage());
-                    e.printStackTrace();
-                    return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                });
-    }
+	/**
+	 * 处理通知
+	 * @param request
+	 * @return
+	 */
+	private Mono<ServerResponse> handleNotification(ServerRequest request) {
+		return request.bodyToMono(String.class)
+				.flatMap(data -> verifyAndProcessNotification(request, data))
+				.onErrorResume(e -> {
+					log.error("Error verifying push notification: {}", e.getMessage());
+					return handleNotificationError(e);
+				});
+	}
+	/**
+	 * 处理错误
+	 * @param e
+	 * @return
+	 */
+	private Mono<ServerResponse> handleNotificationError(Throwable e) {
+		return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+	}
+	/**
+	 * 验证并处理通知
+	 * @param request
+	 * @param data
+	 * @return
+	 */
+	private Mono<ServerResponse> verifyAndProcessNotification(ServerRequest request, String data) {
+		String authHeader = request.headers().firstHeader(AUTH_HEADER_NAME);
+		try {
+			VerifyPushNotificationDto verifyPushNotification = this.pushNotificationReceiverAuth.verifyPushNotification(authHeader, data);
+			if (verifyPushNotification.getSuccess()) {
+				this.processNotification(data, verifyPushNotification.getAgentName());
+				return ServerResponse.ok().build();
+			} else {
+				log.warn("Signature verification failed for push notification data: {}", data);
+				return ServerResponse.status(HttpStatus.UNAUTHORIZED).build();
+			}
+		} catch (Exception e) {
+			log.error("Error during push notification verification: {}", e.getMessage());
+			return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
+	/**
+	 * 处理通知数据
+	 * @param data
+	 */
+	private void processNotification(String data, String agentName) {
+		if (!CollectionUtils.isEmpty(this.notificationConsumers)) {
+			this.notificationConsumers.forEach(c -> c.processMessage(data, agentName));
+		}
+	}
+
 
     /**
      * 创建一个Netty服务 Undertow 服务其实也可以

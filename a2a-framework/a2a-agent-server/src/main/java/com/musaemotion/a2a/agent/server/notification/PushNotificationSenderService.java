@@ -200,11 +200,11 @@ public class PushNotificationSenderService extends PushNotificationAuth {
                 StringEntity requestEntity = new StringEntity(new ObjectMapper().writeValueAsString(data), StandardCharsets.UTF_8);
                 requestEntity.setContentType("application/json;charset=UTF-8");
                 request.setEntity(requestEntity);
-
+                // log.info("发送的内容: {}", data);
                 try (CloseableHttpResponse response = httpClient.execute(request)) {
-                    // 签名验证失败
+                    // 消息发送状态
                     if (response.getStatusLine().getStatusCode() >= 400) {
-                        log.info("Error sending push-notification for URL {}: {}", url, response.getStatusLine().getReasonPhrase());
+                        log.info("Error sending push-notification for URL {}: {}, statusCode: {} ", url, response.getStatusLine().getReasonPhrase(), response.getStatusLine().getStatusCode());
                     } else {
                         // 完成正常推送
                         log.info("Push-notification sent for URL: {}", url);

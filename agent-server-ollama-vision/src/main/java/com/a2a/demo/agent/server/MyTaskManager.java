@@ -28,7 +28,7 @@ public class MyTaskManager extends InMemoryTaskManager {
      * agent 实现该接口 AgentService
      * @param agent
      */
-    public MyTaskManager(MyOllamaAgent agent, PushNotificationSenderService pushNotificationSenderService, A2aServerProperties serverProperties) {
+    public MyTaskManager(MyAgent agent, PushNotificationSenderService pushNotificationSenderService, A2aServerProperties serverProperties) {
         super(agent, pushNotificationSenderService, serverProperties);
     }
 }
