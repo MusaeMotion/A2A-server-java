@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.musaemotion.a2a.common.constant.ArtifactDataKey;
 import com.musaemotion.a2a.common.base.Common;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -36,28 +37,37 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PartUtils {
 
+	/**
+	 * 获取第一条文本消息内容
+	 * @param parts
+	 * @return
+	 */
+	public static String getFirstOneTextContentByParts(List<Common.Part> parts) {
+		var op = parts.stream().filter(item -> item instanceof Common.TextPart).findFirst();
+		if (op.isPresent()) {
+			return ((Common.TextPart) op.get()).getText();
+		}
+		return StringUtils.EMPTY;
+	}
 
 	/**
-	 * 从message消息里获取一条TextPart 的文本内容消息
+	 * 消息里的parts 转 string
 	 * @param message
 	 * @return
 	 */
-	public static String getFirstOneTextContentByMessage(Common.Message message) {
-		var op =  message.getParts().stream().filter(item->item instanceof Common.TextPart).findFirst();
-		if(op.isPresent()) {
-			String text = ((Common.TextPart)op.get()).getText();
-			Map<String, Object> fileMap = firstOneFilePartToMapByParts(message.getParts());
-			if(fileMap.size()>0){
-				ObjectMapper mapper = new ObjectMapper();
-				try {
-					text+=" \n 附件信息如下：\n "+ mapper.writeValueAsString(fileMap);
-				} catch (JsonProcessingException e) {
-					throw new RuntimeException(e);
-				}
+	public static String messagePartsToString(Common.Message message) {
+		var text = getFirstOneTextContentByParts(message.getParts());
+		// 包装附件内容
+		Map<String, Object> fileMap = firstOneFilePartToMapByParts(message.getParts());
+		if (fileMap.size() > 0) {
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				text += " \n 附件信息如下：\n " + mapper.writeValueAsString(fileMap);
+			} catch (JsonProcessingException e) {
+				throw new RuntimeException(e);
 			}
-			return text;
 		}
-		throw new RuntimeException("没有找到TextPart对象");
+		return text;
 	}
 
 	/**

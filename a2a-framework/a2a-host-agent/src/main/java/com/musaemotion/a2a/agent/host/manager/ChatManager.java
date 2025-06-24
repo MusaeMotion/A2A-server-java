@@ -218,12 +218,9 @@ public class ChatManager {
 					.metadata(assistantMessage.getMetadata())
 					.parts(Lists.newArrayList())
 					.build();
-			// 表示输出结果，直接结束，表示完成STOP
-			assistantMessage.getMetadata().put("finishReason", "STOP");
+			// TODO assistantMessage.getMetadata().put("finishReason", "STOP");
 			try {
 				JsonNode jsonNode = new ObjectMapper().readTree(assistantMessage.getText());
-
-
 				Common.Message finalMessage = message;
 				if(jsonNode instanceof ArrayNode){
 					jsonNode.forEach(json -> {
@@ -256,7 +253,7 @@ public class ChatManager {
 		} else {
 			message = Common.Message.builder()
 					.role(MessageRole.AGENT)
-					.parts(Lists.newArrayList(new Common.TextPart(assistantMessage.getText())))
+					.parts(Lists.newArrayList(new Common.TextPart(assistantMessage.getText() == null ? "" : assistantMessage.getText())))
 					.metadata(assistantMessage.getMetadata())
 					.build();
 		}
@@ -406,7 +403,6 @@ public class ChatManager {
 						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason")) || !assistantMessage.getMetadata().containsKey("finishReason")) {
 							agnetMessage = loadTask(agnetMessage);
 						}
-
 					} catch (Exception e) {
 						agnetMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));
 					}

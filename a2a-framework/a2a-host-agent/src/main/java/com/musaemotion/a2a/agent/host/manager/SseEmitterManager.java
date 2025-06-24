@@ -40,7 +40,7 @@ public class SseEmitterManager {
 	 * @param conversationId
 	 * @param inputMessageId
 	 */
-	public static SseEmitter subscribe(String conversationId, String inputMessageId) {
+	public static  SseEmitter subscribe(String conversationId, String inputMessageId) {
 		String key = buildKey(conversationId, inputMessageId);
 		if (emitters.containsKey(key)) {
 			return emitters.get(key);
@@ -51,6 +51,7 @@ public class SseEmitterManager {
 		subscribe(key, sseEmitter);
 		return sseEmitter;
 	}
+
 	/**
 	 * 订阅 SSE 连接。
 	 * @param key key
@@ -91,14 +92,17 @@ public class SseEmitterManager {
 	 * @param inputMessageId
 	 * @param data
 	 */
-	public static void pushData(String conversationId, String inputMessageId, String data) {
+	public static void pushData(String conversationId, String inputMessageId, String eventName, String agentName, String data) {
 		String key = buildKey(conversationId, inputMessageId);
 		SseEmitter emitter = emitters.get(key);
-
 		if (emitter != null) {
 			try {
 				log.info("pushData emitter for key: {}", key);
-				emitter.send(SseEmitter.event().id(String.valueOf(System.currentTimeMillis())).data(data, MediaType.TEXT_PLAIN));
+				emitter.send(SseEmitter.event()
+						.id(String.valueOf(System.currentTimeMillis()))
+						.name(eventName+"_"+agentName)
+						.data(data, MediaType.TEXT_PLAIN)
+				);
 			} catch (Exception e) {
 				log.error("Failed to send data to sessionId: {} with {}", key, e.getMessage());
 				emitters.remove(key);
@@ -117,9 +121,11 @@ public class SseEmitterManager {
 		String key = buildKey(conversationId, inputMessageId);
 		log.info("Removing emitter for key: {}", key);
 		var emitter = emitters.get(key);
-		if(emitter!=null) {
-			emitter.complete();
-			emitters.remove(key);
+		if (emitter != null) {
+			synchronized (emitter) {
+				emitter.complete();
+				emitters.remove(key);
+			}
 		}
 	}
 }

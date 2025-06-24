@@ -18,6 +18,8 @@ package com.musaemotion.a2a.agent.host.manager;
 
 import com.musaemotion.a2a.agent.client.A2ACardResolver;
 import com.musaemotion.a2a.agent.host.core.A2aRemoteAgentConnections;
+import com.musaemotion.a2a.agent.host.listener.RemoteAgentRunningStreamPublisher;
+import com.musaemotion.a2a.agent.host.listener.RemoteAgentRunningStreamPublisherManager;
 import com.musaemotion.a2a.common.AgentCard;
 
 import java.util.HashMap;
@@ -39,6 +41,18 @@ public abstract class AbstractRemoteAgentManager <T extends AgentCard> {
      */
     private Map<String, A2aRemoteAgentConnections> remoteAgentConnections = new HashMap<>();
 
+	/**
+	 * 远程智能体运行时流监听
+	 */
+	private RemoteAgentRunningStreamPublisher runningStreamListener;
+
+	/**
+	 * 远程智能体运行流监听
+	 * @param runningStreamListeners
+	 */
+	public AbstractRemoteAgentManager(List<RemoteAgentRunningStreamPublisher> runningStreamListeners) {
+		this.runningStreamListener = new RemoteAgentRunningStreamPublisherManager(runningStreamListeners);
+	}
 
     /**
      * 注册智能体落库
@@ -63,7 +77,7 @@ public abstract class AbstractRemoteAgentManager <T extends AgentCard> {
      * @param agentCard
      */
     private void registerRemoteAgentConnections(AgentCard agentCard) {
-        var remoteConnection = new A2aRemoteAgentConnections(agentCard);
+        var remoteConnection = new A2aRemoteAgentConnections(agentCard, this.runningStreamListener);
         this.remoteAgentConnections.put(agentCard.getName(), remoteConnection);
     }
 

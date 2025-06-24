@@ -33,7 +33,7 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class MyOllamaAgent implements AgentService {
+public class MyAgent implements AgentService {
 
     private ChatClient chatClient;
 
@@ -46,7 +46,7 @@ public class MyOllamaAgent implements AgentService {
      * @param a2aServerProperties
      */
     @Autowired
-    public MyOllamaAgent(ChatModel chatModel, A2aServerProperties a2aServerProperties, PromptProvider promptProvider){
+    public MyAgent(ChatModel chatModel, A2aServerProperties a2aServerProperties, PromptProvider promptProvider){
        this.chatClient = ChatClient.create(chatModel);
        this.a2aServerProperties = a2aServerProperties;
 	   this.promptProvider = promptProvider;

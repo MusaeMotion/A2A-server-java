@@ -155,12 +155,13 @@ public class A2aClient {
     }
 
 
-
-    /**
-     * 发送任务流
-     * @param request
-     * @return
-     */
+	/**
+	 * 调用远程智能体流请求
+	 * @param request
+	 * @param clazz
+	 * @return
+	 * @param <T>
+	 */
     private <T> ConnectableFlux<T> sendTaskStreaming(JSONRPCRequest request, Class<T> clazz) {
         Flux flux = Flux.create(sink -> {
             WebClient httpClient = WebClient.create(this.url);

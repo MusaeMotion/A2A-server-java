@@ -32,12 +32,13 @@
         <micrometer.veriosn>1.14.5</micrometer.veriosn>
         <opentelemetry.instrumentation.version>2.15.0</opentelemetry.instrumentation.version>
 		<flyway-mysql.version>11.5.0</flyway-mysql.version>
+		<bcprov-jdk18on.version>1.80</bcprov-jdk18on.version>
 
         <url>http://www.musaemotion.com/</url>
     </properties>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a</artifactId>
-     <version>0.2.11</version>
+    <version>0.3.1</version>
     <name>A2A</name>
     <description>A2A</description>
     <dependencyManagement>
@@ -71,7 +72,7 @@
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcprov-jdk18on</artifactId>
-				<version>1.80</version>
+				<version>${bcprov-jdk18on.version}</version>
 			</dependency>
             <dependency>
                 <groupId>org.springframework.ai</groupId>

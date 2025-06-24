@@ -124,7 +124,7 @@ musaemotion:
       remote-agent-addresses:
       #  - http://127.0.0.1:9999/
       # 注意改配置为true，则通过默认实现 ChatModelProvider 机型设置模型配置，如果你有自己的实现，请自己实现 ChatModelProvider
-      chat-model-provider: true
+      chat-model-provider: false
       # MemoryYamlChatModelProvider（ChatModelProvider 的默认实现） 默认实现的配置
       chat-model-configs:
         - name: 'Qwen3'
@@ -143,5 +143,9 @@ musaemotion:
           base-url: https://dashscope.aliyuncs.com/compatible-mode
           api-key: '使用自己的Key'
           model: qwen-plus
+        - name: 'ChatGpt'
+          base-url: https://api.openai.com
+          api-key:  '使用自己的Key'
+          model: gpt-4o-mini
 
 

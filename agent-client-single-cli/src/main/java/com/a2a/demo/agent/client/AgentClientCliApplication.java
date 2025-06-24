@@ -29,6 +29,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.net.InetAddress;
 import java.net.URI;
+import java.util.List;
 
 /**
  * @author：contact@musaemotion.com
@@ -67,13 +68,14 @@ public class AgentClientCliApplication implements CommandLineRunner {
                 pushNotificationServer = new PushNotificationServer(
                         InetAddress.getByName(uri.getHost()),
                         uri.getPort(),
+						List.of(
 						// 通知处理
 						new INotificationConsumer() {
 							@Override
-							public void processMessage(String message) {
-								log.info("通知处理：{}", message);
+							public void processMessage(String message, String agentName) {
+								log.info("通知处理：{}=>{}",agentName, message);
 							}
-						},
+						}),
 						argsModel.getNotificationEndpoint()
                 );
                 // 注册到通知里面
