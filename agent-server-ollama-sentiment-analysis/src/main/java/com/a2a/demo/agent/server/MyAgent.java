@@ -22,7 +22,10 @@ import com.musaemotion.a2a.common.constant.MediaType;
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.metadata.RateLimit;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -70,7 +73,12 @@ public class MyAgent implements AgentService {
         return a2aServerProperties.getName();
     }
 
-    /**
+	@Override
+	public String useModel() {
+		return "qwen-plus";
+	}
+
+	/**
      * 流请求
      * @param agentRequest
      * @return
@@ -79,17 +87,13 @@ public class MyAgent implements AgentService {
     public Flux<AgentGeneralResponse> stream(AgentRequest agentRequest) {
         return this.chatClient
                 .prompt(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText()))
-                // 默认用的配置文件的描述作为的系统提示词
-                // .system(AgentResponsePrompt.buildAgentResponseSystem(a2aServerProperties.getDescription()))
 				.system(AgentResponsePrompt.buildAgentResponseSystem(this.promptProvider.getPrompt()))
                 .stream()
                 .chatResponse()
                 .doOnComplete(()->{})
                 .map(chatResponse -> {
-                    String content = chatResponse.getResult().getOutput().getText();
-                    return AgentGeneralResponse.fromText(content, AgentResponseStatus.WORKING);
-                })
-				.concatWith(Mono.just(AgentGeneralResponse.fromText("", AgentResponseStatus.COMPLETED)));
+                    return AgentGeneralResponse.fromStreamChatResponse(chatResponse, AgentResponseStatus.WORKING);
+                });
     }
 
     /**
@@ -99,14 +103,12 @@ public class MyAgent implements AgentService {
      */
     @Override
     public AgentGeneralResponse call(AgentRequest agentRequest) {
-        String content = this.chatClient
-                // 这里需要严格按照这个方式创建提示词
-                .prompt(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText()))
-                // 可以使用自己的系统提示词
+		ChatResponse chatResponse = this.chatClient
+				// 这里需要严格按照这个方式创建提示词
+				.prompt(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText()))
+				// 可以使用自己的系统提示词
 				.system(AgentResponsePrompt.buildAgentResponseSystem(this.promptProvider.getPrompt()))
-                .call().content();
-        BeanOutputConverter<AgentTextResponse> converter = new BeanOutputConverter<>(AgentTextResponse.class);
-        AgentTextResponse agentTextResponse =  converter.convert(content);
-        return AgentGeneralResponse.fromAgentTextResponse(agentTextResponse);
-    }
+				.call().chatResponse();
+		return AgentGeneralResponse.fromCallChatResponse(chatResponse);
+	}
 }

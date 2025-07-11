@@ -38,14 +38,13 @@ spring:
     ######################################
     openai:
       base-url: https://dashscope.aliyuncs.com/compatible-mode
-      api-key: 用自己的key
+      api-key: 使用自己的key
       chat:
-        # 默认llm text to text 路径
-        # completions-path: '/v1/chat/completions'
         base-url: ${spring.ai.openai.base-url}
         api-key: ${spring.ai.openai.api-key}
         options:
           model: 'qwen-vl-max-latest'
+
 
 card-url: 'http://127.0.0.1'
 ######################################
@@ -56,7 +55,7 @@ musaemotion:
     server:
       capabilities:
         push-notifications: true
-        streaming: true
+        streaming: false
       skills:
         - id: 'visionSkill'
           name: 'visionSkill'

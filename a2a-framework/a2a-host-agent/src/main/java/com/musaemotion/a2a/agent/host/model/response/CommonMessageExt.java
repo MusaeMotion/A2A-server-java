@@ -18,6 +18,7 @@ package com.musaemotion.a2a.agent.host.model.response;
 
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.base.Task;
+import com.musaemotion.a2a.common.constant.MetaDataKey;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.beans.BeanUtils;
@@ -35,9 +36,17 @@ import java.util.List;
 @EqualsAndHashCode(callSuper =  true)
 public class CommonMessageExt extends Common.Message {
 
+	/**
+	 * 相关任务
+	 */
     private List<Task> task;
 
-    /**
+	/**
+	 * 当前消息花费
+	 */
+	private Double amount;
+
+	/**
      *
      * @param message
      * @param task
@@ -60,4 +69,35 @@ public class CommonMessageExt extends Common.Message {
         BeanUtils.copyProperties(message, commonMessageExt);
         return commonMessageExt;
     }
+
+	/**
+	 * 获取所有消耗的tokens
+	 * @return
+	 */
+	private Integer getTotalTokens(){
+		if(this.getMetadata().containsKey(MetaDataKey.TOTAL_TOKENS)){
+			return (Integer)this.getMetadata().get(MetaDataKey.TOTAL_TOKENS);
+		}
+		return 0;
+	}
+
+	/**
+	 * 获取消耗次数
+	 * @return
+	 */
+	private Integer getFrequency(){
+		if(this.getMetadata().containsKey(MetaDataKey.FREQUENCY)){
+			return (Integer)this.getMetadata().get(MetaDataKey.FREQUENCY);
+		}
+		return 0;
+	}
+
+
+	/**
+	 * 计算金额
+	 */
+	public void calculateAmount(){
+
+
+	}
 }

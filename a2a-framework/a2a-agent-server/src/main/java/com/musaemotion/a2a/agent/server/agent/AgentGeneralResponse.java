@@ -20,9 +20,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.musaemotion.a2a.common.base.Common;
+import com.musaemotion.a2a.common.base.UsageTokens;
 import com.musaemotion.a2a.common.constant.MediaType;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.ai.image.Image;
 import org.springframework.ai.image.ImageResponse;
 
@@ -36,6 +41,7 @@ import java.util.List;
  * @description：请完善描述
  */
 @Data
+@Slf4j
 public class AgentGeneralResponse {
 
     /**
@@ -48,12 +54,17 @@ public class AgentGeneralResponse {
      */
     private List<Common.Part> parts;
 
+	/**
+	 * token使用数
+	 */
+	private UsageTokens usageTokens = new UsageTokens();
+
     /**
      * 获取part内容
      * @return
      * @throws JsonProcessingException
      */
-    public String getPart() throws JsonProcessingException {
+    public String getTextPartContent() throws JsonProcessingException {
         if (parts == null){
             return "";
         }
@@ -70,13 +81,94 @@ public class AgentGeneralResponse {
         return sb.toString();
     }
 
-    public static AgentGeneralResponse fromAgentTextResponse(AgentTextResponse agentTextResponse) {
+	/**
+	 * 创建 AgentGeneralResponse
+	 * @param agentTextResponse
+	 * @return
+	 */
+    private static AgentGeneralResponse fromAgentTextResponse(AgentTextResponse agentTextResponse) {
         AgentGeneralResponse agentGeneralResponse = new AgentGeneralResponse();
         agentGeneralResponse.status = agentTextResponse.getStatus();
         agentGeneralResponse.setParts(Lists.newArrayList(new Common.TextPart(agentTextResponse.getContent())));
         return agentGeneralResponse;
     }
 
+
+	/**
+	 * 根据chatResponse构建 AgentGeneralResponse 对象, 加入了 token计算对象
+	 * @param chatResponse
+	 * @return
+	 */
+	public static AgentGeneralResponse fromCallChatResponse(ChatResponse chatResponse) {
+		BeanOutputConverter<AgentTextResponse> converter = new BeanOutputConverter<>(AgentTextResponse.class);
+		AgentTextResponse agentTextResponse = converter.convert(chatResponse.getResult().getOutput().getText());
+		var agentGeneralResponse = AgentGeneralResponse.fromAgentTextResponse(agentTextResponse);
+		var usage = chatResponse.getMetadata().getUsage();
+		log.info("promptTokens: {}, completionTokens: {}, totalTokens: {}",
+				usage.getPromptTokens(),
+				usage.getCompletionTokens(),
+				usage.getTotalTokens()
+		);
+		agentGeneralResponse.setUsageTokens(
+				UsageTokens.fromUsage(
+					usage.getCompletionTokens(),
+					usage.getPromptTokens(),
+					usage.getTotalTokens()
+		));
+		return agentGeneralResponse;
+	}
+
+	/**
+	 * 根据chatResponse构建 AgentGeneralResponse 对象, 加入了 token计算对象
+	 * @param chatResponse
+	 * @return
+	 */
+	public static AgentGeneralResponse fromCallChatResponse(ChatResponse chatResponse, AgentResponseStatus status) {
+		var agentGeneralResponse = fromCallChatResponse(chatResponse);
+		agentGeneralResponse.status = status;
+		return agentGeneralResponse;
+	}
+
+	/**
+	 * 获取流聊天对象
+	 * @param chatResponse
+	 * @param status
+	 * @return
+	 */
+	public static AgentGeneralResponse fromStreamChatResponse(ChatResponse chatResponse, AgentResponseStatus status) {
+
+		if(chatResponse.getResult()!=null){
+			AgentTextResponse agentTextResponse = new AgentTextResponse();
+			agentTextResponse.setContent(chatResponse.getResult().getOutput().getText());
+			agentTextResponse.setStatus(status);
+			AgentGeneralResponse agentGeneralResponse = fromAgentTextResponse(agentTextResponse);
+			// TODO RateLimit rateLimit = chatResponse.getMetadata().getRateLimit();
+			// 限流对象
+			Usage usage = chatResponse.getMetadata().getUsage();
+			agentGeneralResponse.setUsageTokens(
+					UsageTokens.fromUsage(
+							usage.getCompletionTokens(),
+							usage.getPromptTokens(),
+							usage.getTotalTokens()
+					));
+			return agentGeneralResponse;
+		}
+		Usage usage = chatResponse.getMetadata().getUsage();
+		AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText("", AgentResponseStatus.COMPLETED);
+		agentGeneralResponse.setUsageTokens(
+				UsageTokens.fromUsage(
+						usage.getCompletionTokens(),
+						usage.getPromptTokens(),
+						usage.getTotalTokens()
+				));
+		return agentGeneralResponse;
+	}
+	/**
+	 * 创建AgentGeneralResponse
+	 * @param text
+	 * @param status
+	 * @return
+	 */
     public static AgentGeneralResponse fromText(String text, AgentResponseStatus status) {
         AgentGeneralResponse agentGeneralResponse = new AgentGeneralResponse();
         agentGeneralResponse.status = status;
@@ -84,6 +176,24 @@ public class AgentGeneralResponse {
         return agentGeneralResponse;
     }
 
+	/**
+	 *
+	 * @param text
+	 * @param status
+	 * @param usageTokens
+	 * @return
+	 */
+	public static AgentGeneralResponse fromText(String text, AgentResponseStatus status, UsageTokens usageTokens) {
+		AgentGeneralResponse agentGeneralResponse = fromText(text, status);
+		agentGeneralResponse.setUsageTokens(usageTokens);
+		return agentGeneralResponse;
+	}
+
+	/**
+	 * AgentGeneralResponse
+	 * @param imageResponse
+	 * @return
+	 */
     public static AgentGeneralResponse fromImageResponse(ImageResponse imageResponse) {
         AgentGeneralResponse agentGeneralResponse = new AgentGeneralResponse();
         agentGeneralResponse.status = AgentResponseStatus.COMPLETED;
@@ -97,6 +207,8 @@ public class AgentGeneralResponse {
                         .build()
         );
         agentGeneralResponse.setParts(Lists.newArrayList(filePart));
+		// 图片生成一般按次计算
+		agentGeneralResponse.setUsageTokens(UsageTokens.fromUsage(imageResponse.getResults().size()));
         return agentGeneralResponse;
     }
 }

@@ -42,7 +42,7 @@ public class DefaultPromptProviderImpl implements AgentPromptProvider {
 	/**
 	 * 自定义提示词提供者
 	 */
-	private PromptProvider PromptProvider;
+	private PromptProvider promptProvider;
 
 	/**
 	 * check_pending_task_states 有可能在框架adk内部实现的，因为 adk 会创建一个任务任务列表出来。
@@ -82,11 +82,11 @@ public class DefaultPromptProviderImpl implements AgentPromptProvider {
 
 
 	/**
-	 * @param PromptProvider 用户自定义提示词处理器
+	 * @param promptProvider 用户自定义提示词处理器
 	 */
 	@Autowired
-	public DefaultPromptProviderImpl(@Autowired(required = false) PromptProvider PromptProvider) {
-		this.PromptProvider = PromptProvider;
+	public DefaultPromptProviderImpl(@Autowired(required = false) PromptProvider promptProvider) {
+		this.promptProvider = promptProvider;
 	}
 
 	/**
@@ -96,10 +96,10 @@ public class DefaultPromptProviderImpl implements AgentPromptProvider {
 	 */
 	@Override
 	public String userPrompt(Map<String, Object> sendMessageRequestMetadata) {
-		if (this.PromptProvider == null) {
+		if (this.promptProvider == null) {
 			return "";
 		}
-		return this.PromptProvider.getUserPrompt(sendMessageRequestMetadata);
+		return this.promptProvider.getUserPrompt(sendMessageRequestMetadata);
 	}
 
 	/**
@@ -111,8 +111,8 @@ public class DefaultPromptProviderImpl implements AgentPromptProvider {
 	@Override
 	public String systemPrompt(Map<String, Object> toolContext, Map<String, Object> sendMessageRequestMetadata) {
 		String systemPrompt = "";
-		if (this.PromptProvider != null) {
-			systemPrompt = this.PromptProvider.getSystemPrompt(sendMessageRequestMetadata);
+		if (this.promptProvider != null) {
+			systemPrompt = this.promptProvider.getSystemPrompt(sendMessageRequestMetadata);
 		}
 		if (StringUtils.isEmpty(systemPrompt)) {
 			systemPrompt = String.format(ROOT_PROMPT_TPL, getActiveAgent((Map<String, Object>) toolContext.get(STATE)));

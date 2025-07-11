@@ -46,9 +46,6 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 		if (optionalTask.isPresent()) {
 			Task oldTask = optionalTask.get();
 			oldTask.getStatus().setState(newTask.getStatus().getState());
-			// 可以合并一些getMetadata 内容
-			// oldTask.getStatus().getMessage().getMetadata().putAll(newTask.getStatus().getMessage().getMetadata());
-			// oldTask.setStatus(newTask.getStatus());
 			if(newTask.getArtifacts()!=null) {
 				// 返回多个产出结果工件
 				newTask.getArtifacts().forEach(artifact -> {
@@ -56,6 +53,7 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 				});
 			}
 			this.insertMessageHistory(oldTask, newTask.getStatus().getMessage());
+			oldTask.mergeMetaData(newTask.getMetadata());
 			this.taskCenterManager.updateTask(oldTask);
 			return;
 		}
@@ -70,15 +68,15 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 	@Override
 	public void sendTaskCallback(TaskStatusUpdateEvent taskStatusUpdateEvent) {
 
-		Task oleTask = this.addOrGetTask(taskStatusUpdateEvent);
+		Task oldTask = this.addOrGetTask(taskStatusUpdateEvent);
 
-        // 这里会通知完成
-		oleTask.setStatus(taskStatusUpdateEvent.getStatus());
+        // 更新状态
+		oldTask.setStatus(taskStatusUpdateEvent.getStatus());
 
 		// 给当前任务添加历史记录
-		this.insertMessageHistory(oleTask, taskStatusUpdateEvent.getStatus().getMessage());
+		this.insertMessageHistory(oldTask, taskStatusUpdateEvent.getStatus().getMessage());
 
-		this.taskCenterManager.updateTask(oleTask);
+		this.taskCenterManager.updateTask(oldTask);
 	}
 
 	/**
@@ -90,6 +88,7 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 
 		Task oldTask = this.addOrGetTask(taskArtifactUpdateEvent);
 
+		// 处理生产工件
 		this.processArtifactEvent(oldTask, taskArtifactUpdateEvent.getArtifact());
 
 		this.taskCenterManager.updateTask(oldTask);
@@ -104,20 +103,13 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 	private Task addOrGetTask(TaskEvent input) {
 		Optional<Task> optionalTask = this.taskCenterManager.getById(input.getId());
 		if (optionalTask.isEmpty()) {
-			String conversationId = null;
-			if (input.getMetadata() != null && input.getMetadata().containsKey(CONVERSATION_ID)) {
-				conversationId = input.getMetadata().get(CONVERSATION_ID).toString();
-			}
-			Task newTask = Task.builder().id(input.getId())
-					.status(Common.TaskStatus.builder().state(TaskState.SUBMITTED).build())
-					.metadata(input.getMetadata())
-					.artifacts(Lists.newArrayList())
-					.sessionId(conversationId)
-					.build();
+			Task newTask = Task.buildSubmittedFrom(input);
 			this.taskCenterManager.addTask(newTask);
 			return newTask;
 		}
-		return optionalTask.get();
+		Task task = optionalTask.get();
+		task.mergeMetaData(input.getMetadata());
+		return task;
 	}
 
 	/**

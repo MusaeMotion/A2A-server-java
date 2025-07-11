@@ -105,7 +105,6 @@ public class BasisAgent<T extends SendMessageRequest> {
     @Builder.Default
     private Integer chatMemorySize = 10;
 
-
     /**
      * 提示词内存存储方案
       */
@@ -116,13 +115,11 @@ public class BasisAgent<T extends SendMessageRequest> {
      */
     private AgentPromptProvider agentPromptProvider;
 
-
     /**
      * 工具列表
      */
     @Builder.Default
     private List<ToolCallback> toolCallbacks = Lists.newArrayList();
-
 
 	/**
 	 * 构造user 提示词内容
@@ -130,7 +127,7 @@ public class BasisAgent<T extends SendMessageRequest> {
 	 * @return
 	 */
 	private String buildUserPrompt(T input) {
-		StringBuffer stringBuffer = new StringBuffer(agentPromptProvider.userPrompt(input.getMetadata()));
+		StringBuffer stringBuffer = new StringBuffer(this.agentPromptProvider.userPrompt(input.getMetadata()));
 		stringBuffer.append("\n");
 		stringBuffer.append(PartUtils.messagePartsToString(input.getParams()));
 		return stringBuffer.toString();
@@ -209,17 +206,15 @@ public class BasisAgent<T extends SendMessageRequest> {
 	 * @param files 附件内容
 	 * @return
 	 */
-	public AssistantMessage call(T input, Map<String, Object> toolContext, List<FileInfo> files) {
+	public ChatResponse call(T input, Map<String, Object> toolContext, List<FileInfo> files) {
         ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(input.getContent(), files);
 		chatClientRequestSpec = chatClientRequestSpec.system(agentPromptProvider.systemPrompt(toolContext, input.getMetadata()));
-        ChatResponse chatResponse = chatClientRequestSpec.advisors(buildAdvisor(input))
+        return chatClientRequestSpec.advisors(buildAdvisor(input))
                 .user(buildUserPrompt(input))
 				.toolCallbacks(this.toolCallbacks)
                 .toolContext(toolContext)
                 .call()
-                .chatResponse();
-
-        return chatResponse.getResult().getOutput();
+				.chatResponse();
     }
 
 
@@ -230,7 +225,7 @@ public class BasisAgent<T extends SendMessageRequest> {
 	 * @param files 附件内容
 	 * @return
 	 */
-	public Flux<AssistantMessage> stream(T input, Map<String, Object> toolContext, List<FileInfo> files) {
+	public Flux<ChatResponse> stream(T input, Map<String, Object> toolContext, List<FileInfo> files) {
 		ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPrompt(input), files);
 		chatClientRequestSpec = chatClientRequestSpec.system(agentPromptProvider.systemPrompt(toolContext, input.getMetadata()));
 		return chatClientRequestSpec
@@ -239,17 +234,15 @@ public class BasisAgent<T extends SendMessageRequest> {
 				.toolContext(toolContext)
 				.stream()
 				.chatResponse()
-				.doOnComplete(() ->  log.info("BasisAgent 智能体stream响应完成"))
+				.doOnComplete(() -> log.info("BasisAgent 智能体stream响应完成"))
 				.doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
 				.onErrorResume((error) -> {
 					var generation = new Generation(
-							new AssistantMessage("人工智能出现了一点问题, 稍后再试" ),
+							new AssistantMessage("人工智能出现了一点问题, 稍后再试"),
 							ChatGenerationMetadata.builder().finishReason(GuidUtils.createGuid()).build()
 					);
-					log.error("BasisAgent error: {} ",error.getMessage());
-					return Mono.just(ChatResponse.builder().generations(List.of(
-							generation
-					)).build());
-				}).map(chatResponse -> chatResponse.getResult().getOutput());
+					log.error("BasisAgent error: {} ", error.getMessage());
+					return Mono.just(ChatResponse.builder().generations(List.of(generation)).build());
+				});
 	}
 }

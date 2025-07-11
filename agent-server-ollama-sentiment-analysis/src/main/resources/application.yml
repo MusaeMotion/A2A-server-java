@@ -34,6 +34,17 @@ spring:
         chat:
           additional-models:
             - qwen2.5:8b
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: 使用自己的key
+      chat:
+        base-url: ${spring.ai.openai.base-url}
+        api-key: ${spring.ai.openai.api-key}
+        options:
+          model: 'qwen-plus'
+          stream-usage: true
+
+
   ######################################
   #  redis 用于和远程智能体交换智能体的提示词用
   ######################################

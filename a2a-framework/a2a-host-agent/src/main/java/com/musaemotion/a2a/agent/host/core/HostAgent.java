@@ -47,6 +47,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
@@ -262,7 +264,7 @@ public class HostAgent {
 	 * @param files
 	 * @return
 	 */
-	public AssistantMessage call(SendMessageRequest input,  Map<String, Object> toolContext, List<FileInfo> files) {
+	public ChatResponse call(SendMessageRequest input,  Map<String, Object> toolContext, List<FileInfo> files) {
 		return this.basisAgent.call(input, toolContext, files);
 	}
 
@@ -273,7 +275,7 @@ public class HostAgent {
 	 * @param files
 	 * @return
 	 */
-	public Flux<AssistantMessage> stream(SendMessageRequest input,  Map<String, Object> toolContext, List<FileInfo> files) {
+	public Flux<ChatResponse> stream(SendMessageRequest input,  Map<String, Object> toolContext, List<FileInfo> files) {
 		return this.basisAgent.stream(input, toolContext, files);
 	}
 
@@ -365,6 +367,7 @@ public class HostAgent {
 		Map<String, Object> messageMetadata = new HashMap<>();
 
 		Map<String, Object> inputMetadata = (Map<String, Object>) state.get(INPUT_MESSAGE_METADATA);
+		messageMetadata.putAll(inputMetadata);
 		messageMetadata.put(INPUT_MESSAGE_ID, inputMetadata.get(MESSAGE_ID));
 		messageMetadata.put(CONVERSATION_ID, conversationId);
 		messageMetadata.put(MESSAGE_ID, messageId);
@@ -393,14 +396,13 @@ public class HostAgent {
 
 	/**
 	 * 扩展处理
-	 * @param resultTask 返回的 task
+	 * @param responseTask 返回的 task
 	 */
-	private void sendAfterPart(Task resultTask, List<Common.Part> parts) {
+	private void sendAfterPart(Task responseTask, List<Common.Part> parts) {
 
-		Common.TaskStatus resultTaskStatus = resultTask.getStatus();
+		Common.TaskStatus resultTaskStatus = responseTask.getStatus();
 
-		Optional<Task> opTask = this.taskCenterManager.getById(resultTask.getId());
-		Task curTask = opTask.get();
+		Task curTask = this.taskCenterManager.getById(responseTask.getId()).get();
 		curTask.getStatus().setState(resultTaskStatus.getState());
 
 		List<Common.Artifact> artifacts = Lists.newArrayList();
@@ -411,33 +413,33 @@ public class HostAgent {
 			artifact.getParts().addAll(parts);
 		}
 
-		if (!CollectionUtils.isEmpty(resultTask.getArtifacts())) {
+		if (!CollectionUtils.isEmpty(responseTask.getArtifacts())) {
 			artifact.getParts().addAll(
-					resultTask.getArtifacts().stream().map(item->item.getParts()).flatMap(Collection::stream)
+					responseTask.getArtifacts().stream().map(item->item.getParts()).flatMap(Collection::stream)
 							.collect(Collectors.toUnmodifiableList())
 			);
 		}
 
 		curTask.setArtifacts(artifacts);
-		resultTask.setArtifacts(artifacts);
-
-		this.taskCenterManager.updateTask(opTask.get());
+		responseTask.setArtifacts(artifacts);
+		curTask.mergeMetaData(responseTask.getMetadata());
+		this.taskCenterManager.updateTask(curTask);
 	}
 
 	/**
 	 * 消息发送后处理
 	 * @param request
-	 * @param result
+	 * @param responseTask
 	 * @param state
 	 * @param agentName
 	 * @return
 	 */
-	private String sendAfter(TaskSendParams request, Task result, Map<String, Object> state, String agentName) throws JsonProcessingException {
+	private String sendAfter(TaskSendParams request, Task responseTask, Map<String, Object> state, String agentName) throws JsonProcessingException {
 		String messageId = request.getMessage().getMessageId();
-		if(result == null){
+		if(responseTask == null){
 			Optional<Task> opTask = this.taskCenterManager.getById(request.getId());
-			result = opTask.get();
-			result.setStatus(Common.TaskStatus.builder().state(TaskState.FAILED).build());
+			responseTask = opTask.get();
+			responseTask.setStatus(Common.TaskStatus.builder().state(TaskState.FAILED).build());
 		}
 		// 以下是处理远程智能体响应内容
 		// 判断远程智能体响应内容运行状态, 激活状态，只写入正常工作中的状态 SUBMITTED WORKING INPUT_REQUIRED，如果不是这三个状态，激活状态则是 false
@@ -447,40 +449,40 @@ public class HostAgent {
 				TaskState.CANCELED,
 				TaskState.FAILED,
 				TaskState.UNKNOWN
-		).contains(result.getStatus().getState()));
+		).contains(responseTask.getStatus().getState()));
 
 		// 远程智能体执行任务的状态
-		Common.TaskStatus resultTaskStatus = result.getStatus();
+		Common.TaskStatus resultTaskStatus = responseTask.getStatus();
 
 		if (resultTaskStatus.getState() == TaskState.CANCELED) {
-			throw new IllegalArgumentException("Agent " + agentName + " task " + result.getId() + " is cancelled");
+			throw new IllegalArgumentException("Agent " + agentName + " task " + responseTask.getId() + " is cancelled");
 		}
 
 		// 包装远程智能体响应的结果。
-		List<Object> response = new ArrayList<>();
+		List<Object> responsePart = new ArrayList<>();
 		if (resultTaskStatus.getState().equals(TaskState.WORKING)) {
 			// 如果任务 状态是 WORKING 或 INPUT_REQUIRED, 消息内容就在 task.getStatus().getMessage()里，远程智能响应作为状态的一部分返回 message 格式。
-			response.addAll(convertParts(resultTaskStatus.getMessage().getParts()));
+			responsePart.addAll(convertParts(resultTaskStatus.getMessage().getParts()));
 		}
 		if (resultTaskStatus.getState().equals(TaskState.INPUT_REQUIRED)) {
 			state.put(A2AToolCallingManager.RETURN_DIRECT, true);
-			response.addAll(resultTaskStatus.getMessage().getParts());
-			this.sendAfterPart(result, resultTaskStatus.getMessage().getParts());
+			responsePart.addAll(resultTaskStatus.getMessage().getParts());
+			this.sendAfterPart(responseTask, resultTaskStatus.getMessage().getParts());
 		}
 		if (resultTaskStatus.getState().equals(TaskState.FAILED) ) {
 			state.put(A2AToolCallingManager.RETURN_DIRECT, true);
-			var part = new Common.TextPart("智能体 " + agentName + " 任务： " + result.getId() + " 运行失败");
-			response.add(part);
-			this.sendAfterPart(result, Lists.newArrayList(part));
+			var part = new Common.TextPart("智能体 " + agentName + " 任务： " + responseTask.getId() + " 运行失败");
+			responsePart.add(part);
+			this.sendAfterPart(responseTask, Lists.newArrayList(part));
 		}
 		// 如果 task 状态 COMPLETED，则在生产工作件里的part包装数据
 		if(resultTaskStatus.getState().equals(TaskState.COMPLETED)) {
 			// 获取任务相关信息, 因为在远程智能体调用之前，和调用之后，都会有回调创建任务，所以这里能获取到任务相关信息
-			Optional<Task> opTask = this.taskCenterManager.getById(result.getId());
+			Optional<Task> opTask = this.taskCenterManager.getById(responseTask.getId());
 			Task task = opTask.orElse(null);
 			if (task !=null && !CollectionUtils.isEmpty(task.getArtifacts())) {
 				for (Common.Artifact artifact : task.getArtifacts()) {
-					response.addAll(convertParts(artifact.getParts()));
+					responsePart.addAll(convertParts(artifact.getParts()));
 				}
 			}
 			// 把当前消息id 写入上一次消息
@@ -492,7 +494,7 @@ public class HostAgent {
 		log.info("当前运行智能体: {}", state.get(CUR_AGENT_NAME));
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		return objectMapper.writeValueAsString(response);
+		return objectMapper.writeValueAsString(responseTask);
 	}
 
 	/**

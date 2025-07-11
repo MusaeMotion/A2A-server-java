@@ -29,6 +29,7 @@ import com.musaemotion.a2a.agent.server.notification.PushNotificationSenderServi
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.base.Task;
+import com.musaemotion.a2a.common.base.UsageTokens;
 import com.musaemotion.a2a.common.base.base.JSONRPCMessage;
 import com.musaemotion.a2a.common.base.base.JSONRPCResponse;
 import com.musaemotion.a2a.common.base.error.ContentTypeNotSupportedError;
@@ -90,7 +91,9 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	protected AgentService agentService;
 
-
+	/**
+	 * A2a 配置
+	 */
 	private A2aServerProperties a2aServerProperties;
 
 	/**
@@ -227,13 +230,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		Optional<Task> optionalTask = this.getTaskForStore(taskSendParams.getId());
 		Task task = null;
 		if (optionalTask.isEmpty()) {
-			task = Task.builder()
-					.id(taskSendParams.getId())
-					.sessionId(taskSendParams.getSessionId())
-					.status(new Common.TaskStatus(TaskState.SUBMITTED, taskSendParams.getMessage()))
-					.history(Lists.newArrayList(taskSendParams.getMessage()))
-					.metadata(taskSendParams.getMetadata())
-					.build();
+			task = Task.from(taskSendParams, TaskState.SUBMITTED);
 		} else {
 			task = optionalTask.get();
 			// 追加消息
@@ -276,6 +273,8 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 				taskStatus,
 				artifacts.size() > 0 ? artifacts : null
 		);
+		// 构建token使用量
+		task.buildUsageTokens(agentGeneralResponse.getUsageTokens(), this.agentService.useModel());
 
 		// 发送通知
 		this.sendTaskNotification(task);
@@ -285,6 +284,8 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
         // 存储当前任务状态
 		this.setTaskToStore(taskSendParams.getId(), task);
+
+
 		// 返回追加后task
 		return SendTaskResponse.buildResponse(sendTaskRequest.getId(), taskResult);
 	}
@@ -460,13 +461,11 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		}
 
 		// 更新任务状态
-		task = this.updateTask(
+		this.updateTask(
 				params.getId(),
 				Common.TaskStatus.builder().state(TaskState.WORKING).build(),
 				Lists.newArrayList()
 		);
-
-
 
 		String query = PartUtils.messagePartsToString(params.getMessage());
 
@@ -476,6 +475,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 					.text(query)
 					.sessionId(params.getSessionId())
 					.parts(params.getMessage().getParts())
+					.metadata(params.getMessage().getMetadata())
 					.build());
 
 			return this.onSendTaskProcessAgentResponse(request, result);
@@ -539,21 +539,24 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 				try {
 					this.fluxSendWorkingEvent(request.getId(), params, fluxSink);
 
-					StringBuffer buffer = new StringBuffer();
+					StringBuffer textPartContent = new StringBuffer();
 
 					Flux<AgentGeneralResponse> flux = this.agentService.stream(
 							AgentRequest.builder()
 									.text(query)
 									.sessionId(params.getSessionId())
 									.parts(params.getMessage().getParts())
+									.metadata(params.getMessage().getMetadata())
 									.build());
 
 					AtomicReference<AgentResponseStatus> agentResponseStatus = new AtomicReference<>();
+					AtomicReference<UsageTokens> usageTokens = new AtomicReference<>();
 					flux.subscribe(
 							agentResponse -> {
 								try {
-									buffer.append(agentResponse.getPart());
+									textPartContent.append(agentResponse.getTextPartContent());
 									agentResponseStatus.set(agentResponse.getStatus());
+									usageTokens.set(agentResponse.getUsageTokens());
 								} catch (JsonProcessingException e) {
 									throw new RuntimeException(e);
 								}
@@ -584,8 +587,8 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 								fluxSink.complete();
 
 							}, () -> {
-								// log.info("执行完成");
-								AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText(buffer.toString(), agentResponseStatus.get());
+								// stream 完成构建一个新的对象
+								AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText(textPartContent.toString(), agentResponseStatus.get(), usageTokens.get());
 
 								if (agentGeneralResponse != null) {
 									List<Common.Artifact> artifacts = Lists.newArrayList();
@@ -609,7 +612,8 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 											.id(params.getId())
 											.done(Boolean.TRUE)
 											.build();
-
+									// 构建使用token
+									taskStatusUpdateEvent.buildUsageTokens(agentGeneralResponse.getUsageTokens(), this.agentService.useModel());
 									fluxSink.next(SendTaskStreamingResponse.buildResponse(request.getId(), taskStatusUpdateEvent));
 								} else {
 									log.error("智能体未按照要求返回");
@@ -619,6 +623,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 													new InternalA2aError("智能体未按照要求返回"))
 									);
 								}
+
 								fluxSink.complete();
 							});
 				} catch (Exception e) {

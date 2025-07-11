@@ -37,7 +37,7 @@ public class SendMessageResponse<T> extends JSONRPCResponse<T> {
      * @param t
      * @return
      */
-    public static  SendMessageResponse buildMessageResponse(Common.Message t, String conversationId) {
+    public static SendMessageResponse buildMessageResponse(Common.Message t, String conversationId) {
         SendMessageResponse response = new SendMessageResponse();
         response.setResult(t);
         response.setId(conversationId);

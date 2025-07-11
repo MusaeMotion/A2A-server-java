@@ -114,7 +114,7 @@ public class ChatController {
 		try {
 			return ResponseEntity.ok(
 					Result.buildSuccess(
-							this.chatManager.call(input)
+						this.chatManager.call(input)
 					)
 			);
 		} catch (Exception e) {

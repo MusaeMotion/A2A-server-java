@@ -19,23 +19,23 @@ package com.musaemotion.a2a.common.base;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.musaemotion.a2a.common.IMetadata;
 import com.musaemotion.a2a.common.constant.TaskState;
+import com.musaemotion.a2a.common.event.AbstractTask;
 import com.musaemotion.a2a.common.event.TaskArtifactUpdateEvent;
+import com.musaemotion.a2a.common.event.TaskEvent;
 import com.musaemotion.a2a.common.event.TaskStatusUpdateEvent;
 import com.musaemotion.a2a.common.request.params.TaskSendParams;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import static com.musaemotion.a2a.common.constant.MetaDataKey.INPUT_MESSAGE_ID;
-import static com.musaemotion.a2a.common.constant.MetaDataKey.MESSAGE_ID;
+import static com.musaemotion.a2a.common.constant.MetaDataKey.*;
+
 /**
  * @author：contact@musaemotion.com
  * @package：com.musaemotion.a2a.common
@@ -44,14 +44,10 @@ import static com.musaemotion.a2a.common.constant.MetaDataKey.MESSAGE_ID;
  * @description：
  */
 @Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Task implements Serializable, IMetadata {
+@EqualsAndHashCode(callSuper=true)
+public class Task extends AbstractTask {
 
-	// 任务id
-	private String id;
 
 	// sessionId
 	private String sessionId;
@@ -65,8 +61,6 @@ public class Task implements Serializable, IMetadata {
 	// 历史记录
 	private List<Common.Message> history;
 
-	// 上下文传递
-	private Map<String, Object> metadata;
 
 	/**
 	 * 根据任务状态更新包装任务
@@ -99,21 +93,39 @@ public class Task implements Serializable, IMetadata {
 	 * @param taskSendParams
 	 * @return
 	 */
-	public static Task from(TaskSendParams taskSendParams){
-		return Task.builder()
-				.id(taskSendParams.getId())
-				.sessionId(taskSendParams.getSessionId())
-				.status(
-						Common.TaskStatus.builder()
-								.state(TaskState.SUBMITTED)
-								.message(taskSendParams.getMessage())
-								.build()
-				)
-				.metadata(taskSendParams.getMetadata())
-				.history(Lists.newArrayList(taskSendParams.getMessage()))
-				.build();
+	public static Task from(TaskSendParams taskSendParams, TaskState taskState){
+		Task task = new Task();
+		task.setId(taskSendParams.getId());
+		task.setSessionId(taskSendParams.getSessionId());
+		task.setStatus(
+				Common.TaskStatus.builder()
+						.state(taskState)
+						.message(taskSendParams.getMessage())
+						.build()
+		);
+		task.setHistory(Lists.newArrayList(taskSendParams.getMessage()));
+		task.setMetadata(taskSendParams.getMetadata());
+		return task;
 	}
 
+	/**
+	 * 根据任务事件构建Task
+	 * @param taskEvent
+	 * @return
+	 */
+	public static Task buildSubmittedFrom(TaskEvent taskEvent){
+		Task task = new Task();
+		task.setId(taskEvent.getId());
+		task.setStatus(Common.TaskStatus.builder().state(TaskState.SUBMITTED).build());
+		task.setMetadata(taskEvent.getMetadata());
+		task.setArtifacts(Lists.newArrayList());
+		String conversationId = null;
+		if (taskEvent.getMetadata() != null && taskEvent.getMetadata().containsKey(CONVERSATION_ID)) {
+		   conversationId = taskEvent.getMetadata().get(CONVERSATION_ID).toString();
+		}
+		task.setSessionId(conversationId);
+		return task;
+	}
 	/**
 	 * 拷贝一个消息对象
 	 */
@@ -176,4 +188,6 @@ public class Task implements Serializable, IMetadata {
 		}
 		return metadata.get(MESSAGE_ID).toString();
 	}
+
+
 }

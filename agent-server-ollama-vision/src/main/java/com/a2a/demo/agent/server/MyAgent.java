@@ -23,7 +23,9 @@ import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.constant.MediaType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.content.Media;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,13 +73,19 @@ public class MyAgent implements AgentService {
         return a2aServerProperties.getName();
     }
 
-    /**
+	@Override
+	public String useModel() {
+		return "qwen-vl-max-latest";
+	}
+
+	/**
      * 流请求
      * @param agentRequest
      * @return
      */
     @Override
     public Flux<AgentGeneralResponse> stream(AgentRequest agentRequest) {
+
 		// 过滤出文件对象
 		List<Common.FilePart> fileParts = agentRequest.getParts().stream()
 				.filter(item->item instanceof Common.FilePart)
@@ -93,10 +101,8 @@ public class MyAgent implements AgentService {
 				.chatResponse()
 				.doOnComplete(()->{})
 				.map(chatResponse -> {
-					String content = chatResponse.getResult().getOutput().getText();
-					return AgentGeneralResponse.fromText(content, AgentResponseStatus.WORKING);
-				})
-				.concatWith(Mono.just(AgentGeneralResponse.fromText("", AgentResponseStatus.COMPLETED)));
+					return AgentGeneralResponse.fromStreamChatResponse(chatResponse, AgentResponseStatus.WORKING);
+				});
     }
 
     /**
@@ -115,17 +121,12 @@ public class MyAgent implements AgentService {
         }
         List<Media> medias = MediaUtils.filePartToMedia(fileParts);
 
-        // chatClient 用以下访问调用， chatModel是其他方式
-        log.info("请求：{}", agentRequest.getText());
-        String content = this.chatClient
+		ChatResponse chatResponse = this.chatClient
                 .prompt()
                 .user(u-> u.text(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText())).media(medias.toArray(new Media[0])))
                 // 可以使用自己的系统提示词
                 .system(AgentResponsePrompt.buildAgentResponseSystem(this.a2aServerProperties.getDescription()+", 请用中文回复核心问题。"))
-                .call().content();
-        log.info("结果：{}", content);
-        BeanOutputConverter<AgentTextResponse> converter = new BeanOutputConverter<>(AgentTextResponse.class);
-        AgentTextResponse agentTextResponse = converter.convert(content);
-        return AgentGeneralResponse.fromAgentTextResponse(agentTextResponse);
+                .call().chatResponse();
+        return AgentGeneralResponse.fromCallChatResponse(chatResponse);
     }
 }

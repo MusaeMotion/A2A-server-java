@@ -19,10 +19,12 @@ package com.musaemotion.a2a.common.base;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
 import com.musaemotion.a2a.common.IMetadata;
 import com.musaemotion.a2a.common.exception.A2AClientJSONException;
 import com.musaemotion.a2a.common.constant.MessageRole;
 import com.musaemotion.a2a.common.constant.TaskState;
+import com.musaemotion.a2a.common.utils.MetadataUtils;
 import lombok.*;
 
 import java.io.Serializable;
@@ -260,6 +262,16 @@ public class Common {
 			message.setMetadata(metadata);
 			return message;
 		}
+
+		/**
+		 * 构建使用Token
+		 * @param usageTokens
+		 * @param useModel
+		 */
+		public void buildUsageTokens(UsageTokens usageTokens, String useModel) {
+			MetadataUtils.buildUsageTokens(this, usageTokens, useModel);
+		}
+
 	}
 
 

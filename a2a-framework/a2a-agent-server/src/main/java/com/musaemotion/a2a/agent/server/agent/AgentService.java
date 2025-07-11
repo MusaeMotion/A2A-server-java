@@ -43,6 +43,12 @@ public interface AgentService {
      */
     String agentName();
 
+	/**
+	 * agent使用的模型，计算token使用
+	 * @return
+	 */
+	String useModel();
+
     /**
      * 流模式
      * @param agentRequest

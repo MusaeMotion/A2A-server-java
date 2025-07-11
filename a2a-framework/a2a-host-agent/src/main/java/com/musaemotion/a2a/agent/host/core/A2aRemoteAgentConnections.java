@@ -91,9 +91,7 @@ public class A2aRemoteAgentConnections {
 	 * @return
 	 */
 	private Task buildFailedTask(TaskSendParams taskSendParams, String errorMessage) {
-		Task task = Task.from(taskSendParams);
-		// 修改成失败状态，错误状态
-		task.getStatus().setState(TaskState.FAILED);
+		Task task = Task.from(taskSendParams, TaskState.FAILED);
 		// 生成错误工件内容，错误消息
 		task.setArtifacts(Lists.newArrayList(
 				Common.Artifact.builder().lastChunk(Boolean.TRUE).parts(
@@ -132,6 +130,7 @@ public class A2aRemoteAgentConnections {
 			}
 			message.getMetadata().put(MESSAGE_ID, GuidUtils.createShortRandomGuid());
 		}
+		// call 调用完成回调
 		callback.sendTaskCallback(sendTaskResponse.getResult());
 		return sendTaskResponse.getResult();
 	}
@@ -173,11 +172,6 @@ public class A2aRemoteAgentConnections {
 
 				callback.sendTaskCallback(taskStatusUpdateEvent);
 				taskModel.set(Task.from(taskStatusUpdateEvent));
-				/*
-				if (taskStatusUpdateEvent.getDone()) {
-					log.info("任务状态更新完成");
-				} */
-				// log.error("taskStatusUpdateEvent： {}", taskStatusUpdateEvent);
 			}
 
 			if (sendTaskStreamingResponse.getResult() instanceof TaskArtifactUpdateEvent taskArtifactUpdateEvent) {
@@ -205,7 +199,7 @@ public class A2aRemoteAgentConnections {
 	 */
 	public Task sendTask(TaskSendParams taskSendParams, SendTaskCallbackHandle callback) {
 		// 任务提交中
-		callback.sendTaskCallback(Task.from(taskSendParams));
+		callback.sendTaskCallback(Task.from(taskSendParams, TaskState.SUBMITTED));
 
 		if (this.getAgentCard().getCapabilities().streaming()) {
 			return this.streamAgent(taskSendParams, callback);
