@@ -10,7 +10,7 @@ To implement your own A2A Client, add the following dependency to your project's
 <dependency>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a-agent-client</artifactId>
-     <version>0.3.1</version>
+     <version>0.3.2</version>
 </dependency>
 ```
 

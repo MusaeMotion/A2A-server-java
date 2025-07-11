@@ -471,7 +471,8 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 		try {
 			// 智能体调用
-			AgentGeneralResponse result = this.agentService.call(AgentRequest.builder()
+			AgentGeneralResponse result = this.agentService.call(
+					AgentRequest.builder()
 					.text(query)
 					.sessionId(params.getSessionId())
 					.parts(params.getMessage().getParts())
