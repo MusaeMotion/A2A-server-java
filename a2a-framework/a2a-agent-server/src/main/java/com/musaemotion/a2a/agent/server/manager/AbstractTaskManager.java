@@ -460,7 +460,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		}
 
 		// 更新任务状态
-		task = this.updateTask(
+		this.updateTask(
 				params.getId(),
 				Common.TaskStatus.builder().state(TaskState.WORKING).build(),
 				Lists.newArrayList()
@@ -472,10 +472,12 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 		try {
 			// 智能体调用
-			AgentGeneralResponse result = this.agentService.call(AgentRequest.builder()
+			AgentGeneralResponse result = this.agentService.call(
+					AgentRequest.builder()
 					.text(query)
 					.sessionId(params.getSessionId())
 					.parts(params.getMessage().getParts())
+					.metadata(params.getMessage().getMetadata())
 					.build());
 
 			return this.onSendTaskProcessAgentResponse(request, result);
@@ -546,6 +548,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 									.text(query)
 									.sessionId(params.getSessionId())
 									.parts(params.getMessage().getParts())
+									.metadata(params.getMessage().getMetadata())
 									.build());
 
 					AtomicReference<AgentResponseStatus> agentResponseStatus = new AtomicReference<>();

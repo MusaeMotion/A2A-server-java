@@ -365,6 +365,7 @@ public class HostAgent {
 		Map<String, Object> messageMetadata = new HashMap<>();
 
 		Map<String, Object> inputMetadata = (Map<String, Object>) state.get(INPUT_MESSAGE_METADATA);
+		messageMetadata.putAll(inputMetadata);
 		messageMetadata.put(INPUT_MESSAGE_ID, inputMetadata.get(MESSAGE_ID));
 		messageMetadata.put(CONVERSATION_ID, conversationId);
 		messageMetadata.put(MESSAGE_ID, messageId);
