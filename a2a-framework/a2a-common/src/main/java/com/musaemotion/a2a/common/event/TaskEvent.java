@@ -17,12 +17,9 @@
 package com.musaemotion.a2a.common.event;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.musaemotion.a2a.common.IMetadata;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
-
-import java.io.Serializable;
-import java.util.Map;
 
 /**
  * @author：contact@musaemotion.com
@@ -34,15 +31,6 @@ import java.util.Map;
 @Data
 @SuperBuilder
 @JsonDeserialize(using = TaskEventDeserializer.class)
-public abstract class TaskEvent implements Serializable, IMetadata {
-    /**
-     * 这个是任务id
-     */
-    protected String id;
-
-    /**
-     * map数据
-     */
-    protected Map<String, Object> metadata;
-
+@EqualsAndHashCode(callSuper=true)
+public abstract class TaskEvent extends AbstractTask {
 }

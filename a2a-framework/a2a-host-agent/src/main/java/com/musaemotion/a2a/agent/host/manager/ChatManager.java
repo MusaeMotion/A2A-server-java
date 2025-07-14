@@ -31,6 +31,7 @@ import com.musaemotion.a2a.agent.host.properties.A2aHostAgentProperties;
 import com.musaemotion.a2a.agent.host.provider.ChatModelProvider;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.base.Task;
+import com.musaemotion.a2a.common.base.UsageTokens;
 import com.musaemotion.a2a.common.constant.MessageRole;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.common.utils.JsonUtils;
@@ -40,13 +41,18 @@ import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.musaemotion.a2a.common.constant.ArtifactDataKey.*;
@@ -108,7 +114,7 @@ public class ChatManager {
 	/**
 	 * 模型提供者
 	 */
-	private ChatModelProvider ChatModelProvider;
+	private ChatModelProvider chatModelProvider;
 
 	/**
 	 * 聊天记录
@@ -132,33 +138,31 @@ public class ChatManager {
 				.observationRegistry(this.observationRegistry)
 				.hostAgentPromptService(this.agentPromptProvider)
 				.chatMemoryRepository(this.chatMemoryRepository)
-				.chatModelProvider(this.ChatModelProvider)
+				.chatModelProvider(this.chatModelProvider)
 				.sendTaskCallback(new DefaultSendTaskCallbackHandle(this.taskCenterManager))
 				.build();
 		return hostAgent;
 	}
 
 	/**
-	 * @param ChatModelProvider
+	 * @param chatModelProvider
 	 * @param a2aHostAgentProperties
 	 * @param abstractConversationManager
 	 * @param abstractMessageManager
 	 * @param pushNotificationServer
 	 */
 	@Autowired
-	public ChatManager(ChatModelProvider ChatModelProvider, A2aHostAgentProperties a2aHostAgentProperties, AbstractRemoteAgentManager remoteAgentManager, AbstractConversationManager abstractConversationManager, AbstractMessageManager abstractMessageManager, AbstractTaskCenterManager abstractTaskCenterManager, AgentPromptProvider agentPromptProvider, @Autowired(required = false) PushNotificationServer pushNotificationServer, @Autowired(required = false) ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
+	public ChatManager(ChatModelProvider chatModelProvider, A2aHostAgentProperties a2aHostAgentProperties, AbstractRemoteAgentManager remoteAgentManager, AbstractConversationManager abstractConversationManager, AbstractMessageManager abstractMessageManager, AbstractTaskCenterManager abstractTaskCenterManager, AgentPromptProvider agentPromptProvider, @Autowired(required = false) PushNotificationServer pushNotificationServer, @Autowired(required = false) ObservationRegistry observationRegistry, ChatMemoryRepository chatMemoryRepository) {
 		this.conversationManager = abstractConversationManager;
 		this.messageManager = abstractMessageManager;
 		this.pushNotificationServer = pushNotificationServer;
 		this.taskCenterManager = abstractTaskCenterManager;
 		this.observationRegistry = observationRegistry;
 		this.agentPromptProvider = agentPromptProvider;
-		if (this.observationRegistry == null) {
-			this.observationRegistry = ObservationRegistry.NOOP;
-		}
+		this.observationRegistry = Optional.ofNullable(observationRegistry).orElse(ObservationRegistry.NOOP);
 		this.remoteAgentManager = remoteAgentManager;
 		this.a2aHostAgentProperties = a2aHostAgentProperties;
-		this.ChatModelProvider = ChatModelProvider;
+		this.chatModelProvider = chatModelProvider;
 		this.chatMemoryRepository = chatMemoryRepository;
 	}
 
@@ -204,7 +208,6 @@ public class ChatManager {
 
 	/**
 	 * 处理响应消息
-	 *
 	 * @param assistantMessage
 	 * @param userMessage
 	 * @return
@@ -275,7 +278,6 @@ public class ChatManager {
 		state.put(CONVERSATION_ID, input.getConversationId());
 		// 主任务Id, 用于后续异步任务主Id使用
 		state.put(MAIN_TASK_ID, GuidUtils.createGuid());
-
 		// 工具上下文
 		Map<String, Object> toolContext = new HashMap<>();
 		toolContext.put(STATE, state);
@@ -300,42 +302,45 @@ public class ChatManager {
 
 
 	/**
-	 * 后处理
-	 *
-	 * @param assistantMessage
-	 * @param userMessage
-	 * @return
+	 * 加载使用token
+	 * @param chatResponse
+	 * @param agentMessage
 	 */
-	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage) {
-		return this.sendAfter(assistantMessage, userMessage, "");
+	private void loadUsageTokens(ChatResponse chatResponse, Common.Message agentMessage){
+		if(chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null){
+			// 写入token相关数据
+			Usage usage = chatResponse.getMetadata().getUsage();
+			UsageTokens usageTokens =  UsageTokens.fromUsage(usage.getCompletionTokens(), usage.getPromptTokens(), usage.getTotalTokens());
+			agentMessage.buildUsageTokens(usageTokens, this.chatModelProvider.getChatModel().getDefaultOptions().getModel());
+		}
 	}
 
 	/**
 	 * 后处理
-	 *
-	 * @param assistantMessage
+	 * @param chatResponse
 	 * @param userMessage
-	 * @param messageId
 	 * @return
 	 */
-	private Common.Message sendAfter(AssistantMessage assistantMessage, Common.Message userMessage, String messageId) {
-		Common.Message agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
+	private Common.Message sendAfter(ChatResponse chatResponse, Common.Message userMessage) {
+		Generation generation = chatResponse.getResult();
+		Common.Message agentMessage = this.sanitizeResponseMessage(generation.getOutput(), userMessage, "");
+		this.loadUsageTokens(chatResponse, agentMessage);
 		// 消息管理器保存
-		this.messageManager.upsert(agnetMessage);
-		return agnetMessage;
+		this.messageManager.upsert(agentMessage);
+		return agentMessage;
 	}
 
 	/**
 	 * 加载task信息
 	 *
-	 * @param agnetMessage
+	 * @param agentMessage
 	 * @return
 	 */
-	private CommonMessageExt loadTask(Common.Message agnetMessage) {
-		var message = CommonMessageExt.fromMessage(agnetMessage);
-		String lastMessageId = agnetMessage.getLastMessageId();
+	private CommonMessageExt loadTask(Common.Message agentMessage) {
+		var message = CommonMessageExt.fromMessage(agentMessage);
+		String lastMessageId = agentMessage.getLastMessageId();
 		if (StringUtils.hasText(lastMessageId)) {
-			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agnetMessage.getLastMessageId()));
+			List<Task> tasks = this.taskCenterManager.listByInputMessageId(Lists.newArrayList(agentMessage.getLastMessageId()));
 			message.setTask(tasks);
 		}
 		return message;
@@ -365,12 +370,15 @@ public class ChatManager {
 	 */
 	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input) {
 		var hostAgent = this.buildHostAgent();
+
 		Common.Message userMessage = this.sendBefore(input);
-		AssistantMessage assistantMessage = hostAgent.call(input, this.buildToolContext(input), Lists.newArrayList());
-		Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
-		var message = loadTask(agnetMessage);
-		// 删除删除通知sse
+		ChatResponse chatResponse = hostAgent.call(input, this.buildToolContext(input), Lists.newArrayList());
+
+		Common.Message agentMessage = this.sendAfter(chatResponse, userMessage);
+		var message = loadTask(agentMessage);
+		// 删除通知sse
 		SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
+
 		return SendMessageResponse.buildMessageResponse(
 				message,
 				input.getConversationId()
@@ -384,32 +392,53 @@ public class ChatManager {
 	 * @return
 	 */
 	public Flux<SendMessageResponse> stream(SendMessageRequest input) {
-		var hostAgent = this.buildHostAgent();
-		Common.Message userMessage = this.sendBefore(input);
-		Flux<AssistantMessage> fluxAssistantMessage = hostAgent.stream(input, this.buildToolContext(input), Lists.newArrayList());
 		String messageId = GuidUtils.createGuid();
-		List<Common.Message> messages = Lists.newArrayList();
-		return fluxAssistantMessage.doFinally(i -> {
-					// 删除删除通知sse
-					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
-					var agentMessage = this.streamFinishReasonMessage(messages);
-					this.messageManager.upsert(agentMessage);
-				})
-				.map(assistantMessage -> {
-					var agnetMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
+
+		var hostAgent = this.buildHostAgent();
+		// 任务发送钱处理
+		Common.Message userMessage = this.sendBefore(input);
+		// 任务发送
+		Flux<ChatResponse> fluxChatResponse = hostAgent.stream(input, this.buildToolContext(input), Lists.newArrayList());
+		// 当前请求所有的 messages
+		List<Common.Message> responseMessages = Lists.newArrayList();
+		// 当前最新的 ChatResponse 对象
+		AtomicReference<ChatResponse> curChatResponse = new AtomicReference<>(ChatResponse.builder().generations(Lists.newArrayList()).build());
+		return fluxChatResponse
+				// 开启stream计算token之后，getResult 会返回null
+				.filter(chatResponse ->chatResponse.getResult()!=null)
+				.map(chatResponse -> {
+					curChatResponse.set(chatResponse);
+					AssistantMessage assistantMessage = chatResponse.getResult().getOutput();
+					var agentMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
 					try {
-						messages.add(agnetMessage);
+						responseMessages.add(agentMessage);
 						// 加载任务消息
 						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason")) || !assistantMessage.getMetadata().containsKey("finishReason")) {
-							agnetMessage = loadTask(agnetMessage);
+							// 加载任务并且message to CommonMessageExt
+							agentMessage = loadTask(agentMessage);
 						}
 					} catch (Exception e) {
-						agnetMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));
+						agentMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));
 					}
+					// 加载消耗token
+					this.loadUsageTokens(curChatResponse.get(), agentMessage);
 					return SendMessageResponse.buildMessageResponse(
-							agnetMessage,
+							agentMessage,
 							input.getConversationId());
+				})
+				.doOnError(e -> log.error("Error occurred: {}", e.getMessage()))
+				.doFinally(signal  -> {
+					// 删除通知sse
+					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
+					if(responseMessages.size() > 0) {
+						var agentMessage = this.streamFinishReasonMessage(responseMessages);
+						this.loadUsageTokens(curChatResponse.get(), agentMessage);
+						this.messageManager.upsert(agentMessage);
+						log.warn("请求完成");
+					}
+
 				});
+
 	}
 
 }

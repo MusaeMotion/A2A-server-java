@@ -5,11 +5,11 @@
     <packaging>pom</packaging>
     <modules>
         <module>a2a-framework</module>
-        <module>agent-server-ollama-sentiment-analysis</module>
+        <module>agent-server-sentiment-analysis</module>
         <module>agent-server-zhipu-generate-images</module>
         <module>agent-client-single-cli</module>
         <module>agent-client-multiple-web</module>
-        <module>agent-server-ollama-vision</module>
+        <module>agent-server-vision</module>
 		<module>agent-server-web-search</module>
 	</modules>
     <parent>
@@ -38,7 +38,7 @@
     </properties>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a</artifactId>
-    <version>0.3.2</version>
+    <version>0.3.3</version>
     <name>A2A</name>
     <description>A2A</description>
     <dependencyManagement>

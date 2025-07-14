@@ -33,6 +33,7 @@ management:
   health:
     defaults:
       enabled: true
+##############################################
 
 spring:
   ######################################
@@ -60,6 +61,8 @@ spring:
       chat:
         options:
           model: 'qwen3:8b'
+          # 计算token需要开启
+          stream-usage: true
       init:
         pull-model-strategy: WHEN_MISSING
         chat:
@@ -71,7 +74,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/a2a?useSSL=false&serverTimezone=Asia/Shanghai
     username: a2a_user
-    password: a2a_usera2o
+    password: a2a_Usera2o
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       minimum-idle: 5

@@ -17,13 +17,11 @@
 package com.musaemotion.a2a.agent.server.controller;
 
 
-import com.musaemotion.a2a.common.AgentCard;
-import com.musaemotion.a2a.agent.server.notification.PushNotificationSenderService;
-import com.musaemotion.a2a.common.base.base.JSONRPCMessage;
 import com.musaemotion.a2a.agent.server.manager.ServerEndpointManager;
+import com.musaemotion.a2a.agent.server.notification.PushNotificationSenderService;
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
-import com.musaemotion.a2a.agent.server.agent.AgentService;
-import jakarta.annotation.Resource;
+import com.musaemotion.a2a.common.AgentCard;
+import com.musaemotion.a2a.common.base.base.JSONRPCMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.autoconfigure.web.ServerProperties;

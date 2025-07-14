@@ -17,11 +17,16 @@
 package com.musaemotion.a2a.common.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Maps;
 import com.musaemotion.a2a.common.base.Common;
+import com.musaemotion.a2a.common.base.UsageTokens;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import static com.musaemotion.a2a.common.constant.MetaDataKey.*;
+import static com.musaemotion.a2a.common.constant.MetaDataKey.FREQUENCY;
 
 /**
  * @author：contact@musaemotion.com
@@ -46,7 +51,5 @@ public class TaskStatusUpdateEvent extends TaskEvent {
      */
     @JsonProperty("final")
     private Boolean done;
-
-
 
 }

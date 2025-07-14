@@ -30,19 +30,22 @@ import com.musaemotion.a2a.common.base.Task;
 public interface SendTaskCallbackHandle {
 
 	/**
-	 * 发送任务回调，在前处理和后处理都有调用
+	 * 1. 智能体任务发起之前回调(call, stream)
+	 * 2. 智能体任务完成之后回调(call)
 	 * @param task
 	 */
 	void sendTaskCallback(Task task);
 
 	/**
 	 * 任务状态更新
+	 * 1. 智能体任务状态更新时（stream）
 	 * @param taskStatusUpdateEvent
 	 */
 	void sendTaskCallback(TaskStatusUpdateEvent taskStatusUpdateEvent);
 
 	/**
 	 * 任务工件更新
+	 * 1. 智能体任务产出工件时回调（stream）
 	 * @param taskArtifactUpdateEvent
 	 */
 	void sendTaskCallback(TaskArtifactUpdateEvent taskArtifactUpdateEvent);

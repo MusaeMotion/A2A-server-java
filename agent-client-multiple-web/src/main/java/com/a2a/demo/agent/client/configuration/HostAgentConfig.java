@@ -16,7 +16,11 @@
 
 package com.a2a.demo.agent.client.configuration;
 
+import com.google.common.collect.Lists;
+import com.musaemotion.a2a.common.base.CalculateAmount;
 import org.springframework.context.annotation.Configuration;
+
+import java.math.BigDecimal;
 
 /**
  * @author：contact@musaemotion.com
@@ -28,6 +32,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class HostAgentConfig {
 
+	/**
+	 * 模型价格配置对象
+	 */
+	public static CalculateAmount calculateAmount = new CalculateAmount(Lists.newArrayList(
+			CalculateAmount.ModelPriceSetting.createUsageOneMillion(BigDecimal.valueOf(8) ,BigDecimal.valueOf(8),"qwen-plus"),
+			CalculateAmount.ModelPriceSetting.createCall(BigDecimal.valueOf(1) ,"zhipu"),
+			CalculateAmount.ModelPriceSetting.createCall(BigDecimal.valueOf(2) ,"qwen-vl-max-latest")
+	));
 }
 
 

@@ -1,0 +1,128 @@
+server:
+  port: ${port:9999}
+
+spring:
+  application:
+    name: 'agent-ollama-sentiment-analysis'
+  ######################################
+  # Spring AI 相关配置
+  ######################################
+  ai:
+    ######################################
+    # Spring AI observability settings
+    ######################################
+    chat:
+      client:
+        observations:
+          log-prompt: true
+      observations:
+        # 记录大模型输出
+        log-prompt: true
+        # 记录大模型提示词
+        log-completion: true
+    ######################################
+    # Spring AI 模型配置，该智能体不合适这种带深度思考的模型
+    ######################################
+    ollama:
+      chat:
+        options:
+          model: 'qwen2.5:8b'
+      base-url: 'http://192.168.10.100:11434'
+      # base-url: 'http://127.0.0.1:11434'
+      init:
+        pull-model-strategy: WHEN_MISSING
+        chat:
+          additional-models:
+            - qwen2.5:8b
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: '使用自己的key'
+      chat:
+        base-url: ${spring.ai.openai.base-url}
+        api-key: ${spring.ai.openai.api-key}
+        options:
+          model: 'qwen-plus'
+          stream-usage: true
+
+
+  ######################################
+  #  redis 用于和远程智能体交换智能体的提示词用
+  ######################################
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      timeout: 60000
+      database: 0
+      password: redistest
+  ######################################
+  # spring starter database 配置, 请使用自己的数据库配置, 配置taskManger管理，这和hostAgent的taskManger 不同，这是智能体的taskManger
+  # a2a-agent-server-mysql-starter 包集成了 migration sql文件会自动创建数据表
+  ######################################
+  datasource:
+    url: jdbc:mysql://localhost:3306/a2a-agent?useSSL=false&serverTimezone=Asia/Shanghai
+    username: a2a_user
+    password: a2a_usera2o
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+    type: com.zaxxer.hikari.HikariDataSource
+  ######################################
+  #  flyway 数据库版本化配置
+  ######################################
+  flyway:
+    baseline-version: 1.0.0
+    baseline-on-migrate: true
+    encoding: UTF-8
+    clean-disabled: true
+    validate-on-migrate: true
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    driver-class-name: ${spring.datasource.driver-class-name}
+    locations: classpath:db/migration
+    table: flyway_schema_history
+    enabled: true
+
+
+card-url: 'http://127.0.0.1'
+######################################
+#  musaemotion A2A Card 配置
+######################################
+musaemotion:
+  a2a:
+    server:
+      capabilities:
+        push-notifications: true
+        streaming: true
+        modify-prompt : true
+      skills:
+        - id: 'test-skill'
+          name: 'testSkill'
+          description: '主要是用于情感分析'
+          examples:
+            - '请帮我分析一下 我觉的这个不好吃是喜欢吃还是不喜欢吃'
+      url: ${card-url}:${server.port}
+      version: '1.0.0'
+      #default-input-modes:
+      #  - 'text'
+      #default-output-modes:
+      #  - 'text'
+      # name 只能使用英文
+      name: 'SentimentAnalysis'
+      description: '情感分析是否正向反向'
+      # 智能体提供者
+      provider:
+        organization: '位元灵感'
+        url: 'http://www.musaemotion.com/'
+      authentication:
+        schemes: ''
+        credentials: ''
+
+
+
+
+

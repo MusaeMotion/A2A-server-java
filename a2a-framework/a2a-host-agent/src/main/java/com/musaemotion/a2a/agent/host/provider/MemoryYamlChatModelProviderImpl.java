@@ -44,6 +44,8 @@ public class MemoryYamlChatModelProviderImpl implements ChatModelProvider {
 		var openAiChatOptions = OpenAiChatOptions.builder()
 				.model(config.model())
 				.temperature(config.temperature() == null ? 0.7 : config.temperature())
+				// 启动stream 使用
+				.streamUsage(Boolean.TRUE)
 				.build();
 
 		return  OpenAiChatModel.builder().openAiApi(openApi).defaultOptions(openAiChatOptions).build();
@@ -61,7 +63,7 @@ public class MemoryYamlChatModelProviderImpl implements ChatModelProvider {
 		if(defaultChatModel == null) {
 			return this.setDefaultChatModelKey(this.a2aHostAgentProperties.getChatModelConfigs().get(0).name());
 		}
-		log.info("MemoryYamlChatModelProviderImpl:{}", this.defaultChatModelKey);
+		// log.info("MemoryYamlChatModelProviderImpl:{}", this.defaultChatModelKey);
 		return this.defaultChatModel;
 	}
 

@@ -72,7 +72,12 @@ public class MyOllamaAgent implements AgentService {
         return a2aServerProperties.getName();
     }
 
-    /**
+	@Override
+	public String useModel() {
+		return "ollama";
+	}
+
+	/**
      * 流请求
      * @param agentRequest
      * @return

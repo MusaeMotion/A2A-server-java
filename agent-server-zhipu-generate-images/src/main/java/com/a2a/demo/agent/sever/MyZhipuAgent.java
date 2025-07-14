@@ -71,13 +71,18 @@ public class MyZhipuAgent implements AgentService {
         return a2aServerProperties.getName();
     }
 
-    /**
+	@Override
+	public String useModel() {
+		return "zhipu";
+	}
+
+	/**
      * 流请求
      * @param agentRequest
      * @return
      */
     @Override
-    public Flux<AgentGeneralResponse> stream(AgentRequest agentRequest) throws NoSuchMethodException {
+    public Flux<AgentGeneralResponse> stream(AgentRequest agentRequest)  {
        throw new NotImplementedException("该智能体未实现");
     }
 

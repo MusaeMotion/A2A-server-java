@@ -70,4 +70,44 @@ public interface MetaDataKey {
 	String SESSION_ACTIVE = "session_active";
 
 
+	/**
+	 * 完成响应token使用数量
+	 */
+	String COMPLETION_TOKENS = "completion_tokens";
+
+	/**
+	 * 输入内容提示词token使用量
+	 */
+	String PROMPT_TOKENS = "prompt_tokens";
+
+	/**
+	 * 总token使用量
+	 */
+	String TOTAL_TOKENS = "total_tokens";
+
+	/**
+	 * 使用次数
+	 */
+	String FREQUENCY = "frequency";
+
+	/**
+	 * 使用模型
+	 */
+	String USE_MODEL = "use_model";
+
+	/**
+	 * 输入token 金额
+	 */
+	String PROMPT_TOKENS_AMOUNT = "prompt_tokens_amount";
+
+	/**
+	 * 输出token 金额
+	 */
+	String COMPLETION_TOKENS_AMOUNT = "completion_tokens_amount";
+
+	/**
+	 * 总金额
+	 */
+	String TOTAL_AMOUNT ="total_amount";
+
 }

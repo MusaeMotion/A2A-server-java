@@ -19,23 +19,23 @@ package com.musaemotion.a2a.common.base;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.collect.Lists;
-import com.musaemotion.a2a.common.IMetadata;
+import com.musaemotion.a2a.common.constant.MetaDataKey;
 import com.musaemotion.a2a.common.constant.TaskState;
+import com.musaemotion.a2a.common.event.AbstractTask;
 import com.musaemotion.a2a.common.event.TaskArtifactUpdateEvent;
+import com.musaemotion.a2a.common.event.TaskEvent;
 import com.musaemotion.a2a.common.event.TaskStatusUpdateEvent;
 import com.musaemotion.a2a.common.request.params.TaskSendParams;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
-
-import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
-import static com.musaemotion.a2a.common.constant.MetaDataKey.INPUT_MESSAGE_ID;
-import static com.musaemotion.a2a.common.constant.MetaDataKey.MESSAGE_ID;
+import static com.musaemotion.a2a.common.constant.MetaDataKey.*;
+
 /**
  * @author：contact@musaemotion.com
  * @package：com.musaemotion.a2a.common
@@ -44,14 +44,11 @@ import static com.musaemotion.a2a.common.constant.MetaDataKey.MESSAGE_ID;
  * @description：
  */
 @Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Task implements Serializable, IMetadata {
+@EqualsAndHashCode(callSuper=true)
+@Slf4j
+public class Task extends AbstractTask {
 
-	// 任务id
-	private String id;
 
 	// sessionId
 	private String sessionId;
@@ -65,8 +62,6 @@ public class Task implements Serializable, IMetadata {
 	// 历史记录
 	private List<Common.Message> history;
 
-	// 上下文传递
-	private Map<String, Object> metadata;
 
 	/**
 	 * 根据任务状态更新包装任务
@@ -99,21 +94,39 @@ public class Task implements Serializable, IMetadata {
 	 * @param taskSendParams
 	 * @return
 	 */
-	public static Task from(TaskSendParams taskSendParams){
-		return Task.builder()
-				.id(taskSendParams.getId())
-				.sessionId(taskSendParams.getSessionId())
-				.status(
-						Common.TaskStatus.builder()
-								.state(TaskState.SUBMITTED)
-								.message(taskSendParams.getMessage())
-								.build()
-				)
-				.metadata(taskSendParams.getMetadata())
-				.history(Lists.newArrayList(taskSendParams.getMessage()))
-				.build();
+	public static Task from(TaskSendParams taskSendParams, TaskState taskState){
+		Task task = new Task();
+		task.setId(taskSendParams.getId());
+		task.setSessionId(taskSendParams.getSessionId());
+		task.setStatus(
+				Common.TaskStatus.builder()
+						.state(taskState)
+						.message(taskSendParams.getMessage())
+						.build()
+		);
+		task.setHistory(Lists.newArrayList(taskSendParams.getMessage()));
+		task.setMetadata(taskSendParams.getMetadata());
+		return task;
 	}
 
+	/**
+	 * 根据任务事件构建Task
+	 * @param taskEvent
+	 * @return
+	 */
+	public static Task buildSubmittedFrom(TaskEvent taskEvent){
+		Task task = new Task();
+		task.setId(taskEvent.getId());
+		task.setStatus(Common.TaskStatus.builder().state(TaskState.SUBMITTED).build());
+		task.setMetadata(taskEvent.getMetadata());
+		task.setArtifacts(Lists.newArrayList());
+		String conversationId = null;
+		if (taskEvent.getMetadata() != null && taskEvent.getMetadata().containsKey(CONVERSATION_ID)) {
+		   conversationId = taskEvent.getMetadata().get(CONVERSATION_ID).toString();
+		}
+		task.setSessionId(conversationId);
+		return task;
+	}
 	/**
 	 * 拷贝一个消息对象
 	 */
@@ -153,13 +166,13 @@ public class Task implements Serializable, IMetadata {
 	 */
 	@JsonIgnore
 	public String getInputMessageId(){
-		if(metadata==null){
+		if(this.metadata==null){
 			return null;
 		}
-		if(!metadata.containsKey(INPUT_MESSAGE_ID)){
+		if(!this.metadata.containsKey(INPUT_MESSAGE_ID)){
 			return null;
 		}
-		return metadata.get(INPUT_MESSAGE_ID).toString();
+		return this.metadata.get(INPUT_MESSAGE_ID).toString();
 	}
 
 	/**
@@ -168,12 +181,143 @@ public class Task implements Serializable, IMetadata {
 	 */
 	@JsonIgnore
 	public String getMessageId(){
-		if(metadata==null){
+		if(this.metadata==null){
 			return null;
 		}
-		if(!metadata.containsKey(MESSAGE_ID)){
+		if(!this.metadata.containsKey(MESSAGE_ID)){
 			return null;
 		}
-		return metadata.get(MESSAGE_ID).toString();
+		return this.metadata.get(MESSAGE_ID).toString();
+	}
+
+
+	/**
+	 * 获取消耗次数
+	 * @return
+	 */
+	@JsonIgnore
+	public Integer getFrequency(){
+		if(this.getMetadata().containsKey(MetaDataKey.FREQUENCY)){
+			return (Integer)this.getMetadata().get(MetaDataKey.FREQUENCY);
+		}
+		return 0;
+	}
+	/**
+	 * 获取所有消耗的tokens
+	 * @return
+	 */
+	@JsonIgnore
+	public Integer getTotalTokens(){
+		if(this.getMetadata().containsKey(MetaDataKey.TOTAL_TOKENS)){
+			return (Integer)this.getMetadata().get(MetaDataKey.TOTAL_TOKENS);
+		}
+		return 0;
+	}
+	/**
+	 * 获取模型名称
+	 * @return
+	 */
+	@JsonIgnore
+	public String getModelName(){
+		if(this.getMetadata().containsKey(MetaDataKey.USE_MODEL)){
+			return (String)this.getMetadata().get(MetaDataKey.USE_MODEL);
+		}
+		return "";
+	}
+
+	/**
+	 * 输出token
+	 * @return
+	 */
+	@JsonIgnore
+	public Integer getCompletionTokens(){
+		if(this.getMetadata().containsKey(MetaDataKey.COMPLETION_TOKENS)){
+			return (Integer)this.getMetadata().get(MetaDataKey.COMPLETION_TOKENS);
+		}
+		return 0;
+	}
+
+	/**
+	 * 输入token
+	 * @return
+	 */
+	@JsonIgnore
+	public Integer getPromptTokens(){
+		if(this.getMetadata().containsKey(MetaDataKey.PROMPT_TOKENS)){
+			return (Integer)this.getMetadata().get(MetaDataKey.PROMPT_TOKENS);
+		}
+		return 0;
+	}
+
+	/**
+	 * 设置输出金额
+	 */
+	public void setCompletionTokensAmount(BigDecimal completionTokensAmount){
+		this.getMetadata().put(
+				MetaDataKey.COMPLETION_TOKENS_AMOUNT,
+				completionTokensAmount
+		);
+	}
+
+	/**
+	 * 设置输入金额
+	 */
+	public void setPromptTokensAmount(BigDecimal promptTokensAmount){
+		this.getMetadata().put(
+				MetaDataKey.PROMPT_TOKENS_AMOUNT,
+				promptTokensAmount
+		);
+	}
+
+	/**
+	 * 设置总金额
+	 * @param totalAmount
+	 */
+	public void setTotalAmount(BigDecimal totalAmount){
+		this.getMetadata().put(
+				MetaDataKey.TOTAL_AMOUNT,
+				totalAmount
+		);
+	}
+	/**
+	 * 获取输出金额
+	 * @return
+	 */
+	public BigDecimal getCompletionTokensAmount(){
+		if(this.getMetadata().containsKey(MetaDataKey.COMPLETION_TOKENS_AMOUNT)){
+			return (BigDecimal)this.getMetadata().get(MetaDataKey.COMPLETION_TOKENS_AMOUNT);
+		}
+		return BigDecimal.ZERO;
+	}
+
+	/**
+	 * 获取输入金额
+	 * @return
+	 */
+	public BigDecimal getPromptTokensAmount(){
+		if(this.getMetadata().containsKey(MetaDataKey.PROMPT_TOKENS_AMOUNT)){
+			return (BigDecimal)this.getMetadata().get(MetaDataKey.PROMPT_TOKENS_AMOUNT);
+		}
+		return BigDecimal.ZERO;
+	}
+
+	/**
+	 * 计算
+	 * @param calculateAmount
+	 */
+	public void calAmount(CalculateAmount calculateAmount) {
+		if (StringUtils.isEmpty(this.getModelName())) {
+			log.warn("task calAmount modelName is empty");
+			this.setCompletionTokensAmount(BigDecimal.ZERO);
+			this.setPromptTokensAmount(BigDecimal.ZERO);
+			return;
+		}
+		if (this.getFrequency() > 0) {
+			this.setTotalAmount(calculateAmount.calculateCallAmount(this.getFrequency(), this.getModelName()));
+			return;
+		}
+		this.setCompletionTokensAmount(calculateAmount.calculateUsageCompletionAmount(this.getCompletionTokens(), this.getModelName()));
+		this.setPromptTokensAmount(calculateAmount.calculateUsagePromptAmount(this.getPromptTokens(), this.getModelName()));
+		this.setTotalAmount(this.getCompletionTokensAmount().add(this.getPromptTokensAmount()));
 	}
 }
