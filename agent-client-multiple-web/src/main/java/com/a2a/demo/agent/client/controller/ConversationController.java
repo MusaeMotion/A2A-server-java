@@ -16,6 +16,7 @@
 
 package com.a2a.demo.agent.client.controller;
 
+import com.a2a.demo.agent.client.configuration.HostAgentConfig;
 import com.a2a.demo.agent.client.dto.Conversation;
 import com.a2a.demo.agent.client.service.MysqlConversationManager;
 import com.a2a.demo.agent.client.service.MysqlMessageManager;
@@ -138,7 +139,8 @@ public class ConversationController {
 			if(!CollectionUtils.isEmpty(ts)){
 				message.setTask(ts);
 			}
-
+			// 计算费用
+			message.calAmount(HostAgentConfig.calculateAmount);
 		});
 
         return ResponseEntity.ok(

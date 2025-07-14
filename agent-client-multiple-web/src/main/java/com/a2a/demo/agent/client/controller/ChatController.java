@@ -16,6 +16,7 @@
 
 package com.a2a.demo.agent.client.controller;
 
+import com.a2a.demo.agent.client.configuration.HostAgentConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -24,6 +25,7 @@ import com.musaemotion.a2a.agent.host.event.AgentAppEvent;
 import com.musaemotion.a2a.agent.host.manager.SseEmitterManager;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
 import com.musaemotion.a2a.agent.host.model.AgentRunningStreamModel;
+import com.musaemotion.a2a.agent.host.model.response.CommonMessageExt;
 import com.musaemotion.a2a.agent.host.model.response.Result;
 import com.musaemotion.a2a.agent.host.model.response.SendMessageResponse;
 import com.musaemotion.a2a.agent.host.manager.ChatManager;
@@ -35,10 +37,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,6 +68,8 @@ public class ChatController {
 	 * 对象映射转换器
 	 */
 	private ObjectMapper mapper = new ObjectMapper();
+
+
 
 	/**
 	 * 通知监听
@@ -112,9 +116,11 @@ public class ChatController {
     @PostMapping(value = "/call")
     public ResponseEntity call(@RequestBody SendMessageRequest input) {
 		try {
+			SendMessageResponse<CommonMessageExt> sendMessageResponse = this.chatManager.call(input);
+			sendMessageResponse.getResult().calAmount(HostAgentConfig.calculateAmount);
 			return ResponseEntity.ok(
 					Result.buildSuccess(
-						this.chatManager.call(input)
+							sendMessageResponse
 					)
 			);
 		} catch (Exception e) {
@@ -129,7 +135,18 @@ public class ChatController {
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input) {
-        return  this.chatManager.stream(input);
-    }
+		Flux<SendMessageResponse> flux = this.chatManager.stream(input);
+		return flux
+				.buffer(2, 1)// 滑动窗口，最后一个窗口长度为1
+				.concatMap(pair -> {
+					if (pair.size() == 1) { // 最后一个元素
+						SendMessageResponse<CommonMessageExt> last = pair.get(0);
+						last.getResult().calAmount(HostAgentConfig.calculateAmount);
+						return Mono.just(last);
+					} else {  // 其余原样透传
+						return Mono.just(pair.get(0));
+					}
+				});
+	}
 
 }

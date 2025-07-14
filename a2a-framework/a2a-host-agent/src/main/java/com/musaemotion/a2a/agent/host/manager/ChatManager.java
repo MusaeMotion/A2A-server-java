@@ -49,6 +49,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -158,9 +159,7 @@ public class ChatManager {
 		this.taskCenterManager = abstractTaskCenterManager;
 		this.observationRegistry = observationRegistry;
 		this.agentPromptProvider = agentPromptProvider;
-		if (this.observationRegistry == null) {
-			this.observationRegistry = ObservationRegistry.NOOP;
-		}
+		this.observationRegistry = Optional.ofNullable(observationRegistry).orElse(ObservationRegistry.NOOP);
 		this.remoteAgentManager = remoteAgentManager;
 		this.a2aHostAgentProperties = a2aHostAgentProperties;
 		this.chatModelProvider = chatModelProvider;
@@ -325,7 +324,7 @@ public class ChatManager {
 	private Common.Message sendAfter(ChatResponse chatResponse, Common.Message userMessage) {
 		Generation generation = chatResponse.getResult();
 		Common.Message agentMessage = this.sanitizeResponseMessage(generation.getOutput(), userMessage, "");
-        this.loadUsageTokens(chatResponse, userMessage);
+		this.loadUsageTokens(chatResponse, agentMessage);
 		// 消息管理器保存
 		this.messageManager.upsert(agentMessage);
 		return agentMessage;
@@ -377,11 +376,9 @@ public class ChatManager {
 
 		Common.Message agentMessage = this.sendAfter(chatResponse, userMessage);
 		var message = loadTask(agentMessage);
-
 		// 删除通知sse
 		SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
 
-		message.calculateAmount();
 		return SendMessageResponse.buildMessageResponse(
 				message,
 				input.getConversationId()
@@ -405,33 +402,43 @@ public class ChatManager {
 		// 当前请求所有的 messages
 		List<Common.Message> responseMessages = Lists.newArrayList();
 		// 当前最新的 ChatResponse 对象
-		AtomicReference<ChatResponse> curChatResponse = new AtomicReference<>(ChatResponse.builder().build());
-		return fluxChatResponse.doFinally(i -> {
-					// 删除通知sse
-					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
-					var agentMessage = this.streamFinishReasonMessage(responseMessages);
-					this.loadUsageTokens(curChatResponse.get(), agentMessage);
-					this.messageManager.upsert(agentMessage);
-
-				})
+		AtomicReference<ChatResponse> curChatResponse = new AtomicReference<>(ChatResponse.builder().generations(Lists.newArrayList()).build());
+		return fluxChatResponse
+				// 开启stream计算token之后，getResult 会返回null
+				.filter(chatResponse ->chatResponse.getResult()!=null)
 				.map(chatResponse -> {
 					curChatResponse.set(chatResponse);
 					AssistantMessage assistantMessage = chatResponse.getResult().getOutput();
-					chatResponse.getMetadata();
 					var agentMessage = this.sanitizeResponseMessage(assistantMessage, userMessage, messageId);
 					try {
 						responseMessages.add(agentMessage);
 						// 加载任务消息
 						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason")) || !assistantMessage.getMetadata().containsKey("finishReason")) {
+							// 加载任务并且message to CommonMessageExt
 							agentMessage = loadTask(agentMessage);
 						}
 					} catch (Exception e) {
 						agentMessage.setParts(Lists.newArrayList(new Common.TextPart("智能体出现异常")));
 					}
+					// 加载消耗token
+					this.loadUsageTokens(curChatResponse.get(), agentMessage);
 					return SendMessageResponse.buildMessageResponse(
 							agentMessage,
 							input.getConversationId());
+				})
+				.doOnError(e -> log.error("Error occurred: {}", e.getMessage()))
+				.doFinally(signal  -> {
+					// 删除通知sse
+					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
+					if(responseMessages.size() > 0) {
+						var agentMessage = this.streamFinishReasonMessage(responseMessages);
+						this.loadUsageTokens(curChatResponse.get(), agentMessage);
+						this.messageManager.upsert(agentMessage);
+						log.warn("请求完成");
+					}
+
 				});
+
 	}
 
 }

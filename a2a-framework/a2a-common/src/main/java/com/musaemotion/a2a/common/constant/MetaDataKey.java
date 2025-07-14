@@ -95,4 +95,19 @@ public interface MetaDataKey {
 	 */
 	String USE_MODEL = "use_model";
 
+	/**
+	 * 输入token 金额
+	 */
+	String PROMPT_TOKENS_AMOUNT = "prompt_tokens_amount";
+
+	/**
+	 * 输出token 金额
+	 */
+	String COMPLETION_TOKENS_AMOUNT = "completion_tokens_amount";
+
+	/**
+	 * 总金额
+	 */
+	String TOTAL_AMOUNT ="total_amount";
+
 }

@@ -51,6 +51,13 @@ public class MysqlMessageManager extends AbstractMessageManager {
     @Override
     public void upsert(Common.Message message) {
         MessageEntity messageEntity = MessageEntity.newMessage(message);
+		// 可以删除一些不必要的data
+		if(messageEntity.getMessage().getMetadata().containsKey("annotations")){
+			messageEntity.getMessage().getMetadata().remove("annotations");
+		}
+		if(messageEntity.getMessage().getMetadata().containsKey("refusal")){
+			messageEntity.getMessage().getMetadata().remove("refusal");
+		}
         this.messageRepository.save(messageEntity);
     }
 

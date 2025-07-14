@@ -61,6 +61,8 @@ spring:
       chat:
         options:
           model: 'qwen3:8b'
+          # 计算token需要开启
+          stream-usage: true
       init:
         pull-model-strategy: WHEN_MISSING
         chat:
