@@ -4,13 +4,13 @@
     <parent>
 		<groupId>io.github.musaemotion</groupId>
 		<artifactId>a2a</artifactId>
-		 <version>0.3.3</version>
+		  <version>0.3.5</version>
     </parent>
 
     <artifactId>agent-server-vision</artifactId>
     <packaging>jar</packaging>
 
-    <name>agent-server-ollama-vision</name>
+    <name>agent-server-vision</name>
     <url>${url}</url>
 
     <properties>

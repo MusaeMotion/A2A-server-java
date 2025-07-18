@@ -64,7 +64,7 @@ This project is an implementation of the A2A protocol based on the Java Spring f
       <dependency>
         <groupId>io.github.musaemotion</groupId>
         <artifactId>a2a-pom</artifactId>
-         <version>0.3.3</version>
+          <version>0.3.5</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -84,6 +84,43 @@ mvn clean install
 2. Start the "agent - client - multiple - web" project.
 3. Start the supporting frontend project.
 4. Register on the frontend management backend by filling in the agent address.
+
+# Microservice Implementation Plan
+1. Use **Spring Cloud Gateway** as the unified gateway to accept requests from two sources:
+    - End-user frontend.
+    - `host-agent`.
+
+2. Use **Nacos** as the service registry (all microservice agents, the gateway, and `host-agent` register here).
+
+> ### ⚠️ Notes
+> 1. This project only provides a simplified demo. Nacos-related configuration and account setup are **outside the scope**; please refer to the official documentation to start and configure Nacos.
+>
+> 2. **Startup Order**  
+     >    Because `agent-client-nacos-gateway` reads the Nacos service list immediately on startup, **start all microservice agents and `agent-client-multiple-web` (`host-agent`) first**, then **start `agent-client-nacos-gateway` last**.  
+     >    The gateway automatically performs three tasks:
+     >    - Retrieves the agent list and dynamically builds routes for remote agents (accessible by `host-agent`).
+     >    - Dynamically builds routes for `host-agent` (accessible by nginx or other callers).
+>    - After route construction, automatically registers all microservice agents to `host-agent`, eliminating manual registration and unifying the access path.
+>
+> 3. `agent-client-multiple-web` (`host-agent`) is not designed as a microservice by default; cross-origin settings exist in the `WebMvcConfig` class. If accessed via the unified gateway, **comment out the CORS code** to prevent conflicts with gateway-level CORS configuration.
+>
+> 4. To support dynamic route building, this demo enforces a naming convention:
+     >    - Remote agents must use prefix `agent-`.
+     >    - `host-agent` must use prefix `host-`.
+>
+> 5. The gateway **dynamically rewrites** the agent’s `card-url` value. It updates the configuration in the config center under **DataId = service-name.yaml**, so every agent should set `file-extension: yaml` in its Nacos configuration.
+>
+> 6. **Quick Demo Checklist**
+     >    - Start `agent-server-nacos-fiction`.
+     >    - Start `agent-client-multiple-web` (**remember to disable CORS**).
+>    - Start `agent-client-nacos-gateway`.
+>    - Update the frontend `.env` file:
+       >      ```
+>      UMI_APP_API_URL=http://127.0.0.1:10000 ```
+- [Nacos GitHub Link](https://github.com/alibaba/nacos)
+### 微服务版本 系统架构拓扑图
+![1752813738352.png](1752813738352.png)
+
 
 ### 📝 Feedback and Contribution
 If you find any issues or have suggestions during use, you are welcome to provide valuable feedback. You can participate in project development by submitting issues or pull requests.

@@ -35,6 +35,22 @@ management:
       enabled: true
 
 spring:
+  application:
+    # TODO 注意这里命名，请使用host-前缀开头，因为如果使用统一网时，会通过前缀动态构造正确的路由
+    name: 'host-agent'
+  cloud:
+    ######################################
+    # host-agent 的 nacos 注册
+    ######################################
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: dev          # 命名空间 ID
+        # 网关注册到其他分组，不要注册AGENT组，避免混淆
+        group: AGENT_GROUP
+        ip-type: IPv4           # 只注册 IPv4
+        username: agent-user
+        password: shuaigechen998
   ######################################
   # Spring AI 相关配置
   ######################################
@@ -131,6 +147,9 @@ musaemotion:
     host-agent:
       # 通知服务绑定的地址
       notify-url: http://0.0.0.0:5000
+      # TODO 就算微服务化这里也要准确填写实际通讯地址，因为前端用户交互时，建立sse host agent，会把该地址传递给 远程智能体
+      # TODO 远程智能体通过传递过去的地址准确 应答通知状态消息到原和用户产生交互的 host agent 应答到客户前端
+      # TODO 所以这里暂时不能使用配置中心。
       # 发送给远程智能体，回调通知的外部地址
       external-url: http://localhost:5000
       # 默认需要加载到注册中心的远程智能体, 请一定保证该地址智能体存在并且已启动，否则会异常
@@ -142,19 +161,23 @@ musaemotion:
       chat-model-configs:
         - name: 'Qwen3'
           base-url: https://dashscope.aliyuncs.com/compatible-mode
-          api-key: '使用自己的key'
+          api-key: 使用自己的key
           model: qwen-plus
         - name: 'qwen-max-latest'
           base-url: https://dashscope.aliyuncs.com/compatible-mode
-          api-key: '使用自己的key'
+          api-key: 使用自己的key
           model: qwen-max-latest
         - name: 'deepseek-chat'
           base-url: https://api.deepseek.com
-          api-key: '使用自己的key'
+          api-key: 使用自己的key
           model: deepseek-chat
         - name: 'qwen-plus'
           base-url: https://dashscope.aliyuncs.com/compatible-mode
-          api-key: '使用自己的key'
+          api-key: 使用自己的key
           model: qwen-plus
+        - name: 'gork3'
+          base-url: https://api.x.ai
+          api-key: 使用自己的key
+          model: grok-3-latest
 
 

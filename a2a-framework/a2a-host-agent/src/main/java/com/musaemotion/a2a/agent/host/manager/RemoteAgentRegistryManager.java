@@ -44,7 +44,10 @@ public class RemoteAgentRegistryManager {
 	 * @return
 	 */
 	public AgentCard registerAgent(RegisterAgentDto input) {
-		AgentCard agentCard = this.remoteAgentManager.registerAgent("http://" + input.getUrl());
+		if (!input.getUrl().startsWith("http://")) {
+			input.setUrl("http://" + input.getUrl());
+		}
+		AgentCard agentCard = this.remoteAgentManager.registerAgent( input.getUrl());
 		if (this.pushNotificationServer != null) {
 			this.pushNotificationServer.registerAgent(agentCard.getName(), agentCard.getUrl());
 		}

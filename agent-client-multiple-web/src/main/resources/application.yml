@@ -1,6 +1,4 @@
 spring:
-  application:
-    name: 'host-agent'
   profiles:
     active: '@profiles.active@'
     group:

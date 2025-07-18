@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.musaemotion</groupId>
-	 <version>0.3.3</version>
+	  <version>0.3.5</version>
     <artifactId>a2a-framework</artifactId>
     <packaging>pom</packaging>
 

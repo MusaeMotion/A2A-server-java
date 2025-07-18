@@ -11,7 +11,9 @@
         <module>agent-client-multiple-web</module>
         <module>agent-server-vision</module>
 		<module>agent-server-web-search</module>
-	</modules>
+		<module>agent-server-nacos-fiction</module>
+        <module>agent-client-nacos-gateway</module>
+    </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -33,16 +35,34 @@
         <opentelemetry.instrumentation.version>2.15.0</opentelemetry.instrumentation.version>
 		<flyway-mysql.version>11.5.0</flyway-mysql.version>
 		<bcprov-jdk18on.version>1.80</bcprov-jdk18on.version>
-
+		<spring-cloud.version>2024.0.0</spring-cloud.version>
+		<alibaba-cloud.version>2023.0.3.3</alibaba-cloud.version>
         <url>http://www.musaemotion.com/</url>
     </properties>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a</artifactId>
-    <version>0.3.3</version>
+     <version>0.3.5</version>
     <name>A2A</name>
     <description>A2A</description>
     <dependencyManagement>
         <dependencies>
+
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.alibaba.cloud</groupId>
+				<artifactId>spring-cloud-alibaba-dependencies</artifactId>
+				<version>${alibaba-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
             <dependency>
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-bom</artifactId>
@@ -167,15 +187,6 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-
-        <!--<repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>-->
         <repository>
             <id>spring-snapshots</id>
             <name>Spring Snapshots</name>
@@ -192,8 +203,34 @@
             <id>maven2</id>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
+		<repository>
+			<id>spring-milestones</id>
+			<name>Spring Milestones</name>
+			<url>https://repo.spring.io/milestone</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
     </repositories>
 
+	<pluginRepositories>
+		<pluginRepository>
+			<id>spring-snapshots</id>
+			<name>Spring Snapshots</name>
+			<url>https://repo.spring.io/snapshot</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+		<pluginRepository>
+			<id>spring-milestones</id>
+			<name>Spring Milestones</name>
+			<url>https://repo.spring.io/milestone</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
 
 	<build>
 		<plugins>
