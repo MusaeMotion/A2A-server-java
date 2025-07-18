@@ -31,19 +31,28 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @package：com.a2a.demo.agent.client.configuration
  * @project：a2a-github
  * @date：2025/5/22 11:44
- * @description：请完善描述
+ * @description：TODO 如果使用了网关访问请关闭这里的跨域配置，因为跨域配置在网络设置了，这里再配置就会冲突
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
 	/**
 	 * 开启前端跨域访问，（解决 umijs 代理流响应会被等待后端流请求完成之后返回无法达到真正流响应的问题）
+	 * TODO 如果使用了网关访问请关闭这里的跨域配置，因为跨域配置在网络设置了，这里再配置就会冲突
 	 * @param registry
 	 */
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**") // 允许所有路径的跨域请求
-				.allowedOrigins("http://localhost:8000","http://localhost:8001/", "http://localhost:5173", "http://localhost:8011","http://192.168.10.247:8000","http://192.168.10.247:8130")// 允许的来源
+				.allowedOrigins(
+						"http://localhost:8000",
+						"http://localhost:8001/",
+						"http://localhost:5173",
+						"http://localhost:8011",
+						"http://192.168.10.247:8000",
+						"http://192.168.10.247:8130",
+						"http://localhost:10000"
+				)// 允许的来源
 				.allowedMethods("GET", "POST", "PUT", "DELETE") // 允许的 HTTP 方法
 				.allowedHeaders("*") // 允许的请求头
 				.allowCredentials(true) // 是否允许发送 Cookie

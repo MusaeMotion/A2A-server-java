@@ -81,10 +81,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	protected PushNotificationSenderService pushNotificationSenderService;
 
-	/**
-	 * TODO 互斥锁，原python 代码应该不是线程安全的，都加上lock排他锁, 所以这里暂照抄了，后面再来移除则移除
-	 */
-	protected Lock lock;
 
 	/**
 	 * 当下默认实现的内存任务管理器和Spring Agent 类型强依赖
@@ -101,7 +97,6 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	public AbstractTaskManager(PushNotificationSenderService pushNotificationSenderService, AgentService agentService, A2aServerProperties a2aServerProperties) {
 		this.pushNotificationSenderService = pushNotificationSenderService;
-		this.lock = new ReentrantLock();
 		this.agentService = agentService;
 		this.a2aServerProperties = a2aServerProperties;
 	}
@@ -341,20 +336,15 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	@Override
 	public GetTaskResponse onGetTask(GetTaskRequest request) {
 		TaskQueryParams taskQueryParams = request.getParams();
-		lock.lock();
-		try {
-			Optional<Task> optionalTask = this.getTaskForStore(taskQueryParams.getId());
-			if (optionalTask.isEmpty()) {
-				return GetTaskResponse.buildTaskNotFoundError(request.getId());
-			}
-			var task = optionalTask.get();
-			var taskResult = this.appendTaskHistory(
-					task, taskQueryParams.getHistoryLength()
-			);
-			return GetTaskResponse.buildTask(request.getId(), taskResult);
-		} finally {
-			lock.unlock();  // 释放锁
+		Optional<Task> optionalTask = this.getTaskForStore(taskQueryParams.getId());
+		if (optionalTask.isEmpty()) {
+			return GetTaskResponse.buildTaskNotFoundError(request.getId());
 		}
+		var task = optionalTask.get();
+		var taskResult = this.appendTaskHistory(
+				task, taskQueryParams.getHistoryLength()
+		);
+		return GetTaskResponse.buildTask(request.getId(), taskResult);
 	}
 
 	/**
@@ -367,17 +357,13 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	public CancelTaskResponse onCancelTask(CancelTaskRequest request) {
 		log.info("Cancelling task {}", request.getParams().getId());
 		TaskIdParams taskIdParams = request.getParams();
-		lock.lock();
-		try {
-			Optional<Task> optionalTask = this.getTaskForStore(taskIdParams.getId());
-			if (optionalTask.isEmpty()) {
-				return CancelTaskResponse.buildTaskNotFoundError(request.getId());
-			}
-			// 返回不能取消，原代码就是这样的
-			return CancelTaskResponse.buildTaskNotCancelableError(request.getId());
-		} finally {
-			lock.unlock();  // 释放锁
+		Optional<Task> optionalTask = this.getTaskForStore(taskIdParams.getId());
+		if (optionalTask.isEmpty()) {
+			return CancelTaskResponse.buildTaskNotFoundError(request.getId());
 		}
+		// 返回不能取消，原代码就是这样的
+		return CancelTaskResponse.buildTaskNotCancelableError(request.getId());
+
 	}
 
 	/**

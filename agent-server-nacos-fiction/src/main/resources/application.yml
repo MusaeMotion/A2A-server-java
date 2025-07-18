@@ -1,0 +1,146 @@
+server:
+  port: ${port:9991}
+
+spring:
+  application:
+    # TODO 注意这里命名，请使用agent- 前缀 因为如果使用统一网时，会通过前缀动态构造正确的路由
+    name: 'agent-server-fiction'
+  ######################################
+  # nacos 注册中心和配置中心设置
+  ######################################
+  cloud:
+    nacos:
+      # 默认nacos 地址
+      discovery: # 服务注册
+        server-addr: 127.0.0.1:8848
+        namespace: dev          # 命名空间 ID
+        group: AGENT_GROUP
+        ip-type: IPv4           # 只注册 IPv4
+        username: agent-user
+        password: shuaigechen998
+      config: # 配置中心
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: AGENT_GROUP
+        file-extension: yaml    # DataId 后缀
+        username: agent-user
+        password: shuaigechen998
+  config:
+    import: # 取代 bootstrap.yml
+      - optional:nacos:agent-server-fiction.yaml?refreshEnabled=true
+      - optional:nacos:agent-server-fiction-dev.yaml?refreshEnabled=true
+  ######################################
+  # Spring AI 相关配置
+  ######################################
+  ai:
+    ######################################
+    # Spring AI observability settings
+    ######################################
+    chat:
+      client:
+        observations:
+          log-prompt: true
+      observations:
+        # 记录大模型输出
+        log-prompt: true
+        # 记录大模型提示词
+        log-completion: true
+    ######################################
+    # Spring AI 模型配置，该智能体不合适这种带深度思考的模型
+    ######################################
+    ollama:
+      chat:
+        options:
+          model: 'qwen2.5:8b'
+      base-url: 'http://192.168.10.100:11434'
+      # base-url: 'http://127.0.0.1:11434'
+      init:
+        pull-model-strategy: WHEN_MISSING
+        chat:
+          additional-models:
+            - qwen2.5:8b
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: 使用自己的Key
+      chat:
+        base-url: ${spring.ai.openai.base-url}
+        api-key: ${spring.ai.openai.api-key}
+        options:
+          model: 'qwen-plus'
+          stream-usage: true
+  ######################################
+  #  redis 用于和远程智能体交换智能体的提示词用
+  ######################################
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      timeout: 60000
+      database: 0
+      password: redistest
+  ######################################
+  # spring starter database 配置, 请使用自己的数据库配置, 配置taskManger管理，这和hostAgent的taskManger 不同，这是智能体的taskManger
+  # a2a-agent-server-mysql-starter 包集成了 migration sql文件会自动创建数据表
+  ######################################
+  datasource:
+    url: jdbc:mysql://localhost:3306/a2a-agent?useSSL=false&serverTimezone=Asia/Shanghai
+    username: a2a_user
+    password: a2a_usera2o
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+    type: com.zaxxer.hikari.HikariDataSource
+  ######################################
+  #  flyway 数据库版本化配置
+  ######################################
+  flyway:
+    baseline-version: 1.0.0
+    baseline-on-migrate: true
+    encoding: UTF-8
+    clean-disabled: true
+    validate-on-migrate: true
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    driver-class-name: ${spring.datasource.driver-class-name}
+    locations: classpath:db/migration
+    table: flyway_schema_history
+    enabled: true
+card-url: 'http://127.0.0.1:${server.port}'
+######################################
+#  musaemotion A2A Card 配置
+######################################
+
+musaemotion:
+  a2a:
+    server:
+      capabilities:
+        push-notifications: true
+        streaming: true
+        modify-prompt : true
+      skills:
+        - id: 'fiction-skill'
+          name: 'fictionSkill'
+          description: '主要用于小说编写'
+          examples:
+            - '请根据我提供的大纲内容完成小说'
+      # 默认访问地址， 启动后会被配置中心覆盖重写
+      url: ${card-url}
+      version: '1.0.0'
+      name: 'novelWriting'
+      description: '编写小说内容或小说大纲'
+      # 智能体提供者
+      provider:
+        organization: '位元灵感'
+        url: 'http://www.musaemotion.com/'
+      authentication:
+        schemes: ''
+        credentials: ''
+
+
+
+
+

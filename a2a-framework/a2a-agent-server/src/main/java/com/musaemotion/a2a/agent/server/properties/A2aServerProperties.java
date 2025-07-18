@@ -33,6 +33,7 @@ import java.util.List;
  * @date：2025/4/22 10:12
  * @description: a2a 配置
  */
+
 @Data
 @ConfigurationProperties(prefix = "musaemotion.a2a.server")
 public class A2aServerProperties {

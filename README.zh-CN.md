@@ -63,7 +63,7 @@
       <dependency>
         <groupId>io.github.musaemotion</groupId>
         <artifactId>a2a-pom</artifactId>
-         <version>0.3.3</version>
+          <version>0.3.5</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -83,6 +83,36 @@ mvn clean install
 2. 启动 agent-client-multiple-web 项目。
 3. 启动 配套前端项目。
 4. 在前端管理后台通过填写智能体地址完成注册。
+
+# 微服务实现方案 
+1. 使用 Spring Cloud GateWay 统一网关 接收两个客户请求来源:
+   - 用户前端 . 
+   - host-agent .
+2. 使用 nacos 作为注册中心（注册：微服务的智能体、网关、host-agent）
+
+### 注意：
+ 1. 本项目提供了简单的 demo实现，nacos 相关的配置和设置，账户设置不在本demo讨论范畴，请异步到官方去按照启动并且设置
+ 2. 因为 agent-client-nacos-gateway（网关）启动时会自动去读取 nacos 服务列表，所以请把需要微服务的只能体和 agent-client-multiple-web（host-agent）启动之后最后启动
+    agent-client-nacos-gateway, gateway做了三个必要工作 
+    - 获取智能体列表动态构建 远程智能体访问路由（供 host-agent 访问）
+    - 动态构建 host-agent 访问路由（供 nginx/其他 访问）
+    - 路由构建完成之后 把所有微服务化的远程智能体自动注册到 host-agent (省去了手动注册，并且统一了访问路径)
+    - 
+ 3. agent-client-multiple-web（host-agent）默认是非微服务实现，有跨域相关的设置在项目里 WebMvcConfig类，如果使用统一网访问，请注释掉跨域设置代码，因为会和网络的跨域配置代码产生冲突
+ 4. 对于注册到 nocas 的服务需要动态构建路由，所以本demo源码 固定了一个微服务的命名规则
+    - 远程智能体 agent-  作为前缀
+    - host-agent 使用 host- 作为前缀
+ 5. gateway 会动态去修改 智能体配置项：card-url 值。 访问配置中心的 DataId: 服务名.yaml, 所以智能体配置中心使用该配置  file-extension: yaml, 
+ 6. 如果想快速查看微服务的效果
+    - agent-server-nacos-fiction
+    - agent-client-multiple-web （注释跨域代码）
+    - agent-client-nacos-gateway 
+    - 修改配套前端  .env 文件 UMI_APP_API_URL=http://127.0.0.1:10000 
+- [Nacos GitHub Link](https://github.com/alibaba/nacos)
+### 微服务版本 系统架构拓扑图
+![1752813738352.png](1752813738352.png)
+
+
 
 ### 📝反馈与贡献
 如果您在使用过程中发现任何不合理之处或 BUG，欢迎您提出宝贵的意见和建议。您可以通过提交 issue 或 pull request 的方式参与项目的开发。

@@ -1,0 +1,91 @@
+server:
+  port: ${port:10000}
+  netty:
+    # 和下游代理的握手连接时间
+    connection-timeout: 5s
+
+spring:
+  application:
+    # TODO 注意命名，请使用gate-前缀 因为如果使用统一网时，会通过前缀动态构造正确的路由
+    name: 'gate-way'
+  ######################################
+  # Redis 配置
+  ######################################
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      timeout: 60000
+      database: 0
+      password: redistest
+  ######################################
+  # Spring Cloud 配置
+  ######################################
+  cloud:
+    ######################################
+    # gateway  统一网关配置
+    ######################################
+    gateway:
+      httpclient:
+        wiretap: true
+        response-timeout: 1000s       # 如果调用 hostAgent call 调用，把该时间设置长一点，因为可能响应比较慢。
+        pool:
+          max-life-time: 100s        # 连接池最大存活，到期后则重新创建连接
+      ######################################
+      # gateway 统一网关的跨域配置，这里需要注意是，如果host-agent使用统一网关来访问首先注释掉host-agent自己的跨域代码配置，因为会产生冲突
+      # 比如本示例 ：agent-client-multiple-web 项目 里 WebMvcConfig 类 的 void addCorsMappings(CorsRegistry registry) 方法，请注释掉。
+      ######################################
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://localhost:8000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS   # 关键：必须放行 OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true        # 需要带 cookie/token 时设为 true
+            maxAge: 3600
+        add-to-simple-url-handler-mapping: true   # 让 OPTIONS 也过网关
+    ######################################
+    # gateway 的 nacos 注册
+    ######################################
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: dev          # 命名空间 ID
+        # 网关注册到其他分组，不要注册AGENT组，避免混淆
+        group: AGENT_GROUP
+        ip-type: IPv4           # 只注册 IPv4
+        username: agent-user
+        password: shuaigechen998
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: AGENT_GROUP
+        username: agent-user
+        password: shuaigechen998
+  config:
+    import: # 取代 bootstrap.yml
+      - optional:nacos:agent-server-fiction.yaml?refreshEnabled=true
+      - optional:nacos:agent-server-fiction-dev.yaml?refreshEnabled=true
+######################################
+# 日志相关
+######################################
+logging:
+  level:
+    reactor.netty.http.client: DEBUG   # 客户端日志
+    reactor.netty.http.server: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    com.alibaba.nacos: DEBUG
+
+######################################
+# musaemotion A2A配置
+######################################
+musaemotion:
+  a2a:
+    # 统一网关访问地址
+    gateway: http://127.0.0.1:10000

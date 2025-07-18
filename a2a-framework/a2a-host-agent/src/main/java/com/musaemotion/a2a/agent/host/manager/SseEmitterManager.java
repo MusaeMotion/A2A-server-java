@@ -101,7 +101,7 @@ public class SseEmitterManager {
 				emitter.send(SseEmitter.event()
 						.id(String.valueOf(System.currentTimeMillis()))
 						.name(eventName+"_"+agentName)
-						.data(data, MediaType.TEXT_PLAIN)
+						.data(data)
 				);
 			} catch (Exception e) {
 				log.error("Failed to send data to sessionId: {} with {}", key, e.getMessage());

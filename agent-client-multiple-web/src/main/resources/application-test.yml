@@ -36,6 +36,22 @@ management:
 ##############################################
 
 spring:
+  application:
+    # TODO 注意这里命名，请使用host-前缀开头，因为如果使用统一网时，会通过前缀动态构造正确的路由
+    name: 'host-agent'
+  cloud:
+    ######################################
+    # host-agent 的 nacos 注册
+    ######################################
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: dev          # 命名空间 ID
+        # 网关注册到其他分组，不要注册AGENT组，避免混淆
+        group: AGENT_GROUP
+        ip-type: IPv4           # 只注册 IPv4
+        username: agent-user
+        password: shuaigechen998
   ######################################
   # Spring AI 相关配置
   ######################################

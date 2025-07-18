@@ -5,13 +5,13 @@
     <parent>
 		<groupId>io.github.musaemotion</groupId>
 		<artifactId>a2a</artifactId>
-		 <version>0.3.3</version>
+		  <version>0.3.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>com.musaemotion.demo</groupId>
     <artifactId>agent-server-sentiment-analysis</artifactId>
     <packaging>jar</packaging>
-    <name>agent-server-ollama-sentiment-analysis</name>
+    <name>agent-server-sentiment-analysis</name>
     <description>demo-agent-server for spring </description>
     <url>${url}</url>
     <properties>
@@ -31,14 +31,14 @@
             <version>${project.version}</version>
         </dependency>
 
-		<!--<dependency>
-			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-starter-model-openai</artifactId>
-		</dependency>-->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-starter-model-ollama</artifactId>
+			<artifactId>spring-ai-starter-model-openai</artifactId>
 		</dependency>
+		<!--<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-ollama</artifactId>
+		</dependency>-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

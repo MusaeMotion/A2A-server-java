@@ -29,6 +29,8 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.musaemotion.a2a.common.constant.MessageRole.USER;
+
 /**
  * @author：contact@musaemotion.com
  * @package：com.musaemotion.a2a.agent.host.model.response
@@ -162,8 +164,11 @@ public class CommonMessageExt extends Common.Message {
 	 * @param calculateAmount
 	 */
 	public void calAmount(CalculateAmount calculateAmount) {
+		if(this.getRole().equals(USER)){
+			return;
+		}
 		if (!StringUtils.hasText(this.getModelName())) {
-			log.warn("calAmount: hostAgent没有找到模型名称");
+			log.warn("calAmount: hostAgent 没有找到模型名称：{}", this.getModelName());
 			this.setCompletionTokensAmount(BigDecimal.ZERO);
 			this.setPromptTokensAmount(BigDecimal.ZERO);
 			return;

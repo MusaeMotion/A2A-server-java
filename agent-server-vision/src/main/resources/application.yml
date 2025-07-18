@@ -38,7 +38,7 @@ spring:
     ######################################
     openai:
       base-url: https://dashscope.aliyuncs.com/compatible-mode
-      api-key: 使用自己的key
+      api-key: '使用自己的Key'
       chat:
         base-url: ${spring.ai.openai.base-url}
         api-key: ${spring.ai.openai.api-key}

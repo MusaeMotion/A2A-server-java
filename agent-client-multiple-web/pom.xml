@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.musaemotion</groupId>
 		<artifactId>a2a</artifactId>
-		 <version>0.3.3</version>
+		  <version>0.3.5</version>
 		<relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>com.musaemotion.demo</groupId>
@@ -61,7 +61,6 @@
 		</dependency>
 
 
-
 		<dependency>
             <groupId>com.vladmihalcea</groupId>
             <artifactId>hibernate-types-60</artifactId>
@@ -91,11 +90,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<scope>provided</scope>
 		</dependency>
+
 		<!-- 以下 可观察性配置 Observability 注意如果要开启可观察性，请先运行zipkin, 建议使用docker 跑demo,然后取消下面的依赖注释 -->
         <!-- Tracing -->
         <!--<dependency>
@@ -111,6 +112,11 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>-->
 
+		<!--注册nacos-->
+		<dependency>
+			<groupId>com.alibaba.cloud</groupId>
+			<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+		</dependency>
     </dependencies>
 
     <build>
