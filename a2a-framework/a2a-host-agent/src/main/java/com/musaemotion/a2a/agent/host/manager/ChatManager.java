@@ -36,7 +36,7 @@ import com.musaemotion.a2a.common.constant.MessageRole;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.common.utils.JsonUtils;
 import com.musaemotion.agent.AgentPromptProvider;
-import com.musaemotion.agent.model.SendMessageRequest;
+import com.musaemotion.a2a.common.request.SendMessageRequest;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -49,7 +49,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -428,14 +427,15 @@ public class ChatManager {
 				})
 				.doOnError(e -> log.error("Error occurred: {}", e.getMessage()))
 				.doFinally(signal  -> {
-					// 删除通知sse
-					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
 					if(responseMessages.size() > 0) {
 						var agentMessage = this.streamFinishReasonMessage(responseMessages);
 						this.loadUsageTokens(curChatResponse.get(), agentMessage);
 						this.messageManager.upsert(agentMessage);
 						log.warn("请求完成");
 					}
+					// 删除通知sse
+					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
+
 
 				});
 

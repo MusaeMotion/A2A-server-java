@@ -22,10 +22,10 @@ import com.a2a.demo.agent.client.service.MysqlRemoteAgentManager;
 import com.a2a.demo.agent.client.service.RemoteAgentPromptService;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
 import com.musaemotion.a2a.agent.host.manager.RemoteAgentRegistryManager;
-import com.musaemotion.a2a.agent.host.model.response.PageInfo;
-import com.musaemotion.a2a.agent.host.model.response.PageUtils;
+import com.musaemotion.a2a.common.web.PageInfo;
+import com.musaemotion.a2a.common.utils.PageUtils;
 import com.musaemotion.a2a.agent.host.model.service.RegisterAgentDto;
-import com.musaemotion.a2a.agent.host.model.response.Result;
+import com.musaemotion.a2a.common.web.Result;
 import com.musaemotion.a2a.common.AgentCard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -123,8 +123,8 @@ public class RemoteAgentController {
 	 * @return
 	 */
 	@PutMapping("/enable/{id}")
-	public ResponseEntity changeAgentEnable(@PathVariable String id) {
-		this.remoteAgentManager.changeAgentEnable(id);
+	public ResponseEntity changeEnable(@PathVariable String id) {
+		this.remoteAgentManager.changeEnable(id);
 		return ResponseEntity.ok(Result.buildSuccess());
 	}
 

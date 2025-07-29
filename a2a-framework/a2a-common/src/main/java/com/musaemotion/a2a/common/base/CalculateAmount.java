@@ -51,6 +51,9 @@ public class CalculateAmount {
 		var optional = this.modelPriceSetting.stream().filter(modelPriceSetting -> modelPriceSetting.getModelName().equals(modelName)).findFirst();
 		if (optional.isPresent()) {
 			var modelPriceSetting = optional.get();
+			if(modelPriceSetting.getPrice(priceType)==null) {
+				return BigDecimal.ZERO;
+			}
 			return fenToYuan(modelPriceSetting.getPrice(priceType).multiply(BigDecimal.valueOf(quantity)));
 		}
 		log.warn("未找到模型的价格设置: {}", modelName);
@@ -172,13 +175,16 @@ public class CalculateAmount {
 		/**
 		 * 按照单次计算的方式
 		 * @param yuan
+		 * @param completionOneMillionPrice
+		 * @param modelName
 		 * @return
 		 */
-		public static ModelPriceSetting createCall(BigDecimal yuan, String modelName) {
+		public static ModelPriceSetting createCall(BigDecimal yuan,BigDecimal completionOneMillionPrice,  String modelName) {
 			BigDecimal fen = yuanToFen(yuan);
 			ModelPriceSetting modelPriceSetting = new ModelPriceSetting();
 			modelPriceSetting.calculateMode = CalculateMode.CALL;
 			modelPriceSetting.unitPrice = fen;
+			modelPriceSetting.completionUnitPrice = yuanToFen(completionOneMillionPrice).divide(BigDecimal.valueOf(1_000_000));
 			modelPriceSetting.modelName = modelName;
 			return modelPriceSetting;
 		}

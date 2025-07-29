@@ -14,47 +14,33 @@
  * limitations under the License.
  */
 
-package com.musaemotion.a2a.agent.host.model.response;
+package com.musaemotion.a2a.common.utils;
 
-
-import lombok.Data;
-
-import java.io.Serializable;
-import java.util.List;
+import com.musaemotion.a2a.common.web.PageInfo;
+import org.springframework.data.domain.Page;
 
 /**
  * @author：contact@musaemotion.com
  * @package：com.a2a.demo.agent.client.model
  * @project：A2A
- * @date：2025/4/30 17:34
+ * @date：2025/4/30 17:39
  * @description：请完善描述
  */
-@Data
-public class PageInfo<T>  implements Serializable {
+public class PageUtils {
 
     /**
-     * 列表数据
+     * 分页转换
+     * @param page
+     * @return
+     * @param <E>
      */
-    private List<T> list;
-
-    /**
-     * 当前页码
-     */
-    private Integer current;
-
-    /**
-     * 页大小
-     */
-    private Integer pageSize;
-
-    /**
-     * 总记录数
-     */
-    private Integer total;
-
-    /**
-     * 总页数
-     */
-    private Integer totalPages;
-
+    public static <E> PageInfo springPageToMyPage(Page<E> page) {
+        PageInfo pageInfo = new PageInfo();
+        pageInfo.setPageSize(page.getSize());
+        pageInfo.setTotalPages(page.getTotalPages());
+        pageInfo.setCurrent(page.getNumber()+1);
+        pageInfo.setTotal(page.getNumberOfElements());
+        pageInfo.setList(page.getContent());
+        return pageInfo;
+    }
 }

@@ -1,6 +1,6 @@
 package com.musaemotion.a2a.agent.server.repository;
 
-import com.musaemotion.a2a.agent.server.entity.TaskEntity;
+import com.musaemotion.a2a.agent.server.entity.AgentTaskEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,5 +11,5 @@ import org.springframework.stereotype.Repository;
  * @description 任务
  */
 @Repository
-public interface TaskRepository extends JpaRepository<TaskEntity, String> {
+public interface TaskRepository extends JpaRepository<AgentTaskEntity, String> {
 }

@@ -18,7 +18,7 @@ package com.a2a.demo.agent.client.controller;
 
 import com.a2a.demo.agent.client.service.MysqlTaskCenterManager;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
-import com.musaemotion.a2a.agent.host.model.response.Result;
+import com.musaemotion.a2a.common.web.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

@@ -63,7 +63,7 @@
       <dependency>
         <groupId>io.github.musaemotion</groupId>
         <artifactId>a2a-pom</artifactId>
-          <version>0.3.5</version>
+        <version>0.5.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -111,8 +111,10 @@ mvn clean install
 - [Nacos GitHub Link](https://github.com/alibaba/nacos)
 ### 微服务版本 系统架构拓扑图
 ![1752813738352.png](1752813738352.png)
-
-
+# ==================================
+# 注意：  0.5.0 + 之后的版本支持 MCP 智能体 对应的host-agent 提示词也会有调整。
+### 需要注意的是对应的前端版本要匹配，对应的 agent-client-multiple-web 项目 host-agent 提示词需要支持
+# ===================================
 
 ### 📝反馈与贡献
 如果您在使用过程中发现任何不合理之处或 BUG，欢迎您提出宝贵的意见和建议。您可以通过提交 issue 或 pull request 的方式参与项目的开发。

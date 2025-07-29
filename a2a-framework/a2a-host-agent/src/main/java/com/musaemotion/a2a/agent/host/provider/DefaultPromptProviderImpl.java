@@ -64,6 +64,9 @@ public class DefaultPromptProviderImpl implements AgentPromptProvider {
 			
 			      If there is an active agent, send the request to that agent with the update task tool.
 			
+			      Contingency Plan: 
+			      If no suitable agent is found, you can try using the mcpAgent agent and ask if there are any suitable mcp tools available. If there are suitable tools, delegate the task to the mcpAgent agent to run.
+			      
 			      Please do not create your own tools
 			
 				 * **Task Delegation:** Utilize the `sendTask` function to assign actionable tasks to remote agents.

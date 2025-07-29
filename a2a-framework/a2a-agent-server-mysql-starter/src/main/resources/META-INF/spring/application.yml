@@ -13,6 +13,6 @@ spring:
     password: ${spring.datasource.password}
     driver-class-name: ${spring.datasource.driver-class-name}
     locations: classpath:db/migration
-    table: flyway_schema_history
+    table: flyway_agent_schema_history
     enabled: true
 

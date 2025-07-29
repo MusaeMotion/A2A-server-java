@@ -97,7 +97,7 @@ public class SseEmitterManager {
 		SseEmitter emitter = emitters.get(key);
 		if (emitter != null) {
 			try {
-				log.info("pushData emitter for key: {}", key);
+				// log.info("pushData emitter for key: {}", key);
 				emitter.send(SseEmitter.event()
 						.id(String.valueOf(System.currentTimeMillis()))
 						.name(eventName+"_"+agentName)

@@ -64,16 +64,20 @@ public class Task extends AbstractTask {
 
 
 	/**
-	 * 根据任务状态更新包装任务
+	 *
+	 * @param task
 	 * @param taskStatusUpdateEvent
 	 * @return
 	 */
-	public static Task from(TaskStatusUpdateEvent taskStatusUpdateEvent){
-		Task task = new Task();
-		task.setId(taskStatusUpdateEvent.getId());
-		task.setStatus(taskStatusUpdateEvent.getStatus());
-		task.setMetadata(taskStatusUpdateEvent.getMetadata());
-		return task;
+	public static Task statusUpdateFrom(Task task, TaskStatusUpdateEvent taskStatusUpdateEvent) {
+		Task taskStatusUpdate = task;
+		if (taskStatusUpdate == null) {
+			taskStatusUpdate = new Task();
+		}
+		taskStatusUpdate.setId(taskStatusUpdateEvent.getId());
+		taskStatusUpdate.setStatus(taskStatusUpdateEvent.getStatus());
+		taskStatusUpdate.setMetadata(taskStatusUpdateEvent.getMetadata());
+		return taskStatusUpdate;
 	}
 
 	/**
@@ -81,8 +85,7 @@ public class Task extends AbstractTask {
 	 * @param taskArtifactUpdateEvent
 	 * @return
 	 */
-	public static Task from(TaskArtifactUpdateEvent taskArtifactUpdateEvent){
-		Task task = new Task();
+	public static Task artifactUpdateFrom(Task task, TaskArtifactUpdateEvent taskArtifactUpdateEvent){
 		task.setId(taskArtifactUpdateEvent.getId());
 		task.setArtifacts(Lists.newArrayList(taskArtifactUpdateEvent.getArtifact()));
 		task.setMetadata(taskArtifactUpdateEvent.getMetadata());

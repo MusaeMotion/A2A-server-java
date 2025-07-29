@@ -17,11 +17,12 @@
 package com.musaemotion.agent;
 
 import com.google.common.collect.Lists;
+import com.musaemotion.a2a.common.base.Common;
+import com.musaemotion.a2a.common.request.SendMessageRequest;
 import com.musaemotion.a2a.common.utils.GuidUtils;
+import com.musaemotion.a2a.common.utils.MediaUtils;
 import com.musaemotion.a2a.common.utils.PartUtils;
-import com.musaemotion.agent.model.FileInfo;
 import com.musaemotion.agent.model.ModelHyperParams;
-import com.musaemotion.agent.model.SendMessageRequest;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.Builder;
 import lombok.Setter;
@@ -39,7 +40,6 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.content.Media;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.MimeType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -139,17 +139,14 @@ public class BasisAgent<T extends SendMessageRequest> {
      * @param userText
      * @return
      */
-    protected ChatClient.ChatClientRequestSpec buildChatClientParams(String userText, List<FileInfo> files){
+    protected ChatClient.ChatClientRequestSpec buildChatClientParams(String userText, List<Common.FilePart> fileParts){
         List<Media> medias;
-        if(!CollectionUtils.isEmpty(files)){
-            medias = files.stream().map(item-> {
-                return Media.builder()
-                        .mimeType(MimeType.valueOf(item.getMime()))
-                        .name(item.getFileName())
-                        .data(item.getResource())
-                        .build();
-            }).collect(Collectors.toList());
-
+        if(!CollectionUtils.isEmpty(fileParts)){
+			// 过滤出文件对象
+			fileParts.stream()
+					.filter(item->item instanceof Common.FilePart)
+					.map(item->(Common.FilePart)item).collect(Collectors.toUnmodifiableList());
+			medias = MediaUtils.filePartToMedia(fileParts);
         } else {
             medias = Lists.newArrayList();
         }
@@ -203,12 +200,14 @@ public class BasisAgent<T extends SendMessageRequest> {
 	 * 同步调用
 	 * @param input 输入内容
 	 * @param toolContext 工具上下文
-	 * @param files 附件内容
+	 * @param fileParts 附件内容
 	 * @return
 	 */
-	public ChatResponse call(T input, Map<String, Object> toolContext, List<FileInfo> files) {
-        ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(input.getContent(), files);
-		chatClientRequestSpec = chatClientRequestSpec.system(agentPromptProvider.systemPrompt(toolContext, input.getMetadata()));
+	public ChatResponse call(T input, Map<String, Object> toolContext, List<Common.FilePart> fileParts) {
+        ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(input.getContent(), fileParts);
+		String systemPrompt = agentPromptProvider.systemPrompt(toolContext, input.getMetadata());
+		// log.error("call systemPrompt: {}", systemPrompt);
+		chatClientRequestSpec = chatClientRequestSpec.system(systemPrompt);
         return chatClientRequestSpec.advisors(buildAdvisor(input))
                 .user(buildUserPrompt(input))
 				.toolCallbacks(this.toolCallbacks)
@@ -222,12 +221,14 @@ public class BasisAgent<T extends SendMessageRequest> {
 	 * stream 调用
 	 * @param input 输入内容
 	 * @param toolContext 工具上下文
-	 * @param files 附件内容
+	 * @param fileParts 附件内容
 	 * @return
 	 */
-	public Flux<ChatResponse> stream(T input, Map<String, Object> toolContext, List<FileInfo> files) {
-		ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPrompt(input), files);
-		chatClientRequestSpec = chatClientRequestSpec.system(agentPromptProvider.systemPrompt(toolContext, input.getMetadata()));
+	public Flux<ChatResponse> stream(T input, Map<String, Object> toolContext, List<Common.FilePart> fileParts) {
+		ChatClient.ChatClientRequestSpec chatClientRequestSpec = buildChatClientParams(buildUserPrompt(input), fileParts);
+		String systemPrompt = agentPromptProvider.systemPrompt(toolContext, input.getMetadata());
+		// log.error("stream systemPrompt: {}", systemPrompt);
+		chatClientRequestSpec = chatClientRequestSpec.system(systemPrompt);
 		return chatClientRequestSpec
 				.advisors(buildAdvisor(input))
 				.toolCallbacks(this.toolCallbacks)

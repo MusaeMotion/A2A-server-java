@@ -116,7 +116,7 @@ spring:
   #  flyway 数据库版本化配置
   ######################################
   flyway:
-    baseline-version: 1.0.0
+    baseline-version: 0
     baseline-on-migrate: true
     encoding: UTF-8
     clean-disabled: true

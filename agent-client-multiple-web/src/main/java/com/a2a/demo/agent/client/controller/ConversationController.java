@@ -17,13 +17,12 @@
 package com.a2a.demo.agent.client.controller;
 
 import com.a2a.demo.agent.client.configuration.HostAgentConfig;
-import com.a2a.demo.agent.client.dto.Conversation;
 import com.a2a.demo.agent.client.service.MysqlConversationManager;
 import com.a2a.demo.agent.client.service.MysqlMessageManager;
 import com.a2a.demo.agent.client.service.MysqlTaskCenterManager;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
 import com.musaemotion.a2a.agent.host.model.response.CommonMessageExt;
-import com.musaemotion.a2a.agent.host.model.response.Result;
+import com.musaemotion.a2a.common.web.Result;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.base.Task;
 import jakarta.transaction.Transactional;

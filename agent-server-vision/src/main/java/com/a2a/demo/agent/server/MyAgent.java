@@ -18,21 +18,18 @@ package com.a2a.demo.agent.server;
 
 import com.musaemotion.a2a.agent.server.agent.*;
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
-import com.musaemotion.a2a.agent.server.utils.MediaUtils;
+import com.musaemotion.a2a.common.utils.MediaUtils;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.constant.MediaType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.content.Media;
-import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -159,7 +159,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 		List<MediaType> intersection = taskSendParams.getAcceptedOutputModes().stream()
 				.filter(agentSupportedContentTypes::contains)
 				.collect(Collectors.toList());
-		if (intersection.size() != agentSupportedContentTypes.size()) {
+		if (intersection.size() ==0) {
 			return Optional.of(
 					JSONRPCResponse.buildError(requestId, new ContentTypeNotSupportedError())
 			);
