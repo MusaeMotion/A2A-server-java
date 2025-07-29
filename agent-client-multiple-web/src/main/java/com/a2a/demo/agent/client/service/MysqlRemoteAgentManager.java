@@ -103,7 +103,7 @@ public class MysqlRemoteAgentManager extends AbstractRemoteAgentManager<AgentCar
 	 * @param Id
 	 * @return
 	 */
-	public void changeAgentEnable(String Id) {
+	public void changeEnable(String Id) {
 		var op = this.repository.findById(Id);
 		if (op.isEmpty()) {
 			return;

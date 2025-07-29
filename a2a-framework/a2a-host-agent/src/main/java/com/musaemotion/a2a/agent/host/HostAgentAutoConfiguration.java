@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -64,10 +65,11 @@ public class HostAgentAutoConfiguration {
      * @return
      */
     @Bean(value = "toolCallingManager")
-    public A2AToolCallingManager toolCallingManager(AgentPromptProvider agentPromptProvider, @Autowired(required = false) ObservationRegistry observationRegistry) {
+    public A2AToolCallingManager toolCallingManager(AgentPromptProvider agentPromptProvider, @Autowired(required = false) ObservationRegistry observationRegistry, @Autowired(required = false) ToolCallbackResolver toolCallbackResolver) {
         return A2AToolCallingManager.builder()
                 .toolExecutionExceptionProcessor(new MyToolExecutionExceptionProcessor())
                 .observationRegistry(observationRegistry == null ? ObservationRegistry.NOOP : observationRegistry)
+				.toolCallbackResolver(toolCallbackResolver)
                 .hostAgentPromptService(agentPromptProvider)
                 .build();
     }

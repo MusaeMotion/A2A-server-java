@@ -68,7 +68,6 @@ public class A2aRemoteAgentConnections {
 	@Getter
 	private AgentCard agentCard;
 
-
 	/**
 	 * 运行流监听
 	 */
@@ -135,7 +134,6 @@ public class A2aRemoteAgentConnections {
 		return sendTaskResponse.getResult();
 	}
 
-
 	/**
 	 * agent 支持 stream 请求
 	 * @param taskSendParams
@@ -171,14 +169,16 @@ public class A2aRemoteAgentConnections {
 				}
 
 				callback.sendTaskCallback(taskStatusUpdateEvent);
-				taskModel.set(Task.from(taskStatusUpdateEvent));
+				taskModel.set(
+						Task.statusUpdateFrom(taskModel.get(), taskStatusUpdateEvent)
+				);
 			}
 
 			if (sendTaskStreamingResponse.getResult() instanceof TaskArtifactUpdateEvent taskArtifactUpdateEvent) {
 				// 最后一条消息, 并且不是新增消息，表示完整消息
 				if(taskArtifactUpdateEvent.getArtifact().getLastChunk() && !taskArtifactUpdateEvent.getArtifact().getAppend()) {
 					callback.sendTaskCallback(taskArtifactUpdateEvent);
-					taskModel.set(Task.from(taskArtifactUpdateEvent));
+					Task.artifactUpdateFrom(taskModel.get(), taskArtifactUpdateEvent);
 				}else {
 					String text = PartUtils.getFirstOneTextContentByParts(taskArtifactUpdateEvent.getArtifact().getParts());
 					// log.error("taskArtifactUpdateEvent： {}", text);
@@ -224,7 +224,6 @@ public class A2aRemoteAgentConnections {
 			target.getMetadata().putAll(source.getMetadata());
 		}
 	}
-
 
 	/**
 	 * 判断map 为空

@@ -37,10 +37,10 @@ import java.util.Map;
  * @description：请完善描述
  */
 @Entity
-@Table(name = "task")
+@Table(name = "agent_task")
 @Data
 @NoArgsConstructor
-public class TaskEntity {
+public class AgentTaskEntity {
 
 	@Id
 	@Column(name = "id", length = 36)
@@ -101,34 +101,34 @@ public class TaskEntity {
 	 * @param task
 	 * @return
 	 */
-   public static TaskEntity from(Task task) {
-	   TaskEntity taskEntity = new TaskEntity();
-	   taskEntity.setId(task.getId());
-	   taskEntity.setSessionId(task.getSessionId());
+   public static AgentTaskEntity from(Task task) {
+	   AgentTaskEntity agentTaskEntity = new AgentTaskEntity();
+	   agentTaskEntity.setId(task.getId());
+	   agentTaskEntity.setSessionId(task.getSessionId());
 	   if (task.getInputMessageId() != null) {
-		   taskEntity.setInputMessageId(task.getInputMessageId());
+		   agentTaskEntity.setInputMessageId(task.getInputMessageId());
 	   }
 	   if (task.getMessageId() != null) {
-		   taskEntity.setMessageId(task.getMessageId());
+		   agentTaskEntity.setMessageId(task.getMessageId());
 	   }
 
 	   if (task.getHistory() != null) {
-		   taskEntity.setHistory(task.getHistory());
+		   agentTaskEntity.setHistory(task.getHistory());
 	   }
 
 	   if (task.getArtifacts() != null) {
-		   taskEntity.setArtifacts(task.getArtifacts());
+		   agentTaskEntity.setArtifacts(task.getArtifacts());
 	   }
 	   if (task.getMetadata() != null) {
-		   taskEntity.setMetadata(task.getMetadata());
+		   agentTaskEntity.setMetadata(task.getMetadata());
 	   }
 
-	   taskEntity.setStatusState(task.getStatus().getState());
-	   taskEntity.setStatusTimestamp(task.getStatus().getTimestamp());
+	   agentTaskEntity.setStatusState(task.getStatus().getState());
+	   agentTaskEntity.setStatusTimestamp(task.getStatus().getTimestamp());
 	   if (task.getStatus().getMessage() != null) {
-		   taskEntity.setStatusMessage(task.getStatus().getMessage());
+		   agentTaskEntity.setStatusMessage(task.getStatus().getMessage());
 	   }
-	   return taskEntity;
+	   return agentTaskEntity;
    }
 
 	/**

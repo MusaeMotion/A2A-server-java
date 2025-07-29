@@ -95,7 +95,7 @@ public class MyOllamaAgent implements AgentService {
     @Override
     public AgentGeneralResponse call(AgentRequest agentRequest) throws JsonProcessingException {
         log.info("请求：{}", agentRequest.getText());
-       WebTools	webTools = new WebTools();
+        WebTools webTools = new WebTools();
         String content = this.chatClient
                 .prompt()
                 .user(u-> u.text(AgentResponsePrompt.buildAgentResponsePrompt(agentRequest.getText())))

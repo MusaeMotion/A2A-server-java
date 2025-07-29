@@ -18,7 +18,7 @@ package com.musaemotion.a2a.agent.server.manager;
 
 import com.musaemotion.a2a.agent.server.agent.AgentService;
 import com.musaemotion.a2a.agent.server.entity.PushNotificationEntity;
-import com.musaemotion.a2a.agent.server.entity.TaskEntity;
+import com.musaemotion.a2a.agent.server.entity.AgentTaskEntity;
 import com.musaemotion.a2a.agent.server.notification.PushNotificationSenderService;
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import com.musaemotion.a2a.agent.server.repository.PushNotificationRepository;
@@ -68,7 +68,7 @@ public class MysqlJpaTaskManager extends AbstractTaskManager  {
 	 */
 	@Transactional
 	public Boolean setPushNotificationInfoToStore(String taskId, Common.PushNotificationConfig notificationConfig) {
-		Optional<TaskEntity> taskOptional = this.taskRepository.findById(taskId);
+		Optional<AgentTaskEntity> taskOptional = this.taskRepository.findById(taskId);
 		if (!taskOptional.isPresent()) {
 			log.info("taskId:{} not exist", taskId);
 			return Boolean.FALSE;
@@ -89,7 +89,7 @@ public class MysqlJpaTaskManager extends AbstractTaskManager  {
 	 */
 	@Transactional(readOnly = true)
 	public Optional<Common.PushNotificationConfig> getPushNotificationInfoForStore(String taskId) {
-		Optional<TaskEntity> taskOptional = this.taskRepository.findById(taskId);
+		Optional<AgentTaskEntity> taskOptional = this.taskRepository.findById(taskId);
 		if (taskOptional.isEmpty()) {
 			return Optional.empty();
 		}
@@ -109,9 +109,9 @@ public class MysqlJpaTaskManager extends AbstractTaskManager  {
 	 */
 	@Transactional
 	public void setTaskToStore(String taskId, Task task) {
-		TaskEntity taskEntity = TaskEntity.from(task);
-		taskEntity.setId(taskId);
-		taskRepository.save(taskEntity);
+		AgentTaskEntity agentTaskEntity = AgentTaskEntity.from(task);
+		agentTaskEntity.setId(taskId);
+		taskRepository.save(agentTaskEntity);
 	}
 
 	/**
@@ -125,8 +125,8 @@ public class MysqlJpaTaskManager extends AbstractTaskManager  {
 		if (taskOptional.isEmpty()) {
 			return Optional.empty();
 		}
-		TaskEntity taskEntity = taskOptional.get();
-		return Optional.of(taskEntity.toTask());
+		AgentTaskEntity agentTaskEntity = taskOptional.get();
+		return Optional.of(agentTaskEntity.toTask());
 	}
 
 }

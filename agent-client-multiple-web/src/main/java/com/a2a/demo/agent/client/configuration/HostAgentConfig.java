@@ -37,8 +37,8 @@ public class HostAgentConfig {
 	 */
 	public static CalculateAmount calculateAmount = new CalculateAmount(Lists.newArrayList(
 			CalculateAmount.ModelPriceSetting.createUsageOneMillion(BigDecimal.valueOf(8) ,BigDecimal.valueOf(8),"qwen-plus"),
-			CalculateAmount.ModelPriceSetting.createCall(BigDecimal.valueOf(1) ,"zhipu"),
-			CalculateAmount.ModelPriceSetting.createCall(BigDecimal.valueOf(2) ,"qwen-vl-max-latest")
+			CalculateAmount.ModelPriceSetting.createCall(BigDecimal.valueOf(1) ,BigDecimal.valueOf(2),"zhipu"),
+			CalculateAmount.ModelPriceSetting.createUsageOneMillion(BigDecimal.valueOf(2) ,BigDecimal.valueOf(2),"qwen-vl-max-latest")
 	));
 }
 

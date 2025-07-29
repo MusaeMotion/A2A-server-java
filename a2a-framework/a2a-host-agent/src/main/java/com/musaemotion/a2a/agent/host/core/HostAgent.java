@@ -35,19 +35,16 @@ import com.musaemotion.a2a.common.base.Task;
 import com.musaemotion.a2a.common.constant.MediaType;
 import com.musaemotion.a2a.common.constant.MessageRole;
 import com.musaemotion.a2a.common.constant.TaskState;
+import com.musaemotion.a2a.common.request.SendMessageRequest;
 import com.musaemotion.a2a.common.request.params.TaskSendParams;
 import com.musaemotion.a2a.common.utils.GuidUtils;
 import com.musaemotion.a2a.common.utils.PartUtils;
-import com.musaemotion.agent.BasisAgent;
 import com.musaemotion.agent.AgentPromptProvider;
-import com.musaemotion.agent.model.FileInfo;
-import com.musaemotion.agent.model.SendMessageRequest;
+import com.musaemotion.agent.BasisAgent;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.support.ToolCallbacks;
@@ -156,7 +153,6 @@ public class HostAgent {
 	 */
 	private void createHostAgent() {
 		Assert.notNull(this.chatModelProvider, "chatModelProvider must not be null");
-
 		ToolCallback[] toolCallbacks = ToolCallbacks.from(this);
 		this.basisAgent = BasisAgent.builder()
 				.id("host-agent")
@@ -261,22 +257,22 @@ public class HostAgent {
 	 * 同步调用
 	 * @param input
 	 * @param toolContext
-	 * @param files
+	 * @param fileParts
 	 * @return
 	 */
-	public ChatResponse call(SendMessageRequest input,  Map<String, Object> toolContext, List<FileInfo> files) {
-		return this.basisAgent.call(input, toolContext, files);
+	public ChatResponse call(SendMessageRequest input,  Map<String, Object> toolContext, List<Common.FilePart> fileParts) {
+		return this.basisAgent.call(input, toolContext, fileParts);
 	}
 
 	/**
 	 * 流调用
 	 * @param input
 	 * @param toolContext
-	 * @param files
+	 * @param fileParts
 	 * @return
 	 */
-	public Flux<ChatResponse> stream(SendMessageRequest input,  Map<String, Object> toolContext, List<FileInfo> files) {
-		return this.basisAgent.stream(input, toolContext, files);
+	public Flux<ChatResponse> stream(SendMessageRequest input,  Map<String, Object> toolContext, List<Common.FilePart> fileParts) {
+		return this.basisAgent.stream(input, toolContext, fileParts);
 	}
 
 
@@ -290,7 +286,7 @@ public class HostAgent {
 	@Tool(description = "列出可用于委派任务可用的 remote agent")
 	public String listRemoteAgents() {
 		String remoteAgents = this.loadRemoteAgentsToString();
-	    // log.error("remoteAgents:{}", remoteAgents);
+	    log.error("remoteAgents:{}", remoteAgents);
 		return remoteAgents;
 	}
 
@@ -328,9 +324,9 @@ public class HostAgent {
 		var request = this.sendBefore(state, agentName, message);
 
 		Task result = client.sendTask(request, this.callback);
-
+		log.info("sendTask result:{}", result.toString());
 		var response = this.sendAfter(request, result, state,  agentName);
-        log.info("sendTask:{}", response.toString());
+        log.info("sendTask response:{}", response.toString());
 		return response;
 	}
 
@@ -494,7 +490,7 @@ public class HostAgent {
 		log.info("当前运行智能体: {}", state.get(CUR_AGENT_NAME));
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		return objectMapper.writeValueAsString(responseTask);
+		return objectMapper.writeValueAsString(responsePart);
 	}
 
 	/**

@@ -9,7 +9,7 @@
     <dependency>
         <groupId>io.github.musaemotion</groupId>
         <artifactId>a2a-host-agent</artifactId>
-          <version>0.3.5</version>
+        <version>0.5.0</version>
     </dependency>
 ```
  
@@ -52,3 +52,7 @@ musaemotion:
     <artifactId>spring-boot-starter-actuator</artifactId>
 </dependency>
 ```
+# ==================================
+# 注意：  0.5.0 + 之后的版本支持 MCP 智能体 对应的host-agent 提示词也会有调整。
+### 需要注意的是对应的前端版本要匹配，对应的 agent-client-multiple-web 项目 host-agent 提示词需要支持
+# ===================================

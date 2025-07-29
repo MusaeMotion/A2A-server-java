@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.musaemotion.a2a.agent.host.model.response;
+package com.musaemotion.a2a.common.web;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

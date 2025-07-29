@@ -24,11 +24,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import static com.musaemotion.a2a.agent.server.constant.Constant.*;
+
 @Configuration
-@ComponentScan("com.musaemotion.a2a.agent.server")
+@ComponentScan(MAIN_PAGE)
 @RequiredArgsConstructor
-@EntityScan(basePackages = "com.musaemotion.a2a.agent.server.entity")
-@EnableJpaRepositories("com.musaemotion.a2a.agent.server.repository")
+@EntityScan(basePackages = ENTITY_PAGE)
+@EnableJpaRepositories(REPOSITORY_PAGE)
 @EnableTransactionManagement
 public class AgentServerMysqlJapAutoConfiguration {
 

@@ -45,10 +45,10 @@ UNLOCK TABLES;
 -- Table structure for table `task`
 --
 
-DROP TABLE IF EXISTS `task`;
+DROP TABLE IF EXISTS `agent_task`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `task` (
+CREATE TABLE `agent_task` (
                         `id` char(36) NOT NULL,
                         `session_id` char(36) DEFAULT NULL,
                         `input_message_id` char(36) DEFAULT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE `task` (
 -- Dumping data for table `task`
 --
 
-LOCK TABLES `task` WRITE;
+LOCK TABLES `agent_task` WRITE;
 /*!40000 ALTER TABLE `task` DISABLE KEYS */;
 /*!40000 ALTER TABLE `task` ENABLE KEYS */;
 UNLOCK TABLES;

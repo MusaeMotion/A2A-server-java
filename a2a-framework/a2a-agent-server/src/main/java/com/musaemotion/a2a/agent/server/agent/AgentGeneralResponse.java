@@ -136,7 +136,6 @@ public class AgentGeneralResponse {
 	 * @return
 	 */
 	public static AgentGeneralResponse fromStreamChatResponse(ChatResponse chatResponse, AgentResponseStatus status) {
-
 		if(chatResponse.getResult()!=null){
 			AgentTextResponse agentTextResponse = new AgentTextResponse();
 			agentTextResponse.setContent(chatResponse.getResult().getOutput().getText());
@@ -153,6 +152,7 @@ public class AgentGeneralResponse {
 					));
 			return agentGeneralResponse;
 		}
+		// 等于空直接返回完成状态信息
 		Usage usage = chatResponse.getMetadata().getUsage();
 		AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText("", AgentResponseStatus.COMPLETED);
 		agentGeneralResponse.setUsageTokens(

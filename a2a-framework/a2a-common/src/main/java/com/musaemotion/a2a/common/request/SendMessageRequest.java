@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.musaemotion.agent.model;
+package com.musaemotion.a2a.common.request;
 
 import com.musaemotion.a2a.common.base.Common;
 import lombok.Data;
@@ -81,4 +81,7 @@ public class SendMessageRequest {
     public Map<String, Object> getMetadata() {
         return this.params.getMetadata();
     }
+
+
+
 }

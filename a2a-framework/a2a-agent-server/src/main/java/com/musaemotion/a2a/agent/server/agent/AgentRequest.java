@@ -16,7 +16,10 @@
 
 package com.musaemotion.a2a.agent.server.agent;
 
+import com.google.common.collect.Lists;
 import com.musaemotion.a2a.common.base.Common;
+import com.musaemotion.a2a.common.constant.MessageRole;
+import com.musaemotion.a2a.common.request.SendMessageRequest;
 import lombok.Builder;
 import lombok.Data;
 
@@ -53,4 +56,20 @@ public class AgentRequest {
 	 * 请求响应
 	 */
 	private Map<String, Object> metadata;
+
+
+	/**
+	 * 转换成SendMessageRequest
+	 * @return
+	 */
+	public SendMessageRequest toSendMessageRequest() {
+		List<Common.Part> parts = Lists.newArrayList();
+		Common.TextPart textPart = new Common.TextPart(this.getText());
+		parts.add(textPart);
+		parts.addAll(this.parts);
+		var message = Common.Message.newMessage(MessageRole.AGENT, parts, metadata);
+		SendMessageRequest sendMessageRequest = new SendMessageRequest();
+		sendMessageRequest.setParams(message);
+		return sendMessageRequest;
+	}
 }
