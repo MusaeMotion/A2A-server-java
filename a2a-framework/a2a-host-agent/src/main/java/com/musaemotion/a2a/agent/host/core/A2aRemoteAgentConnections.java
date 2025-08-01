@@ -147,7 +147,9 @@ public class A2aRemoteAgentConnections {
 		responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
 			if (sendTaskStreamingResponse.getError() != null) {
 				log.error("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
-				taskModel.set(buildFailedTask(taskSendParams, sendTaskStreamingResponse.getError().getMessage()));
+				Task task = buildFailedTask(taskSendParams, sendTaskStreamingResponse.getError().getMessage());
+				task.setSessionId(taskSendParams.getSessionId());
+				taskModel.set(task);
 				return;
 			}
 			if (sendTaskStreamingResponse.getResult() instanceof TaskEvent taskEvent) {
@@ -169,19 +171,18 @@ public class A2aRemoteAgentConnections {
 				}
 
 				callback.sendTaskCallback(taskStatusUpdateEvent);
-				taskModel.set(
-						Task.statusUpdateFrom(taskModel.get(), taskStatusUpdateEvent)
-				);
+				Task task = Task.statusUpdateFrom(taskModel.get(), taskStatusUpdateEvent);
+				task.setSessionId(taskSendParams.getSessionId());
+				taskModel.set(task);
 			}
 
 			if (sendTaskStreamingResponse.getResult() instanceof TaskArtifactUpdateEvent taskArtifactUpdateEvent) {
 				// 最后一条消息, 并且不是新增消息，表示完整消息
 				if(taskArtifactUpdateEvent.getArtifact().getLastChunk() && !taskArtifactUpdateEvent.getArtifact().getAppend()) {
 					callback.sendTaskCallback(taskArtifactUpdateEvent);
-					Task.artifactUpdateFrom(taskModel.get(), taskArtifactUpdateEvent);
-				}else {
+					Task.updateTaskFromArtifactUpdateEvent(taskModel.get(), taskArtifactUpdateEvent);
+				} else {
 					String text = PartUtils.getFirstOneTextContentByParts(taskArtifactUpdateEvent.getArtifact().getParts());
-					// log.error("taskArtifactUpdateEvent： {}", text);
 					// 调用监听器
 					this.runningStreamListener.publisher(text, taskArtifactUpdateEvent.getId(), taskSendParams.getMetadata());
 				}
@@ -198,13 +199,10 @@ public class A2aRemoteAgentConnections {
 	 * @param callback
 	 */
 	public Task sendTask(TaskSendParams taskSendParams, SendTaskCallbackHandle callback) {
-		// 任务提交中
 		callback.sendTaskCallback(Task.from(taskSendParams, TaskState.SUBMITTED));
-
 		if (this.getAgentCard().getCapabilities().streaming()) {
 			return this.streamAgent(taskSendParams, callback);
 		}
-
 		return this.callAgent(taskSendParams, callback);
 	}
 

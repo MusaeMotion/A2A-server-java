@@ -63,7 +63,7 @@ public  class InMemoryTaskManager extends AbstractTaskManager  {
      */
     public Boolean setPushNotificationInfoToStore(String taskId, Common.PushNotificationConfig notificationConfig) {
         if (!this.tasks.containsKey(taskId)) {
-            log.info("taskId:{} not exist", taskId);
+			log.debug("taskId:{} not exist", taskId);
             return Boolean.FALSE;
         }
         this.pushNotificationInfos.put(taskId, notificationConfig);

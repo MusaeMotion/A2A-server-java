@@ -133,7 +133,7 @@ public class DefaultSendTaskCallbackHandle implements SendTaskCallbackHandle {
 			}
 			oldTask.getHistory().add(message);
 		} else {
-			log.info("Message id already in history: {} , History: {}", newMessageId, oldTask.getHistory());
+			log.debug("Message id already in history: {} , History: {}", newMessageId, oldTask.getHistory());
 		}
 	}
 

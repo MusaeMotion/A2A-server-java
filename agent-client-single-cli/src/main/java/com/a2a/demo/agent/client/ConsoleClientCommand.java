@@ -82,7 +82,7 @@ public class ConsoleClientCommand implements Runnable {
             }
         }
         // 在这里可以添加业务逻辑
-        log.info("人工智能随时准备为你服务");
+		log.debug("人工智能随时准备为你服务");
 
         // 获取用户输入
         Scanner scanner = new Scanner(System.in);
@@ -93,7 +93,7 @@ public class ConsoleClientCommand implements Runnable {
 
             // 如果启动聊天记录，主动拉取聊天记录打印
             if (history && continueLoop) {
-                log.info("========= 历史记录 ========");
+				log.debug("========= 历史记录 ========");
                 GetTaskResponse getTaskResponse = this.a2aClient.getTask(
                         GetTaskRequest.newInstance(
                           TaskQueryParams.newInstance(taskId,10)
@@ -112,10 +112,10 @@ public class ConsoleClientCommand implements Runnable {
      * @return
      */
     private boolean completeTask(String taskId, Scanner scanner) {
-        log.info("想说点什么? (输入'exit' 退出程序) "); // 提示符
+		log.debug("想说点什么? (输入'exit' 退出程序) "); // 提示符
         String input = scanner.nextLine();
         if ("exit".equalsIgnoreCase(input)) {
-            log.info("程序已退出。");
+			log.warn("程序已退出。");
             return false;
         }
 
@@ -139,17 +139,17 @@ public class ConsoleClientCommand implements Runnable {
             ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams));
             responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
                 if(sendTaskStreamingResponse.getError()!=null){
-                    log.info("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
+                    log.debug("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
                     return;
                 }
                 if(sendTaskStreamingResponse.getResult() instanceof  TaskStatusUpdateEvent taskStatusUpdateEvent){
-                    log.info("stream event => msgId：{}, body: {} ",sendTaskStreamingResponse.getId(),  taskStatusUpdateEvent.toString());
+                    log.debug("stream event => msgId：{}, body: {} ",sendTaskStreamingResponse.getId(),  taskStatusUpdateEvent.toString());
                 }
                 if(sendTaskStreamingResponse.getResult() instanceof  TaskArtifactUpdateEvent taskArtifactUpdateEvent){
-                    log.info("stream event => msgId：{}, body: {} ", sendTaskStreamingResponse.getId(),  taskArtifactUpdateEvent.toString());
-                    log.info("这次任务完成，智能体回答如下：" );
+                    log.debug("stream event => msgId：{}, body: {} ", sendTaskStreamingResponse.getId(),  taskArtifactUpdateEvent.toString());
+                    log.debug("这次任务完成，智能体回答如下：" );
                     taskArtifactUpdateEvent.getArtifact().getParts().stream().forEach(part -> {
-                        log.error(part.toString());
+                        log.debug(part.toString());
                     });
                 }
             });

@@ -20,7 +20,7 @@ public class DefaultChatModelProviderImpl implements ChatModelProvider {
 
 	@Override
 	public ChatModel getChatModel() {
-		log.info("DefaultChatModelProviderImpl");
+		log.debug("DefaultChatModelProviderImpl");
 		return this.chatModel;
 	}
 }

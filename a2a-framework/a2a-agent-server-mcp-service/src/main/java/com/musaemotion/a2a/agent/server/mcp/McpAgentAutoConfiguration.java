@@ -133,4 +133,6 @@ public class McpAgentAutoConfiguration {
 	public MyTaskManager taskManager() {
 		return new MyTaskManager(mcpHostAgent(), this.pushNotificationSenderService,this.serverProperties);
 	}
+
+
 }

@@ -44,12 +44,14 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -351,12 +353,17 @@ public class ChatManager {
 	 * @param messages
 	 * @return
 	 */
-	private Common.Message streamFinishReasonMessage(List<Common.Message> messages) {
+	private Common.Message streamFinishReasonMessage(List<Common.Message> messages) throws IOException {
 		var parts = messages.stream().map(item -> item.getParts()).flatMap(Collection::stream).collect(Collectors.toUnmodifiableList());
 		String text = parts.stream().filter(part -> {
 			return part instanceof Common.TextPart;
 		}).map(item -> ((Common.TextPart) item).getText()).collect(Collectors.joining(""));
-		var agentMessage = messages.get(messages.size() - 1);
+
+		var lastMessage = messages.get(messages.size() - 1);
+		ObjectMapper jsonMapper = new ObjectMapper();
+		byte[] bytes = jsonMapper.writeValueAsBytes(lastMessage);
+		var agentMessage = jsonMapper.readValue(bytes, Common.Message.class);
+
 		agentMessage.getParts().clear();
 		agentMessage.getParts().add(new Common.TextPart(text));
 		return agentMessage;
@@ -412,8 +419,8 @@ public class ChatManager {
 					try {
 						responseMessages.add(agentMessage);
 						// 加载任务消息
-						if ("STOP".equals(assistantMessage.getMetadata().get("finishReason")) || !assistantMessage.getMetadata().containsKey("finishReason")) {
-							// 加载任务并且message to CommonMessageExt
+						if (StringUtils.hasText(chatResponse.getResult().getMetadata().getFinishReason())) {
+							log.debug("getFinishReason:{}",  chatResponse.getResult());
 							agentMessage = loadTask(agentMessage);
 						}
 					} catch (Exception e) {
@@ -421,22 +428,26 @@ public class ChatManager {
 					}
 					// 加载消耗token
 					this.loadUsageTokens(curChatResponse.get(), agentMessage);
-					return SendMessageResponse.buildMessageResponse(
+					var response = SendMessageResponse.buildMessageResponse(
 							agentMessage,
 							input.getConversationId());
+					log.debug("response:{}",response);
+					return response;
 				})
 				.doOnError(e -> log.error("Error occurred: {}", e.getMessage()))
 				.doFinally(signal  -> {
 					if(responseMessages.size() > 0) {
-						var agentMessage = this.streamFinishReasonMessage(responseMessages);
-						this.loadUsageTokens(curChatResponse.get(), agentMessage);
-						this.messageManager.upsert(agentMessage);
-						log.warn("请求完成");
+						try {
+							var agentMessage = this.streamFinishReasonMessage(responseMessages);
+							this.loadUsageTokens(curChatResponse.get(), agentMessage);
+							this.messageManager.upsert(agentMessage);
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+						log.debug("响应完成");
 					}
 					// 删除通知sse
 					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
-
-
 				});
 
 	}

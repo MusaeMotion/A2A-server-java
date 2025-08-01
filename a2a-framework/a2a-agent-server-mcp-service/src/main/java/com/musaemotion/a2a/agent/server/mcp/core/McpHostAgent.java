@@ -12,6 +12,7 @@ import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import com.musaemotion.a2a.common.base.Common;
 import com.musaemotion.a2a.common.base.UsageTokens;
 import com.musaemotion.a2a.common.constant.MediaType;
+import com.musaemotion.a2a.common.constant.MetaDataKey;
 import com.musaemotion.a2a.common.request.SendMessageRequest;
 import com.musaemotion.agent.AgentPromptProvider;
 import com.musaemotion.agent.BasisAgent;
@@ -26,6 +27,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
 import java.util.HashMap;
@@ -188,8 +190,12 @@ public class McpHostAgent implements AgentService {
 					return false;
 				})
 				.map(chatResponse -> {
-					AssistantMessage assistantMessage = chatResponse.getResult().getOutput();
-					if ("STOP".equals(assistantMessage.getMetadata().get("finishReason")) ) {
+					// 出现错误则返回
+					if(chatResponse.getResult().getMetadata().containsKey(MetaDataKey.AGENT_ERROR)) {
+						return AgentGeneralResponse.fromStreamChatResponse(chatResponse, AgentResponseStatus.ERROR);
+					}
+					// 如果是完成，则完成
+					if (StringUtils.hasText(chatResponse.getResult().getMetadata().getFinishReason())) {
 						return AgentGeneralResponse.fromStreamChatResponse(chatResponse, AgentResponseStatus.COMPLETED);
 					}
 					return AgentGeneralResponse.fromStreamChatResponse(chatResponse, AgentResponseStatus.WORKING);

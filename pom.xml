@@ -22,12 +22,11 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <properties>
-        <spring-ai.version>1.0.0</spring-ai.version>
+        <spring-ai.version>1.0.1</spring-ai.version>
         <lombok.version>1.18.26</lombok.version>
         <guava.version>33.4.8-jre</guava.version>
         <jackson-databind.version>2.15.2</jackson-databind.version>
         <classmate.version>1.5.1</classmate.version>
-        <gson.version>2.10.1</gson.version>
         <nimbus-jose-jwt.version>9.9</nimbus-jose-jwt.version>
         <httpclient.version>4.5.13</httpclient.version>
         <hibernate-types-60.version>2.21.1</hibernate-types-60.version>

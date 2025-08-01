@@ -92,6 +92,7 @@ public class MyAgent implements AgentService {
                 .chatResponse()
                 .doOnComplete(()->{})
                 .map(chatResponse -> {
+					// log.error("stream:{}", chatResponse.toString());
                     return AgentGeneralResponse.fromStreamChatResponse(chatResponse, AgentResponseStatus.WORKING);
                 });
     }

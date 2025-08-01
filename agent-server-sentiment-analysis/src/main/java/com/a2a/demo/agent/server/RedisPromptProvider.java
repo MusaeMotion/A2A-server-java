@@ -31,7 +31,7 @@ public class RedisPromptProvider implements PromptProvider {
     public RedisPromptProvider(StringRedisTemplate redisTemplate, A2aServerProperties serverProperties) {
         this.redisTemplate = redisTemplate;
 		this.serverProperties = serverProperties;
-		logger.info("Redis连接已配置，使用 RedisPromptProvider");
+		logger.debug("Redis连接已配置，使用 RedisPromptProvider");
     }
     
 
@@ -41,7 +41,7 @@ public class RedisPromptProvider implements PromptProvider {
 		if (key == null) {
 			return "";
 		}
-		logger.info("getPrompt: {} ", redisTemplate.opsForValue().get(key));
+		logger.debug("getPrompt: {} ", redisTemplate.opsForValue().get(key));
 		return redisTemplate.opsForValue().get(key);
 	}
 

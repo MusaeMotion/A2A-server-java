@@ -104,7 +104,7 @@ public class AgentGeneralResponse {
 		AgentTextResponse agentTextResponse = converter.convert(chatResponse.getResult().getOutput().getText());
 		var agentGeneralResponse = AgentGeneralResponse.fromAgentTextResponse(agentTextResponse);
 		var usage = chatResponse.getMetadata().getUsage();
-		log.info("promptTokens: {}, completionTokens: {}, totalTokens: {}",
+		log.debug("promptTokens: {}, completionTokens: {}, totalTokens: {}",
 				usage.getPromptTokens(),
 				usage.getCompletionTokens(),
 				usage.getTotalTokens()
@@ -136,25 +136,18 @@ public class AgentGeneralResponse {
 	 * @return
 	 */
 	public static AgentGeneralResponse fromStreamChatResponse(ChatResponse chatResponse, AgentResponseStatus status) {
+
+		AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText("", status);
 		if(chatResponse.getResult()!=null){
 			AgentTextResponse agentTextResponse = new AgentTextResponse();
 			agentTextResponse.setContent(chatResponse.getResult().getOutput().getText());
 			agentTextResponse.setStatus(status);
-			AgentGeneralResponse agentGeneralResponse = fromAgentTextResponse(agentTextResponse);
-			// TODO RateLimit rateLimit = chatResponse.getMetadata().getRateLimit();
-			// 限流对象
-			Usage usage = chatResponse.getMetadata().getUsage();
-			agentGeneralResponse.setUsageTokens(
-					UsageTokens.fromUsage(
-							usage.getCompletionTokens(),
-							usage.getPromptTokens(),
-							usage.getTotalTokens()
-					));
-			return agentGeneralResponse;
+			agentGeneralResponse = fromAgentTextResponse(agentTextResponse);
+		}else{
+			agentGeneralResponse.setStatus(AgentResponseStatus.COMPLETED);
 		}
-		// 等于空直接返回完成状态信息
+		// TODO 限流对象 RateLimit rateLimit = chatResponse.getMetadata().getRateLimit();
 		Usage usage = chatResponse.getMetadata().getUsage();
-		AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText("", AgentResponseStatus.COMPLETED);
 		agentGeneralResponse.setUsageTokens(
 				UsageTokens.fromUsage(
 						usage.getCompletionTokens(),

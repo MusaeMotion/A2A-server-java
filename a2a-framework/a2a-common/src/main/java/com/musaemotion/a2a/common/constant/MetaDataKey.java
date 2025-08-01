@@ -36,11 +36,6 @@ public interface MetaDataKey {
 	String CUR_AGENT_NAME = "agentName";
 
 	/**
-	 * 就是 conversation_id 交谈id, 暂时没用，后续其实可以扩展成，也应该是MAIN_TASK_ID
-	 */
-	String SESSION_ID = "session_id";
-
-	/**
 	 * 交谈id, 就是sessionId, 估计是adk里面会读取 conversation_id 字段
 	 */
 	String CONVERSATION_ID = "conversation_id";
@@ -109,5 +104,10 @@ public interface MetaDataKey {
 	 * 总金额
 	 */
 	String TOTAL_AMOUNT ="total_amount";
+
+	/**
+	 * 智能体错误
+	 */
+	String AGENT_ERROR = "agent_error";
 
 }

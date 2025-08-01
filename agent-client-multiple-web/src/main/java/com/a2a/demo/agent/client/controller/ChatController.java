@@ -19,7 +19,6 @@ package com.a2a.demo.agent.client.controller;
 import com.a2a.demo.agent.client.configuration.HostAgentConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import com.musaemotion.a2a.agent.host.constant.AppEventType;
 import com.musaemotion.a2a.agent.host.event.AgentAppEvent;
 import com.musaemotion.a2a.agent.host.manager.SseEmitterManager;
@@ -87,12 +86,13 @@ public class ChatController {
 			AgentRunningStreamModel runningStreamModel = mapper.readValue(event.getMessage(), AgentRunningStreamModel.class);
 			Map<String, String> data = new HashMap<>();
 			data.put("text", runningStreamModel.getText());
+
 			SseEmitterManager.pushData(
 					runningStreamModel.getMetadata().get(MetaDataKey.CONVERSATION_ID).toString(),
 					runningStreamModel.getMetadata().get(MetaDataKey.INPUT_MESSAGE_ID).toString(),
 					AppEventType.RUNNING.name(),
 					event.getAgentName(),
-					new Gson().toJson(data)
+					mapper.writeValueAsString(data)
 			);
 		}
 	}

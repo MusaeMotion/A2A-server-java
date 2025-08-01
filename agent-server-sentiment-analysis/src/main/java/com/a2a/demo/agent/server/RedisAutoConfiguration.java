@@ -39,7 +39,7 @@ public class RedisAutoConfiguration {
 			matchIfMissing = false // 必须存在该属性
 	)
 	public PromptProvider redisPromptProvider(StringRedisTemplate redisTemplate) {
-		log.info("使用Redis提示词提供者");
+		log.debug("使用Redis提示词提供者");
 		return new RedisPromptProvider(redisTemplate, this.serverProperties);
 	}
 
@@ -52,7 +52,7 @@ public class RedisAutoConfiguration {
 	)
 	@ConditionalOnMissingBean(name = "promptProvider") // 额外添加 @ConditionalOnMissingBean，确保只有在真实实现未创建时才创建虚拟实现
 	public PromptProvider noopPromptProvider() {
-		log.info("使用内存提示词提供者");
+		log.debug("使用内存提示词提供者");
 		return new NoopPromptProvider();
 	}
 }

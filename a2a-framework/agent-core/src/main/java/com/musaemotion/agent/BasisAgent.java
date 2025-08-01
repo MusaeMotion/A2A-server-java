@@ -46,6 +46,9 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.musaemotion.a2a.common.constant.MetaDataKey.AGENT_ERROR;
+
 /**
  * @author：contact@musaemotion.com
  * @package：com.musaemotion.framework
@@ -235,12 +238,13 @@ public class BasisAgent<T extends SendMessageRequest> {
 				.toolContext(toolContext)
 				.stream()
 				.chatResponse()
-				.doOnComplete(() -> log.info("BasisAgent 智能体stream响应完成"))
+				.doOnComplete(() -> log.debug("BasisAgent 智能体stream响应完成"))
 				.doOnError(s -> Boolean.TRUE, s -> log.error("BasisAgent 智能体执行出现了异常"))
 				.onErrorResume((error) -> {
 					var generation = new Generation(
-							new AssistantMessage("人工智能出现了一点问题, 稍后再试"),
-							ChatGenerationMetadata.builder().finishReason(GuidUtils.createGuid()).build()
+							new AssistantMessage("人工智能出现了一点问题:"+error.getMessage()+" 稍后再试"),
+							// 扩展以外的其他参数，在元数据里保存， chatResponse.getResult().getMetadata() 取值
+							ChatGenerationMetadata.builder().finishReason(GuidUtils.createGuid()).metadata(AGENT_ERROR, Boolean.TRUE).build()
 					);
 					log.error("BasisAgent error: {} ", error.getMessage());
 					return Mono.just(ChatResponse.builder().generations(List.of(generation)).build());

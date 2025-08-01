@@ -51,8 +51,9 @@ public class TaskSendParams implements Serializable, IMetadata {
 	private String id;
 
 	/**
-	 * 对话id, 也就是交谈id, 同一个会话会产生多个消息，每个消息 都是唯一id, 并且也可能会启动多个任务，每个任务一个id, 任务可能会关联多个智能体
-	 * 多个智能体完成一个工作，就是同一个taskId, 关系则是 sessionId 1 对多 taskId, taskId 也又可能产生多个 messageId( 实际上是sessionId)
+	 * 1. sessionId, 也就是交谈Id, 同一个 session 会产生多个消息（inputMessage），每个消息 都有自己独立 messageId (对于task来说，他是inputMessageId),
+	 * 2. inputMessageId 消息可能会触发 产生多个task 任务,每个 task 都有自己而独立的 taskId 和 messageId(这里和前面 inputMessageId不同),
+	 * 3. sessionId 1 对多 inputMessage, inputMessage 1 对多 task
 	 */
 	private String sessionId;
 

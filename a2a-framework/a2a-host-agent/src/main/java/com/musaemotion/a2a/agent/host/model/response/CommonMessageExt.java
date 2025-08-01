@@ -16,10 +16,7 @@
 
 package com.musaemotion.a2a.agent.host.model.response;
 
-import com.musaemotion.a2a.common.base.CalculateAmount;
-import com.musaemotion.a2a.common.base.Common;
-import com.musaemotion.a2a.common.base.Task;
-import com.musaemotion.a2a.common.constant.MetaDataKey;
+import com.musaemotion.a2a.common.base.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -41,13 +38,20 @@ import static com.musaemotion.a2a.common.constant.MessageRole.USER;
 @Data
 @EqualsAndHashCode(callSuper =  true)
 @Slf4j
-public class CommonMessageExt extends Common.Message {
+public class CommonMessageExt extends Common.Message implements CalculateChargeable {
 
 	/**
 	 * 相关任务
 	 */
     private List<Task> task;
 
+	// 计算委托
+	private CalculateChargeableDelegate calculateChargeableDelegate;
+
+	// 构建
+	public CommonMessageExt() {
+		this.calculateChargeableDelegate = new CalculateChargeableDelegate(this);
+	}
 	/**
 	 *
 	 * @param message
@@ -59,80 +63,58 @@ public class CommonMessageExt extends Common.Message {
         return commonMessageExt;
     }
 
-
-
 	/**
 	 * 设置输出金额
 	 */
-	private void setCompletionTokensAmount(BigDecimal completionTokensAmount){
-		this.getMetadata().put(
-				MetaDataKey.COMPLETION_TOKENS_AMOUNT,
-				completionTokensAmount
-		);
+	public void setCompletionTokensAmount(BigDecimal amount){
+		this.calculateChargeableDelegate.setCompletionTokensAmount(amount);
 	}
 
 	/**
 	 * 设置输入金额
 	 */
-	private void setPromptTokensAmount(BigDecimal promptTokensAmount){
-		this.getMetadata().put(
-				MetaDataKey.PROMPT_TOKENS_AMOUNT,
-				promptTokensAmount
-		);
+	public void setPromptTokensAmount(BigDecimal amount){
+		this.calculateChargeableDelegate.setPromptTokensAmount(amount);
 	}
 
 	/**
 	 * 设置总金额
-	 * @param totalAmount
+	 * @param amount
 	 */
-	private void setTotalAmount(BigDecimal totalAmount){
-		this.getMetadata().put(
-				MetaDataKey.TOTAL_AMOUNT,
-				totalAmount
-		);
+	public void setTotalAmount(BigDecimal amount){
+		this.calculateChargeableDelegate.setTotalAmount(amount);
 	}
 	/**
 	 * 获取输出金额
 	 * @return
 	 */
-	private BigDecimal getCompletionTokensAmount(){
-		if(this.getMetadata().containsKey(MetaDataKey.COMPLETION_TOKENS_AMOUNT)){
-			return (BigDecimal)this.getMetadata().get(MetaDataKey.COMPLETION_TOKENS_AMOUNT);
-		}
-		return BigDecimal.ZERO;
+	public BigDecimal getCompletionTokensAmount(){
+		return this.calculateChargeableDelegate.getCompletionTokensAmount();
 	}
 
 	/**
 	 * 获取输入金额
 	 * @return
 	 */
-	private BigDecimal getPromptTokensAmount(){
-		if(this.getMetadata().containsKey(MetaDataKey.PROMPT_TOKENS_AMOUNT)){
-			return (BigDecimal)this.getMetadata().get(MetaDataKey.PROMPT_TOKENS_AMOUNT);
-		}
-		return BigDecimal.ZERO;
+	public BigDecimal getPromptTokensAmount(){
+		return this.calculateChargeableDelegate.getPromptTokensAmount();
 	}
 
 	/**
 	 * 输出token
 	 * @return
 	 */
-	private Integer getCompletionTokens(){
-		if(this.getMetadata().containsKey(MetaDataKey.COMPLETION_TOKENS)){
-			return (Integer)this.getMetadata().get(MetaDataKey.COMPLETION_TOKENS);
-		}
-		return 0;
+	public Integer getCompletionTokens(){
+		return this.calculateChargeableDelegate.getCompletionTokens();
 	}
+
 
 	/**
 	 * 输入token
 	 * @return
 	 */
-	private Integer getPromptTokens(){
-		if(this.getMetadata().containsKey(MetaDataKey.PROMPT_TOKENS)){
-			return (Integer)this.getMetadata().get(MetaDataKey.PROMPT_TOKENS);
-		}
-		return 0;
+	public Integer getPromptTokens(){
+		return this.calculateChargeableDelegate.getPromptTokens();
 	}
 
 
@@ -140,37 +122,31 @@ public class CommonMessageExt extends Common.Message {
 	 * 获取消耗次数
 	 * @return
 	 */
-	private Integer getFrequency(){
-		if(this.getMetadata().containsKey(MetaDataKey.FREQUENCY)){
-			return (Integer)this.getMetadata().get(MetaDataKey.FREQUENCY);
-		}
-		return 0;
+	public Integer getFrequency(){
+		return this.calculateChargeableDelegate.getFrequency();
 	}
 
 	/**
 	 * 获取模型名称
 	 * @return
 	 */
-	private String getModelName(){
-		if(this.getMetadata().containsKey(MetaDataKey.USE_MODEL)){
-			return (String)this.getMetadata().get(MetaDataKey.USE_MODEL);
-		}
-		return "";
+	public String getModelName(){
+		return this.calculateChargeableDelegate.getModelName();
 	}
 
 
 	/**
-	 * 计算
+	 * 计算金额
 	 * @param calculateAmount
 	 */
 	public void calAmount(CalculateAmount calculateAmount) {
 		if(this.getRole().equals(USER)){
 			return;
 		}
-		if (!StringUtils.hasText(this.getModelName())) {
-			log.warn("calAmount: hostAgent 没有找到模型名称：{}", this.getModelName());
-			this.setCompletionTokensAmount(BigDecimal.ZERO);
-			this.setPromptTokensAmount(BigDecimal.ZERO);
+		if (!StringUtils.hasText(this.calculateChargeableDelegate.getModelName())) {
+			log.warn("calAmount: hostAgent 没有找到模型名称：{}", this.calculateChargeableDelegate.getModelName());
+			this.calculateChargeableDelegate.setCompletionTokensAmount(BigDecimal.ZERO);
+			this.calculateChargeableDelegate.setPromptTokensAmount(BigDecimal.ZERO);
 			return;
 		}
 		if (this.getTask() != null) {
@@ -178,12 +154,6 @@ public class CommonMessageExt extends Common.Message {
 				task.calAmount(calculateAmount);
 			});
 		}
-		if (this.getFrequency() > 0) {
-			this.setTotalAmount(calculateAmount.calculateCallAmount(this.getFrequency(), this.getModelName()));
-			return;
-		}
-		this.setCompletionTokensAmount(calculateAmount.calculateUsageCompletionAmount(this.getCompletionTokens(), this.getModelName()));
-		this.setPromptTokensAmount(calculateAmount.calculateUsagePromptAmount(this.getPromptTokens(), this.getModelName()));
-		this.setTotalAmount(this.getCompletionTokensAmount().add(this.getPromptTokensAmount()));
+		this.calculateChargeableDelegate.calAmount(calculateAmount);
 	}
 }

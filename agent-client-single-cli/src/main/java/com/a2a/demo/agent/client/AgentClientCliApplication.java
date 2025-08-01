@@ -55,7 +55,7 @@ public class AgentClientCliApplication implements CommandLineRunner {
             // 获取AgentCard
             A2ACardResolver cardResolver = new A2ACardResolver(argsModel.getAgentUrl());
             AgentCard card = cardResolver.getAgentCard();
-            log.info(card.toJson());
+			log.debug(card.toJson());
 
             // 本地通知的地址
             URI uri = new URI(argsModel.getNotificationEndpoint());
@@ -73,7 +73,7 @@ public class AgentClientCliApplication implements CommandLineRunner {
 						new INotificationConsumer() {
 							@Override
 							public void processMessage(String message, String agentName) {
-								log.info("通知处理：{}=>{}",agentName, message);
+								log.debug("通知处理：{}=>{}",agentName, message);
 							}
 						}),
 						argsModel.getNotificationEndpoint()

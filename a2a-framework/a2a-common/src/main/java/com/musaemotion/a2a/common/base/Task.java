@@ -47,7 +47,7 @@ import static com.musaemotion.a2a.common.constant.MetaDataKey.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @EqualsAndHashCode(callSuper=true)
 @Slf4j
-public class Task extends AbstractTask {
+public class Task extends AbstractTask implements CalculateChargeable {
 
 
 	// sessionId
@@ -62,9 +62,16 @@ public class Task extends AbstractTask {
 	// 历史记录
 	private List<Common.Message> history;
 
+	// 计算委托
+	@JsonIgnore
+	private CalculateChargeableDelegate calculateChargeableDelegate;
+
+	// 构建
+	public Task() {
+		this.calculateChargeableDelegate = new CalculateChargeableDelegate(this);
+	}
 
 	/**
-	 *
 	 * @param task
 	 * @param taskStatusUpdateEvent
 	 * @return
@@ -85,7 +92,7 @@ public class Task extends AbstractTask {
 	 * @param taskArtifactUpdateEvent
 	 * @return
 	 */
-	public static Task artifactUpdateFrom(Task task, TaskArtifactUpdateEvent taskArtifactUpdateEvent){
+	public static Task updateTaskFromArtifactUpdateEvent(Task task, TaskArtifactUpdateEvent taskArtifactUpdateEvent) {
 		task.setId(taskArtifactUpdateEvent.getId());
 		task.setArtifacts(Lists.newArrayList(taskArtifactUpdateEvent.getArtifact()));
 		task.setMetadata(taskArtifactUpdateEvent.getMetadata());
@@ -94,10 +101,11 @@ public class Task extends AbstractTask {
 
 	/**
 	 * 根据任务请求参数包装任务
+	 *
 	 * @param taskSendParams
 	 * @return
 	 */
-	public static Task from(TaskSendParams taskSendParams, TaskState taskState){
+	public static Task from(TaskSendParams taskSendParams, TaskState taskState) {
 		Task task = new Task();
 		task.setId(taskSendParams.getId());
 		task.setSessionId(taskSendParams.getSessionId());
@@ -114,10 +122,11 @@ public class Task extends AbstractTask {
 
 	/**
 	 * 根据任务事件构建Task
+	 *
 	 * @param taskEvent
 	 * @return
 	 */
-	public static Task buildSubmittedFrom(TaskEvent taskEvent){
+	public static Task buildSubmittedFrom(TaskEvent taskEvent) {
 		Task task = new Task();
 		task.setId(taskEvent.getId());
 		task.setStatus(Common.TaskStatus.builder().state(TaskState.SUBMITTED).build());
@@ -125,15 +134,16 @@ public class Task extends AbstractTask {
 		task.setArtifacts(Lists.newArrayList());
 		String conversationId = null;
 		if (taskEvent.getMetadata() != null && taskEvent.getMetadata().containsKey(CONVERSATION_ID)) {
-		   conversationId = taskEvent.getMetadata().get(CONVERSATION_ID).toString();
+			conversationId = taskEvent.getMetadata().get(CONVERSATION_ID).toString();
 		}
 		task.setSessionId(conversationId);
 		return task;
 	}
+
 	/**
 	 * 拷贝一个消息对象
 	 */
-	public Task copyNotification(){
+	public Task copyNotification() {
 		Task task = new Task();
 		task.setId(this.getId());
 		task.setSessionId(this.getSessionId());
@@ -144,11 +154,11 @@ public class Task extends AbstractTask {
 		task.setHistory(Lists.newArrayList());
 
 
-		if(this.getStatus()!=null){
+		if (this.getStatus() != null) {
 			var taskStatusBuilder = Common.TaskStatus.builder()
 					.state(this.getStatus().getState())
 					.timestamp(this.getStatus().getTimestamp());
-			if(this.getStatus().getMessage()!=null){
+			if (this.getStatus().getMessage() != null) {
 				taskStatusBuilder.message(
 						Common.Message.newMessage(
 								this.getStatus().getMessage().getRole(),
@@ -165,14 +175,15 @@ public class Task extends AbstractTask {
 
 	/**
 	 * 用户输入消息id
+	 *
 	 * @return
 	 */
 	@JsonIgnore
-	public String getInputMessageId(){
-		if(this.metadata==null){
+	public String getInputMessageId() {
+		if (this.metadata == null) {
 			return null;
 		}
-		if(!this.metadata.containsKey(INPUT_MESSAGE_ID)){
+		if (!this.metadata.containsKey(INPUT_MESSAGE_ID)) {
 			return null;
 		}
 		return this.metadata.get(INPUT_MESSAGE_ID).toString();
@@ -180,128 +191,112 @@ public class Task extends AbstractTask {
 
 	/**
 	 * 智能体交互消息id
+	 *
 	 * @return
 	 */
 	@JsonIgnore
-	public String getMessageId(){
-		if(this.metadata==null){
+	public String getMessageId() {
+		if (this.metadata == null) {
 			return null;
 		}
-		if(!this.metadata.containsKey(MESSAGE_ID)){
+		if (!this.metadata.containsKey(MESSAGE_ID)) {
 			return null;
 		}
 		return this.metadata.get(MESSAGE_ID).toString();
 	}
 
-
 	/**
 	 * 获取消耗次数
+	 *
 	 * @return
 	 */
 	@JsonIgnore
-	public Integer getFrequency(){
-		if(this.getMetadata().containsKey(MetaDataKey.FREQUENCY)){
-			return (Integer)this.getMetadata().get(MetaDataKey.FREQUENCY);
-		}
-		return 0;
+	public Integer getFrequency() {
+		return this.calculateChargeableDelegate.getFrequency();
 	}
+
 	/**
 	 * 获取所有消耗的tokens
+	 *
 	 * @return
 	 */
 	@JsonIgnore
-	public Integer getTotalTokens(){
-		if(this.getMetadata().containsKey(MetaDataKey.TOTAL_TOKENS)){
-			return (Integer)this.getMetadata().get(MetaDataKey.TOTAL_TOKENS);
+	public Integer getTotalTokens() {
+		if (this.getMetadata().containsKey(MetaDataKey.TOTAL_TOKENS)) {
+			return (Integer) this.getMetadata().get(MetaDataKey.TOTAL_TOKENS);
 		}
 		return 0;
 	}
+
 	/**
 	 * 获取模型名称
+	 *
 	 * @return
 	 */
 	@JsonIgnore
-	public String getModelName(){
-		if(this.getMetadata().containsKey(MetaDataKey.USE_MODEL)){
-			return (String)this.getMetadata().get(MetaDataKey.USE_MODEL);
-		}
-		return "";
+	public String getModelName() {
+		return this.calculateChargeableDelegate.getModelName();
 	}
 
 	/**
 	 * 输出token
+	 *
 	 * @return
 	 */
 	@JsonIgnore
-	public Integer getCompletionTokens(){
-		if(this.getMetadata().containsKey(MetaDataKey.COMPLETION_TOKENS)){
-			return (Integer)this.getMetadata().get(MetaDataKey.COMPLETION_TOKENS);
-		}
-		return 0;
+	public Integer getCompletionTokens() {
+		return this.calculateChargeableDelegate.getCompletionTokens();
 	}
 
 	/**
 	 * 输入token
+	 *
 	 * @return
 	 */
 	@JsonIgnore
-	public Integer getPromptTokens(){
-		if(this.getMetadata().containsKey(MetaDataKey.PROMPT_TOKENS)){
-			return (Integer)this.getMetadata().get(MetaDataKey.PROMPT_TOKENS);
-		}
-		return 0;
+	public Integer getPromptTokens() {
+		return this.calculateChargeableDelegate.getPromptTokens();
 	}
 
 	/**
 	 * 设置输出金额
 	 */
-	public void setCompletionTokensAmount(BigDecimal completionTokensAmount){
-		this.getMetadata().put(
-				MetaDataKey.COMPLETION_TOKENS_AMOUNT,
-				completionTokensAmount
-		);
+	public void setCompletionTokensAmount(BigDecimal amount) {
+		this.calculateChargeableDelegate.setCompletionTokensAmount(amount);
 	}
 
 	/**
 	 * 设置输入金额
 	 */
-	public void setPromptTokensAmount(BigDecimal promptTokensAmount){
-		this.getMetadata().put(
-				MetaDataKey.PROMPT_TOKENS_AMOUNT,
-				promptTokensAmount
-		);
+	public void setPromptTokensAmount(BigDecimal amount) {
+		this.calculateChargeableDelegate.setPromptTokensAmount(amount);
 	}
 
 	/**
 	 * 设置总金额
-	 * @param totalAmount
+	 *
+	 * @param amount
 	 */
-	public void setTotalAmount(BigDecimal totalAmount){
-		this.getMetadata().put(
-				MetaDataKey.TOTAL_AMOUNT,
-				totalAmount
-		);
+	public void setTotalAmount(BigDecimal amount) {
+		this.calculateChargeableDelegate.setTotalAmount(amount);
 	}
+
 	/**
 	 * 获取输出金额
+	 *
 	 * @return
 	 */
-	public BigDecimal getCompletionTokensAmount(){
-		if(this.getMetadata().containsKey(MetaDataKey.COMPLETION_TOKENS_AMOUNT)){
-			return (BigDecimal)this.getMetadata().get(MetaDataKey.COMPLETION_TOKENS_AMOUNT);
-		}
-		return BigDecimal.ZERO;
+	public BigDecimal getCompletionTokensAmount() {
+		return this.calculateChargeableDelegate.getCompletionTokensAmount();
 	}
 
 	/**
 	 * 获取输入金额
+	 *
 	 * @return
 	 */
-	public BigDecimal getPromptTokensAmount(){
-		if(this.getMetadata().containsKey(MetaDataKey.PROMPT_TOKENS_AMOUNT)){
-			return (BigDecimal)this.getMetadata().get(MetaDataKey.PROMPT_TOKENS_AMOUNT);
-		}
-		return BigDecimal.ZERO;
+	public BigDecimal getPromptTokensAmount() {
+		return this.calculateChargeableDelegate.getPromptTokensAmount();
 	}
 
 	/**
@@ -309,18 +304,13 @@ public class Task extends AbstractTask {
 	 * @param calculateAmount
 	 */
 	public void calAmount(CalculateAmount calculateAmount) {
-		if (StringUtils.isEmpty(this.getModelName())) {
+		if (StringUtils.isEmpty(this.calculateChargeableDelegate.getModelName())) {
 			log.warn("task calAmount modelName is empty");
-			this.setCompletionTokensAmount(BigDecimal.ZERO);
-			this.setPromptTokensAmount(BigDecimal.ZERO);
+			log.info("calAmount{}", this);
+			this.calculateChargeableDelegate.setCompletionTokensAmount(BigDecimal.ZERO);
+			this.calculateChargeableDelegate.setPromptTokensAmount(BigDecimal.ZERO);
 			return;
 		}
-		if (this.getFrequency() > 0) {
-			this.setTotalAmount(calculateAmount.calculateCallAmount(this.getFrequency(), this.getModelName()));
-			return;
-		}
-		this.setCompletionTokensAmount(calculateAmount.calculateUsageCompletionAmount(this.getCompletionTokens(), this.getModelName()));
-		this.setPromptTokensAmount(calculateAmount.calculateUsagePromptAmount(this.getPromptTokens(), this.getModelName()));
-		this.setTotalAmount(this.getCompletionTokensAmount().add(this.getPromptTokensAmount()));
+		this.calculateChargeableDelegate.calAmount(calculateAmount);
 	}
 }

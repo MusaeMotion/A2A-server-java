@@ -22,6 +22,7 @@ import com.musaemotion.a2a.common.constant.ArtifactDataKey;
 import com.musaemotion.a2a.common.base.Common;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,9 @@ public class PartUtils {
 	 * @return
 	 */
 	public static String getFirstOneTextContentByParts(List<Common.Part> parts) {
+		if(CollectionUtils.isEmpty(parts)){
+			return StringUtils.EMPTY;
+		}
 		var op = parts.stream().filter(item -> item instanceof Common.TextPart).findFirst();
 		if (op.isPresent()) {
 			return ((Common.TextPart) op.get()).getText();
@@ -51,7 +55,7 @@ public class PartUtils {
 	}
 
 	/**
-	 * 消息里的parts 转 string
+	 * 消息里的 parts 转 string
 	 * @param message
 	 * @return
 	 */

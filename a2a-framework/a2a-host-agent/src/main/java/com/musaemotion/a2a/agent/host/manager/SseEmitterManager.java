@@ -45,7 +45,7 @@ public class SseEmitterManager {
 		if (emitters.containsKey(key)) {
 			return emitters.get(key);
 		}
-		log.info("subscribe emitter for key: {}", key);
+		log.debug("subscribe emitter for key: {}", key);
 		// TODO 暂不设置超时，后续完善客户端心跳
 		SseEmitter sseEmitter = new SseEmitter(0L);
 		subscribe(key, sseEmitter);
@@ -73,11 +73,11 @@ public class SseEmitterManager {
 		}, 0, 10, TimeUnit.SECONDS);
 
 		emitter.onCompletion(() -> {
-			log.info("onCompletion for key: {}", key);
+			log.debug("onCompletion for key: {}", key);
 			emitters.remove(key);
 		});
 		emitter.onTimeout(() -> {
-			log.info("onTimeout for key: {}", key);
+			log.debug("onTimeout for key: {}", key);
 			emitters.remove(key);
 		});
 		emitter.onError((e) -> {
@@ -108,7 +108,7 @@ public class SseEmitterManager {
 				emitters.remove(key);
 			}
 		} else {
-			log.info("No emitter found for sessionId: {}", key);
+			log.debug("No emitter found for sessionId: {}", key);
 		}
 	}
 
@@ -119,7 +119,7 @@ public class SseEmitterManager {
 	 */
 	public static void removeEmitter(String conversationId, String inputMessageId) {
 		String key = buildKey(conversationId, inputMessageId);
-		log.info("Removing emitter for key: {}", key);
+		log.debug("Removing emitter for key: {}", key);
 		var emitter = emitters.get(key);
 		if (emitter != null) {
 			synchronized (emitter) {
