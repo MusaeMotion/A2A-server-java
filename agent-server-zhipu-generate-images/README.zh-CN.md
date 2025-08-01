@@ -12,7 +12,7 @@
 <dependency>
     <groupId>io.github.musaemotion</groupId>
     <artifactId>a2a-agent-server</artifactId>
-    <version>0.5.0</version>
+    <version>0.5.1</version>
 </dependency>
 ```
 
