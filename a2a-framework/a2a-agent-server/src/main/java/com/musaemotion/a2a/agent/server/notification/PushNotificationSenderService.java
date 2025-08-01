@@ -79,7 +79,7 @@ public class PushNotificationSenderService extends PushNotificationAuth {
                 try (CloseableHttpResponse response = httpClient.execute(request)) {
                     String responseBody = EntityUtils.toString(response.getEntity());
                     boolean isVerified = responseBody.equals(request.getURI().getQuery().split("=")[1]);
-                    log.info("Verified push-notification URL: {} => {}", url, isVerified);
+					log.debug("Verified push-notification URL: {} => {}", url, isVerified);
                     return isVerified;
                 }
             } catch (Exception e) {
@@ -140,7 +140,7 @@ public class PushNotificationSenderService extends PushNotificationAuth {
             this.privateKey = privateKey;
             String json = this.jwkJson(rsaKey);
             this.jwkJson = json;
-            log.info("Generated JWK: {}", json);
+			log.debug("Generated JWK: {}", json);
 
         } catch (NoSuchAlgorithmException e) {
             log.error("Error generating JWK: {} ", e.getMessage());
@@ -204,10 +204,10 @@ public class PushNotificationSenderService extends PushNotificationAuth {
                 try (CloseableHttpResponse response = httpClient.execute(request)) {
                     // 消息发送状态
                     if (response.getStatusLine().getStatusCode() >= 400) {
-                        log.info("Error sending push-notification for URL {}: {}, statusCode: {} ", url, response.getStatusLine().getReasonPhrase(), response.getStatusLine().getStatusCode());
+						log.debug("Error sending push-notification for URL {}: {}, statusCode: {} ", url, response.getStatusLine().getReasonPhrase(), response.getStatusLine().getStatusCode());
                     } else {
                         // 完成正常推送
-                        log.info("Push-notification sent for URL: {}", url);
+						log.debug("Push-notification sent for URL: {}", url);
                     }
                 }
             } catch (Exception e) {

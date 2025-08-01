@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.musaemotion</groupId>
-	<version>0.5.0</version>
+	<version>0.5.1</version>
     <artifactId>a2a-framework</artifactId>
     <packaging>pom</packaging>
 
@@ -35,7 +35,6 @@
 		<guava.version>33.4.8-jre</guava.version>
 		<jackson-databind.version>2.15.2</jackson-databind.version>
 		<classmate.version>1.5.1</classmate.version>
-		<gson.version>2.10.1</gson.version>
 		<nimbus-jose-jwt.version>9.9</nimbus-jose-jwt.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<bcprov.version>1.80</bcprov.version>

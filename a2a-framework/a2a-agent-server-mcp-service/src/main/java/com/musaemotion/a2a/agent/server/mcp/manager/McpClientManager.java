@@ -161,9 +161,9 @@ public class McpClientManager {
 			try {
 				client.initialize();
 				syncCache.put(name, client);
-				log.info("Sync client [{}] created & cached", name);
+				log.debug("Sync client [{}] created & cached", name);
 			}catch(Exception e) {
-				log.info("Sync client [{}] conn error", name);
+				log.debug("Sync client [{}] conn error", name);
 			}
 		}
 	}
@@ -183,7 +183,7 @@ public class McpClientManager {
 			McpAsyncClient client = buildAsync(cfg);
 			client.initialize();
 			asyncCache.put(name, client);
-			log.info("Async client [{}] created & cached", name);
+			log.debug("Async client [{}] created & cached", name);
 		}
 	}
 	/**
@@ -284,14 +284,14 @@ public class McpClientManager {
 			if (client instanceof McpAsyncClient ac) {
 				// ac.listTools().block(Duration.ofSeconds(3));
 				var ret = ac.ping();
-				log.warn("Health check Async ping [{}]: {}", client, ret.block());
+				log.debug("Health check Async ping [{}]: {}", client, ret.block());
 			} else if (client instanceof McpSyncClient sc) {
 				var ret = sc.ping();
-				log.warn("Health check Sync ping [{}]: {}", client, ret);
+				log.debug("Health check Sync ping [{}]: {}", client, ret);
 			}
 			return true;
 		} catch (Exception e) {
-			log.warn("Health check failed for [{}]: {}", client, e.getMessage());
+			log.error("Health check failed for [{}]: {}", client, e.getMessage());
 			return false;
 		}
 	}
@@ -305,7 +305,7 @@ public class McpClientManager {
 		try {
 			if (client instanceof McpAsyncClient c) c.closeGracefully();
 			if (client instanceof McpSyncClient c) c.closeGracefully();
-			log.info("Client [{}] closed", name);
+			log.debug("Client [{}] closed", name);
 		} catch (Exception e) {
 			log.error("Error closing client [{}]", name, e);
 		}

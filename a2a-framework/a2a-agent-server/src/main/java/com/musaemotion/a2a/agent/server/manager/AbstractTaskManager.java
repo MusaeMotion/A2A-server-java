@@ -355,7 +355,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	@Override
 	public CancelTaskResponse onCancelTask(CancelTaskRequest request) {
-		log.info("Cancelling task {}", request.getParams().getId());
+		log.debug("Cancelling task {}", request.getParams().getId());
 		TaskIdParams taskIdParams = request.getParams();
 		Optional<Task> optionalTask = this.getTaskForStore(taskIdParams.getId());
 		if (optionalTask.isEmpty()) {
@@ -374,7 +374,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	@Override
 	public SetTaskPushNotificationResponse onSetTaskPushNotification(SetTaskPushNotificationRequest request) {
-		log.info("Setting task push notification {}", request.getParams().getId());
+		log.debug("Setting task push notification {}", request.getParams().getId());
 		TaskPushNotificationConfig taskPushNotificationConfig = request.getParams();
 		try {
 			this.setPushNotificationInfo(taskPushNotificationConfig.getId(), taskPushNotificationConfig.getPushNotificationConfig());
@@ -391,7 +391,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	@Override
 	public GetTaskPushNotificationResponse onGetTaskPushNotification(GetTaskPushNotificationRequest request) {
-		log.info("Getting task push notification {}", request.getParams().getId());
+		log.debug("Getting task push notification {}", request.getParams().getId());
 		TaskIdParams taskParams = request.getParams();
 		try {
 			Common.PushNotificationConfig pushNotificationConfig = this.getPushNotificationInfoForStore(taskParams.getId()).get();
@@ -425,7 +425,7 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 	 */
 	@Override
 	public JSONRPCMessage onSendTask(SendTaskRequest request) {
-		log.info("request task {}", request.getParams().getId());
+		log.debug("request task {}", request.getParams().getId());
 		// 验证请求
 		Optional<JSONRPCResponse> optionalError = this.validateRequest(request.getParams(), request.getId());
 		if (optionalError.isPresent()) {
@@ -550,26 +550,26 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 
 								// 生产出工件流返回响应
 								TaskArtifactUpdateEvent taskArtifactUpdateEvent = TaskArtifactUpdateEvent.builder()
-										.id(params.getId())
-										.artifact(Common.Artifact.builder()
-												.parts(agentResponse.getParts())
-												.append(Boolean.TRUE)
-												.lastChunk(Boolean.FALSE)
-												.metadata(Maps.newHashMap())
-												.build()
-										)
-										.build();
+									.id(params.getId())
+									.artifact(Common.Artifact.builder()
+										.parts(agentResponse.getParts())
+										.append(Boolean.TRUE)
+										.lastChunk(Boolean.FALSE)
+										.metadata(Maps.newHashMap())
+										.build()
+									)
+									.build();
 								fluxSink.next(SendTaskStreamingResponse.buildResponse(request.getId(), taskArtifactUpdateEvent));
-
 
 							},
 							err -> {
 								log.error("出现错误：{}", err.getMessage());
+								err.printStackTrace();
 								fluxSink.next(
-										SendTaskStreamingResponse.buildErrorResponse(
-												request.getId(),
-												new InternalA2aError("An error occurred while streaming the response: " + err.getMessage())
-										)
+									SendTaskStreamingResponse.buildErrorResponse(
+										request.getId(),
+										new InternalA2aError("An error occurred while streaming the response: " + err.getMessage())
+									)
 								);
 								fluxSink.complete();
 
@@ -578,6 +578,28 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 								AgentGeneralResponse agentGeneralResponse = AgentGeneralResponse.fromText(textPartContent.toString(), agentResponseStatus.get(), usageTokens.get());
 
 								if (agentGeneralResponse != null) {
+									if(agentGeneralResponse.getStatus().equals(AgentResponseStatus.ERROR)) {
+										Common.TaskStatus taskStatus = null;
+										try {
+											taskStatus = Common.TaskStatus.builder()
+													.state(TaskState.FAILED)
+													.message(Common.Message.newMessage(MessageRole.AGENT, Lists.newArrayList(new Common.TextPart(agentGeneralResponse.getTextPartContent())), Maps.newHashMap()))
+													.build();
+											var taskStatusUpdateEvent = TaskStatusUpdateEvent.builder()
+													.status(taskStatus)
+													.id(params.getId())
+													.done(Boolean.TRUE)
+													.build();
+											// 构建使用token
+											taskStatusUpdateEvent.buildUsageTokens(agentGeneralResponse.getUsageTokens(), this.agentService.useModel());
+											fluxSink.next(SendTaskStreamingResponse.buildResponse(request.getId(), taskStatusUpdateEvent));
+										} catch (JsonProcessingException e) {
+											throw new RuntimeException(e);
+										}
+										fluxSink.complete();
+										return;
+									}
+
 									List<Common.Artifact> artifacts = Lists.newArrayList();
 									// 获取content 里面的内容
 									Common.TaskStatus taskStatus = this.onSendTaskSubscribeBuildTaskStatus(
@@ -602,15 +624,16 @@ public abstract class AbstractTaskManager implements ITaskManager, ITaskStore {
 									// 构建使用token
 									taskStatusUpdateEvent.buildUsageTokens(agentGeneralResponse.getUsageTokens(), this.agentService.useModel());
 									fluxSink.next(SendTaskStreamingResponse.buildResponse(request.getId(), taskStatusUpdateEvent));
-								} else {
-									log.error("智能体未按照要求返回");
-									fluxSink.next(
-											SendTaskStreamingResponse.buildErrorResponse(
-													request.getId(),
-													new InternalA2aError("智能体未按照要求返回"))
-									);
-								}
+									fluxSink.complete();
+									return;
 
+								}
+								log.error("智能体未按照要求返回");
+								fluxSink.next(
+										SendTaskStreamingResponse.buildErrorResponse(
+												request.getId(),
+												new InternalA2aError("智能体未按照要求返回"))
+								);
 								fluxSink.complete();
 							});
 				} catch (Exception e) {

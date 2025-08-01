@@ -1,6 +1,5 @@
 package com.musaemotion.a2a.common.event;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Maps;
 import com.musaemotion.a2a.common.IMetadata;
 import com.musaemotion.a2a.common.base.UsageTokens;
@@ -11,9 +10,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 import java.util.Map;
-
-import static com.musaemotion.a2a.common.constant.MetaDataKey.*;
-import static com.musaemotion.a2a.common.constant.MetaDataKey.FREQUENCY;
 
 /**
  * @author labidc@hotmail.com

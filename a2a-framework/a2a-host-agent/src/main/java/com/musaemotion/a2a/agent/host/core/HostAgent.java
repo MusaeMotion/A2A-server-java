@@ -286,7 +286,7 @@ public class HostAgent {
 	@Tool(description = "列出可用于委派任务可用的 remote agent")
 	public String listRemoteAgents() {
 		String remoteAgents = this.loadRemoteAgentsToString();
-	    log.error("remoteAgents:{}", remoteAgents);
+	    log.debug("remoteAgents:{}", remoteAgents);
 		return remoteAgents;
 	}
 
@@ -322,12 +322,11 @@ public class HostAgent {
 		Map<String, Object> state = (Map<String, Object>)toolContext.getContext().get(STATE);
 
 		var request = this.sendBefore(state, agentName, message);
-
-		Task result = client.sendTask(request, this.callback);
-		log.info("sendTask result:{}", result.toString());
-		var response = this.sendAfter(request, result, state,  agentName);
-        log.info("sendTask response:{}", response.toString());
-		return response;
+		Task responseTask = client.sendTask(request, this.callback);
+		log.debug("sendTask responseTask:{}", responseTask.toString());
+		var responseJsonStr = this.sendAfter(request, responseTask, state,  agentName);
+		log.debug("sendTask responseJsonStr:{}", responseJsonStr.toString());
+		return responseJsonStr;
 	}
 
 	/**
@@ -341,7 +340,9 @@ public class HostAgent {
 
 		// 创建默认任务id
 		String taskId = GuidUtils.createShortRandomGuid();
-		String mainTaskId =GuidUtils.createGuid();
+
+		String mainTaskId = GuidUtils.createGuid();
+
 		if (state.containsKey(MAIN_TASK_ID)) {
 			// 如果状态信息里包含任务id则使用任务id, 后续重发任务使用
 			mainTaskId = (String) state.get(MAIN_TASK_ID);
@@ -467,7 +468,11 @@ public class HostAgent {
 		}
 		if (resultTaskStatus.getState().equals(TaskState.FAILED) ) {
 			state.put(A2AToolCallingManager.RETURN_DIRECT, true);
-			var part = new Common.TextPart("智能体 " + agentName + " 任务： " + responseTask.getId() + " 运行失败");
+			String error = "智能体：\"" + agentName + "\" 任务：\"" + responseTask.getId() + " \" 运行失败。";
+			if(responseTask.getStatus().getMessage()!=null) {
+				error += "\n 异常详情："+ PartUtils.getFirstOneTextContentByParts(responseTask.getStatus().getMessage().getParts());
+			}
+			var part = new Common.TextPart(error);
 			responsePart.add(part);
 			this.sendAfterPart(responseTask, Lists.newArrayList(part));
 		}
@@ -487,7 +492,7 @@ public class HostAgent {
 		// 当前智能体执行完成
 		state.put(SESSION_ACTIVE, Boolean.FALSE);
 
-		log.info("当前运行智能体: {}", state.get(CUR_AGENT_NAME));
+		log.debug("当前运行智能体: {}", state.get(CUR_AGENT_NAME));
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		return objectMapper.writeValueAsString(responsePart);

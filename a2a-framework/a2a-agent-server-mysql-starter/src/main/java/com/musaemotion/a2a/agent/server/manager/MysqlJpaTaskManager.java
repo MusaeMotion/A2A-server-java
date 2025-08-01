@@ -70,7 +70,7 @@ public class MysqlJpaTaskManager extends AbstractTaskManager  {
 	public Boolean setPushNotificationInfoToStore(String taskId, Common.PushNotificationConfig notificationConfig) {
 		Optional<AgentTaskEntity> taskOptional = this.taskRepository.findById(taskId);
 		if (!taskOptional.isPresent()) {
-			log.info("taskId:{} not exist", taskId);
+			log.debug("taskId:{} not exist", taskId);
 			return Boolean.FALSE;
 		}
 		PushNotificationEntity config = new PushNotificationEntity();

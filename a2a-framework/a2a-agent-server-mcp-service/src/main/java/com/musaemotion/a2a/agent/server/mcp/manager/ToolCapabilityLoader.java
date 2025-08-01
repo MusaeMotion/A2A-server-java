@@ -2,6 +2,7 @@ package com.musaemotion.a2a.agent.server.mcp.manager;
 
 import com.musaemotion.a2a.agent.server.mcp.model.McpBasics;
 import io.modelcontextprotocol.spec.McpSchema;
+import org.springframework.util.CollectionUtils;
 
 import java.time.Duration;
 import java.util.List;
@@ -22,7 +23,7 @@ public abstract class ToolCapabilityLoader {
 		this.serverCapabilities = serverCapabilities;
 	}
 
-	protected void loadTools(Supplier<List<McpSchema.Tool>> supplier){
+	protected void loadTools(Supplier<List<McpSchema.Tool>> supplier) {
 		/*
 		有的mcp估计没按照这个协议标准返回，不能用该方法判断，因为会返回空，应该用client直接返回
 		if (serverCapabilities.tools() == null) {
@@ -32,7 +33,10 @@ public abstract class ToolCapabilityLoader {
 			return;
 		}
 		*/
-		mcpBasics.setTools(supplier.get());
+		var tools = supplier.get();
+		if (!CollectionUtils.isEmpty(tools)) {
+			mcpBasics.setTools(tools);
+		}
 	}
 
 	protected void loadResources(Supplier<List<McpSchema.Resource>> supplier){

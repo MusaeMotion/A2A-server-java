@@ -45,7 +45,7 @@ public class CustomMcpAsyncClientCustomizer implements McpAsyncClientCustomizer 
 		// 设置用于处理消息创建请求的自定义采样处理程序。
 		spec.sampling((McpSchema.CreateMessageRequest llmRequest) -> {
 			// Handle sampling
-			log.info("llmRequest: {}", llmRequest);
+			log.debug("llmRequest: {}", llmRequest);
 			var userPrompt = ((McpSchema.TextContent) llmRequest.messages().get(0).content()).text();
 			String modelHint = llmRequest.modelPreferences().hints().get(0).name();
 
@@ -72,7 +72,7 @@ public class CustomMcpAsyncClientCustomizer implements McpAsyncClientCustomizer 
 			// 示例：异步保存工具变更到数据库
 			return Mono.fromRunnable(() -> {
 				// Handle tools change
-				log.info("toolsChangeConsumer: {}", tools);
+				log.debug("toolsChangeConsumer: {}", tools);
 				// 可以调用 reactive repository 或其他异步操作
 			}).then(); // 返回
 		});
@@ -84,7 +84,7 @@ public class CustomMcpAsyncClientCustomizer implements McpAsyncClientCustomizer 
 			// 示例：异步保存工具变更到数据库
 			return Mono.fromRunnable(() -> {
 				// Handle tools change
-				log.info("resourcesChangeConsumer: {}", resources);
+				log.debug("resourcesChangeConsumer: {}", resources);
 				// 可以调用 reactive repository 或其他异步操作
 			}).then(); // 返回
 		});
@@ -95,7 +95,7 @@ public class CustomMcpAsyncClientCustomizer implements McpAsyncClientCustomizer 
 			// 示例：异步保存工具变更到数据库
 			return Mono.fromRunnable(() -> {
 				// Handle tools change
-				log.info("promptsChangeConsumer: {}", prompts);
+				log.debug("promptsChangeConsumer: {}", prompts);
 				// 可以调用 reactive repository 或其他异步操作
 			}).then(); // 返回
 		});
@@ -105,7 +105,7 @@ public class CustomMcpAsyncClientCustomizer implements McpAsyncClientCustomizer 
 			// 示例：异步保存工具变更到数据库
 			return Mono.fromRunnable(() -> {
 				// Handle tools change
-				log.info("loggingConsumer: {}", logMsg);
+				log.debug("loggingConsumer: {}", logMsg);
 				// 可以调用 reactive repository 或其他异步操作
 			}).then(); // 返回
 		});

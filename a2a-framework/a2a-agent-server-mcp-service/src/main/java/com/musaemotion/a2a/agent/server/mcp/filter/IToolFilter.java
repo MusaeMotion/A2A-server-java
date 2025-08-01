@@ -12,7 +12,7 @@ import java.util.function.BiPredicate;
  * @date 2025/7/23  18:07
  * @description 工具过滤逻辑, 适合权限和其他判断控制
  */
-public interface  IToolFilter {
+public interface IToolFilter {
 
 	/**
 	 * McpAsyncClient 过滤

@@ -180,4 +180,10 @@ musaemotion:
           api-key: 使用自己的key
           model: grok-3-latest
 
-
+######################################
+# 日志相关
+######################################
+logging:
+  level:
+    # host agent 日志
+    # com.musaemotion.a2a.agent.host.core: DEBUG

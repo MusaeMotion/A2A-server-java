@@ -30,7 +30,7 @@ public class DefaultNotificationConsumer implements INotificationConsumer {
 
 	@Override
 	public void processMessage(String message,String agentName) {
-		log.info("Message received: {} ", message);
+		log.debug("Message received: {} ", message);
 		AgentAppEvent agentAppEvent = new AgentAppEvent(this, message, AppEventType.NOTIFICATION, agentName);
 		this.publisher.publishEvent(agentAppEvent);
 	}

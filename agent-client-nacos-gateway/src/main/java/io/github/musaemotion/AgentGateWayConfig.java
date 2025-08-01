@@ -67,7 +67,7 @@ public class AgentGateWayConfig {
 				.filters(f -> f.requestRateLimiter(c -> c.setRateLimiter(this.redisRateLimiter)))
 				.uri("http://127.0.0.1:10001"));
 		RouteLocator routeLocator = routeBuildable.build();
-		log.info("customRouteLocator: {}",routeLocator.getRoutes().count());
+		log.debug("customRouteLocator: {}",routeLocator.getRoutes().count());
 		return routeLocator;
 	}
 
