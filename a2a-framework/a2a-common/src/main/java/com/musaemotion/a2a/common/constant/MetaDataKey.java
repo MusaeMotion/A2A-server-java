@@ -69,5 +69,8 @@ public interface MetaDataKey {
 	 */
 	String SESSION_ACTIVE = "session_active";
 
-
+	/**
+	 * 授权auth token
+	 */
+	String AUTHORIZATION = "authorization";
 }

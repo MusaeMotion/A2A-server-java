@@ -268,18 +268,16 @@ public class ChatManager {
 	 * @param input
 	 * @return
 	 */
-	private Map<String, Object> buildToolContext(SendMessageRequest input) {
-
+	private Map<String, Object> buildToolContext(SendMessageRequest input, String authorization) {
 		Map<String, Object> state = new HashMap<>();
 		state.put(INPUT_MESSAGE_METADATA, input.getMetadata());
 		state.put(CONVERSATION_ID, input.getConversationId());
 		// 主任务Id, 用于后续异步任务主Id使用
 		state.put(MAIN_TASK_ID, GuidUtils.createGuid());
-
+        state.put(AUTHORIZATION, authorization);
 		// 工具上下文
 		Map<String, Object> toolContext = new HashMap<>();
 		toolContext.put(STATE, state);
-
 		return toolContext;
 	}
 
@@ -363,10 +361,10 @@ public class ChatManager {
 	 * @param input
 	 * @return
 	 */
-	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input) {
+	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input, String authorization) {
 		var hostAgent = this.buildHostAgent();
 		Common.Message userMessage = this.sendBefore(input);
-		AssistantMessage assistantMessage = hostAgent.call(input, this.buildToolContext(input), Lists.newArrayList());
+		AssistantMessage assistantMessage = hostAgent.call(input, this.buildToolContext(input, authorization), Lists.newArrayList());
 		Common.Message agnetMessage = this.sendAfter(assistantMessage, userMessage);
 		var message = loadTask(agnetMessage);
 		// 删除删除通知sse
@@ -383,10 +381,10 @@ public class ChatManager {
 	 * @param input
 	 * @return
 	 */
-	public Flux<SendMessageResponse> stream(SendMessageRequest input) {
+	public Flux<SendMessageResponse> stream(SendMessageRequest input, String authorization) {
 		var hostAgent = this.buildHostAgent();
 		Common.Message userMessage = this.sendBefore(input);
-		Flux<AssistantMessage> fluxAssistantMessage = hostAgent.stream(input, this.buildToolContext(input), Lists.newArrayList());
+		Flux<AssistantMessage> fluxAssistantMessage = hostAgent.stream(input, this.buildToolContext(input, authorization), Lists.newArrayList());
 		String messageId = GuidUtils.createGuid();
 		List<Common.Message> messages = Lists.newArrayList();
 		return fluxAssistantMessage.doFinally(i -> {

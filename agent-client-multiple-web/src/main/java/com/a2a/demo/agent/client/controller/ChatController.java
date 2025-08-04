@@ -110,11 +110,11 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/call")
-    public ResponseEntity call(@RequestBody SendMessageRequest input) {
+    public ResponseEntity call(@RequestBody SendMessageRequest input, @RequestHeader(value = "Authorization", required = false, defaultValue = "EMPTY") String authorization) {
 		try {
 			return ResponseEntity.ok(
 					Result.buildSuccess(
-							this.chatManager.call(input)
+							this.chatManager.call(input, authorization)
 					)
 			);
 		} catch (Exception e) {
@@ -128,8 +128,8 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input) {
-        return  this.chatManager.stream(input);
+    public Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input, @RequestHeader(value = "Authorization", required = false, defaultValue = "EMPTY") String authorization) {
+        return  this.chatManager.stream(input, authorization);
     }
 
 }

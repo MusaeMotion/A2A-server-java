@@ -109,9 +109,9 @@ public class A2aRemoteAgentConnections {
 	 * @param callback
 	 * @return
 	 */
-	private Task callAgent(TaskSendParams taskSendParams, SendTaskCallbackHandle callback){
+	private Task callAgent(TaskSendParams taskSendParams, SendTaskCallbackHandle callback, String authorization){
 		SendTaskRequest sendTaskRequest = SendTaskRequest.newInstance(taskSendParams);
-		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest);
+		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest, authorization);
 		if(sendTaskResponse.getResult() == null && sendTaskResponse.getError() != null) {
 			return buildFailedTask(taskSendParams, sendTaskResponse.getError().getMessage());
 		}
@@ -143,10 +143,10 @@ public class A2aRemoteAgentConnections {
 	 * @param callback
 	 * @return
 	 */
-	private Task streamAgent(TaskSendParams taskSendParams,  SendTaskCallbackHandle callback){
+	private Task streamAgent(TaskSendParams taskSendParams,  SendTaskCallbackHandle callback, String authorization){
 		AtomicReference<Task> taskModel = new AtomicReference<>();
 		// 流请求
-		ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams));
+		ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams), authorization);
 		responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
 			if (sendTaskStreamingResponse.getError() != null) {
 				log.error("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
@@ -203,15 +203,15 @@ public class A2aRemoteAgentConnections {
 	 * @param taskSendParams
 	 * @param callback
 	 */
-	public Task sendTask(TaskSendParams taskSendParams, SendTaskCallbackHandle callback) {
+	public Task sendTask(TaskSendParams taskSendParams, SendTaskCallbackHandle callback, String authorization) {
 		// 任务提交中
 		callback.sendTaskCallback(Task.from(taskSendParams));
 
 		if (this.getAgentCard().getCapabilities().streaming()) {
-			return this.streamAgent(taskSendParams, callback);
+			return this.streamAgent(taskSendParams, callback, authorization);
 		}
 
-		return this.callAgent(taskSendParams, callback);
+		return this.callAgent(taskSendParams, callback, authorization);
 	}
 
 	/**

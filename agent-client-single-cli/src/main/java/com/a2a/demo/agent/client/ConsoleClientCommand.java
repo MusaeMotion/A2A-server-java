@@ -136,7 +136,7 @@ public class ConsoleClientCommand implements Runnable {
         JSONRPCResponse<Task> taskResult;
 
         if(streaming) {
-            ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams));
+            ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams),"");
             responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
                 if(sendTaskStreamingResponse.getError()!=null){
                     log.info("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
@@ -163,7 +163,7 @@ public class ConsoleClientCommand implements Runnable {
                     )
             );
         }else{
-            taskResult = this.a2aClient.sendTask(SendTaskRequest.newInstance(taskSendParams));
+            taskResult = this.a2aClient.sendTask(SendTaskRequest.newInstance(taskSendParams),"");
         }
         Task task = taskResult.getResult();
         // 需要用户输入, 完成工件则没有信息，直接返回

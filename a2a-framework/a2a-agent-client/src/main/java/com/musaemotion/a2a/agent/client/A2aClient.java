@@ -99,8 +99,8 @@ public class A2aClient {
      * @param sendTaskRequest
      * @return
      */
-    public SendTaskResponse sendTask(SendTaskRequest sendTaskRequest) {
-        return this.sendRequest(sendTaskRequest, SendTaskResponse.class).join();
+    public SendTaskResponse sendTask(SendTaskRequest sendTaskRequest, String authorization) {
+        return this.sendRequest(sendTaskRequest,authorization, SendTaskResponse.class).join();
     }
 
     /**
@@ -108,8 +108,8 @@ public class A2aClient {
      * @param sendTaskStreamingRequest
      * @return
      */
-    public ConnectableFlux<SendTaskStreamingResponse> sendTaskStreaming(SendTaskStreamingRequest sendTaskStreamingRequest) {
-        return this.sendTaskStreaming(sendTaskStreamingRequest, SendTaskStreamingResponse.class);
+    public ConnectableFlux<SendTaskStreamingResponse> sendTaskStreaming(SendTaskStreamingRequest sendTaskStreamingRequest, String authorization) {
+        return this.sendTaskStreaming(sendTaskStreamingRequest, authorization, SendTaskStreamingResponse.class);
     }
 
     /**
@@ -118,7 +118,7 @@ public class A2aClient {
      * @return
      */
     public GetTaskResponse getTask(GetTaskRequest getTaskRequest) {
-        return this.sendRequest(getTaskRequest, GetTaskResponse.class).join();
+        return this.sendRequest(getTaskRequest,"", GetTaskResponse.class).join();
     }
 
     /**
@@ -129,7 +129,7 @@ public class A2aClient {
     public CancelTaskResponse cancelTask(LinkedHashMap payload){
         ObjectMapper objectMapper = new ObjectMapper();
         CancelTaskRequest cancelTaskRequest = objectMapper.convertValue(payload, CancelTaskRequest.class);
-        return this.sendRequest(cancelTaskRequest, CancelTaskResponse.class).join();
+        return this.sendRequest(cancelTaskRequest,"", CancelTaskResponse.class).join();
     }
 
     /**
@@ -140,7 +140,7 @@ public class A2aClient {
     public SetTaskPushNotificationResponse setTaskCallback(LinkedHashMap payload){
         ObjectMapper objectMapper = new ObjectMapper();
         SetTaskPushNotificationRequest setTaskPushNotificationRequest = objectMapper.convertValue(payload, SetTaskPushNotificationRequest.class);
-        return this.sendRequest(setTaskPushNotificationRequest, SetTaskPushNotificationResponse.class).join();
+        return this.sendRequest(setTaskPushNotificationRequest,"", SetTaskPushNotificationResponse.class).join();
     }
 
     /**
@@ -151,7 +151,7 @@ public class A2aClient {
     public GetTaskPushNotificationResponse getTaskCallback(LinkedHashMap payload) {
         ObjectMapper objectMapper = new ObjectMapper();
         GetTaskPushNotificationRequest getTaskPushNotificationRequest = objectMapper.convertValue(payload, GetTaskPushNotificationRequest.class);
-        return this.sendRequest(getTaskPushNotificationRequest, GetTaskPushNotificationResponse.class).join();
+        return this.sendRequest(getTaskPushNotificationRequest,"", GetTaskPushNotificationResponse.class).join();
     }
 
 
@@ -162,7 +162,7 @@ public class A2aClient {
 	 * @return
 	 * @param <T>
 	 */
-    private <T> ConnectableFlux<T> sendTaskStreaming(JSONRPCRequest request, Class<T> clazz) {
+    private <T> ConnectableFlux<T> sendTaskStreaming(JSONRPCRequest request, String authorization,  Class<T> clazz) {
         Flux flux = Flux.create(sink -> {
             WebClient httpClient = WebClient.create(this.url);
             Flux<String> eventStream = null;
@@ -172,6 +172,7 @@ public class A2aClient {
                 eventStream = httpClient.post()
                         .bodyValue(jsonBody)
                         .header(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
+						.header(HttpHeaders.AUTHORIZATION,  authorization)
                         .accept(MediaType.TEXT_EVENT_STREAM)
                         .retrieve()
                         .bodyToFlux(String.class);
@@ -212,12 +213,13 @@ public class A2aClient {
      * @return
      * @param <T>
      */
-    private <T> CompletableFuture<T> sendRequest(JSONRPCRequest request, Class<T> clazz) {
+    private <T> CompletableFuture<T> sendRequest(JSONRPCRequest request, String authorization, Class<T> clazz) {
         return CompletableFuture.supplyAsync(() -> {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 String jsonBody = objectMapper.writeValueAsString(request);
                 HttpPost post = new HttpPost(this.url);
+				post.setHeader(HttpHeaders.AUTHORIZATION, authorization);
                 post.setEntity(new StringEntity(jsonBody, ContentType.APPLICATION_JSON));
                 try (CloseableHttpResponse response = httpClient.execute(post)) {
                     String responseBody = EntityUtils.toString(response.getEntity());

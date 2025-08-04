@@ -323,9 +323,10 @@ public class HostAgent {
 		// 获取工具上下文信息里面的状态信息
 		Map<String, Object> state = (Map<String, Object>)toolContext.getContext().get(STATE);
 
+
 		var request = this.sendBefore(state, agentName, message);
 
-		Task result = client.sendTask(request, this.callback);
+		Task result = client.sendTask(request, this.callback, state.get(AUTHORIZATION)==null?"":state.get(AUTHORIZATION).toString());
 
 		var response = this.sendAfter(request, result, state,  agentName);
         log.info("sendTask:{}", response.toString());
