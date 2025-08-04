@@ -22,7 +22,9 @@ import com.musaemotion.a2a.agent.server.notification.PushNotificationSenderServi
 import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import com.musaemotion.a2a.common.AgentCard;
 import com.musaemotion.a2a.common.base.base.JSONRPCMessage;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.http.MediaType;
@@ -42,6 +44,7 @@ import java.util.LinkedHashMap;
  */
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class ServerController {
 
 	private final A2aServerProperties a2aServerProperties;
@@ -92,7 +95,8 @@ public class ServerController {
 	 * @return
 	 */
 	@PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-	public JSONRPCMessage processRequest(@RequestBody LinkedHashMap request) {
+	public JSONRPCMessage processRequest(@RequestBody LinkedHashMap request, HttpServletRequest httpServletRequest) {
+        log.debug("Test processRequest Transparent Authorization header: {}", httpServletRequest.getHeader("Authorization"));
 		return this.serverEndpointManager.processRequest(request);
 	}
 
@@ -103,7 +107,8 @@ public class ServerController {
 	 * @return
 	 */
 	@PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public Flux<?> processRequestSubscribe(@RequestBody LinkedHashMap request) {
+	public Flux<?> processRequestSubscribe(@RequestBody LinkedHashMap request, HttpServletRequest httpServletRequest) {
+		log.debug("Test processRequestSubscribe Transparent Authorization header: {}", httpServletRequest.getHeader("Authorization"));
 		return this.serverEndpointManager.processRequestSubscribe(request);
 	}
 }

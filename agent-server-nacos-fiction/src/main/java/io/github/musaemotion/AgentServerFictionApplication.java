@@ -16,10 +16,13 @@
 
 package io.github.musaemotion;
 
+import com.musaemotion.a2a.agent.server.notification.PushNotificationSenderService;
+import com.musaemotion.a2a.agent.server.properties.A2aServerProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
 @ComponentScan("io.github")
@@ -28,10 +31,19 @@ import org.springframework.context.annotation.ComponentScan;
 // 开启注册发现
 @EnableDiscoveryClient
 public class AgentServerFictionApplication {
+	private final MyAgent agent;
+
+	private final PushNotificationSenderService pushNotificationSenderService;
+
+	private final A2aServerProperties serverProperties;
 
 
-  public static void main(String[] args) {
-    SpringApplication.run(AgentServerFictionApplication.class, args);
-  }
+	public static void main(String[] args) {
+		SpringApplication.run(AgentServerFictionApplication.class, args);
+	}
 
+	@Bean
+	public MyTaskManager taskManager() {
+		return new MyTaskManager(this.agent, this.pushNotificationSenderService, this.serverProperties);
+	}
 }

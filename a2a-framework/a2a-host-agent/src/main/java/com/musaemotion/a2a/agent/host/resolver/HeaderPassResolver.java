@@ -3,6 +3,7 @@ package com.musaemotion.a2a.agent.host.resolver;
 import com.musaemotion.a2a.agent.host.properties.HeaderPassProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class HeaderPassResolver {
 
 	private final HeaderPassProperties properties;
@@ -44,6 +46,7 @@ public class HeaderPassResolver {
 				result.put(cfgHeader, value);
 			}
 		}
+		log.debug("HeaderPassResolver Resolved Headers: {}", result);
 		return Collections.unmodifiableMap(result);
 	}
 }
