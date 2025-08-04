@@ -13,7 +13,7 @@ spring:
     zhipuai:
       image:
         api-key: 使用自己的key
-      api-key: 使用自己的key
+      api-key: ${spring.ai.zhipuai.image.api-key}
 card-url: 'http://127.0.0.1'
 ######################################
 #  musaemotion A2A Card 配置

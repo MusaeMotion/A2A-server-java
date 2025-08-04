@@ -20,17 +20,19 @@ import com.a2a.demo.agent.client.configuration.HostAgentConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.musaemotion.a2a.agent.host.constant.AppEventType;
-import com.musaemotion.a2a.agent.host.event.AgentAppEvent;
-import com.musaemotion.a2a.agent.host.manager.SseEmitterManager;
 import com.musaemotion.a2a.agent.host.constant.ControllerSetting;
+import com.musaemotion.a2a.agent.host.event.AgentAppEvent;
+import com.musaemotion.a2a.agent.host.manager.ChatManager;
+import com.musaemotion.a2a.agent.host.manager.SseEmitterManager;
 import com.musaemotion.a2a.agent.host.model.AgentRunningStreamModel;
 import com.musaemotion.a2a.agent.host.model.response.CommonMessageExt;
-import com.musaemotion.a2a.common.web.Result;
 import com.musaemotion.a2a.agent.host.model.response.SendMessageResponse;
-import com.musaemotion.a2a.agent.host.manager.ChatManager;
+import com.musaemotion.a2a.agent.host.resolver.HeaderPassResolver;
 import com.musaemotion.a2a.common.base.Task;
 import com.musaemotion.a2a.common.constant.MetaDataKey;
 import com.musaemotion.a2a.common.request.SendMessageRequest;
+import com.musaemotion.a2a.common.web.Result;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -62,6 +64,11 @@ public class ChatController {
      * 主机智能体
      */
     private final ChatManager chatManager;
+
+	/**
+	 * 透传请求头透传解析器
+	 */
+	private final HeaderPassResolver resolver;
 
 	/**
 	 * 对象映射转换器
@@ -114,9 +121,10 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/call")
-    public ResponseEntity call(@RequestBody SendMessageRequest input) {
+    public ResponseEntity call(@RequestBody SendMessageRequest input, HttpServletRequest request) {
 		try {
-			SendMessageResponse<CommonMessageExt> sendMessageResponse = this.chatManager.call(input);
+			Map<String, String> headers = resolver.resolve(request);
+			SendMessageResponse<CommonMessageExt> sendMessageResponse = this.chatManager.call(input, headers);
 			sendMessageResponse.getResult().calAmount(HostAgentConfig.calculateAmount);
 			return ResponseEntity.ok(
 					Result.buildSuccess(
@@ -134,8 +142,9 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input) {
-		Flux<SendMessageResponse> flux = this.chatManager.stream(input);
+    public Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input, HttpServletRequest request) {
+		Map<String, String> headers = resolver.resolve(request);
+		Flux<SendMessageResponse> flux = this.chatManager.stream(input, headers);
 		return flux
 				.buffer(2, 1)// 滑动窗口，最后一个窗口长度为1
 				.concatMap(pair -> {

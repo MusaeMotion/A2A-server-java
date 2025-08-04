@@ -110,4 +110,8 @@ public interface MetaDataKey {
 	 */
 	String AGENT_ERROR = "agent_error";
 
+	/**
+	 * 透传请求头
+	 */
+	String PASSTHROUGH_HEADERS  = "passthrough.headers";
 }

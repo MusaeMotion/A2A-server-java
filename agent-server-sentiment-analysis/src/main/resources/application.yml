@@ -122,7 +122,13 @@ musaemotion:
         schemes: ''
         credentials: ''
 
-
+######################################
+# 日志相关
+######################################
+logging:
+  level:
+    # 智能体控制器日志
+    com.musaemotion.a2a.agent.server.controller.ServerController: DEBUG
 
 
 

@@ -163,3 +163,13 @@ musaemotion:
           api-key: '使用自己的Key'
           model: qwen-plus
 
+######################################
+# 需要透传的 headers
+######################################
+header:
+  pass:
+    enabled: true
+    headers:
+      - Authorization
+      - X-User-ID
+      - X-Trace-ID

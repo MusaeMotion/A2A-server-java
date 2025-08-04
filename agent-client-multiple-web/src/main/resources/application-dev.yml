@@ -167,14 +167,14 @@ musaemotion:
           base-url: https://dashscope.aliyuncs.com/compatible-mode
           api-key: 使用自己的key
           model: qwen-max-latest
-        - name: 'deepseek-chat'
-          base-url: https://api.deepseek.com
-          api-key: 使用自己的key
-          model: deepseek-chat
         - name: 'qwen-plus'
           base-url: https://dashscope.aliyuncs.com/compatible-mode
           api-key: 使用自己的key
           model: qwen-plus
+        - name: 'deepseek-chat'
+          base-url: https://api.deepseek.com
+          api-key: 使用自己的key
+          model: deepseek-chat
         - name: 'gork3'
           base-url: https://api.x.ai
           api-key: 使用自己的key
@@ -186,4 +186,15 @@ musaemotion:
 logging:
   level:
     # host agent 日志
-    # com.musaemotion.a2a.agent.host.core: DEBUG
+    com.musaemotion.a2a.agent.host.core: DEBUG
+
+######################################
+# 需要透传的 headers
+######################################
+header:
+  pass:
+    enabled: true
+    headers:
+      - Authorization
+      - X-User-ID
+      - X-Trace-ID
