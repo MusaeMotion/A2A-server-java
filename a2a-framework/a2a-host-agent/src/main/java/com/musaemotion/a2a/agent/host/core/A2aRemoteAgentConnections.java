@@ -68,6 +68,7 @@ public class A2aRemoteAgentConnections {
 	@Getter
 	private AgentCard agentCard;
 
+
 	/**
 	 * 运行流监听
 	 */
@@ -106,9 +107,9 @@ public class A2aRemoteAgentConnections {
 	 * @param callback
 	 * @return
 	 */
-	private Task callAgent(TaskSendParams taskSendParams, SendTaskCallbackHandle callback){
+	private Task callAgent(TaskSendParams taskSendParams, SendTaskCallbackHandle callback, String authorization){
 		SendTaskRequest sendTaskRequest = SendTaskRequest.newInstance(taskSendParams);
-		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest);
+		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest, authorization);
 		if(sendTaskResponse.getResult() == null && sendTaskResponse.getError() != null) {
 			return buildFailedTask(taskSendParams, sendTaskResponse.getError().getMessage());
 		}
@@ -134,16 +135,17 @@ public class A2aRemoteAgentConnections {
 		return sendTaskResponse.getResult();
 	}
 
+
 	/**
 	 * agent 支持 stream 请求
 	 * @param taskSendParams
 	 * @param callback
 	 * @return
 	 */
-	private Task streamAgent(TaskSendParams taskSendParams,  SendTaskCallbackHandle callback){
+	private Task streamAgent(TaskSendParams taskSendParams,  SendTaskCallbackHandle callback, String authorization){
 		AtomicReference<Task> taskModel = new AtomicReference<>();
 		// 流请求
-		ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams));
+		ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams), authorization);
 		responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
 			if (sendTaskStreamingResponse.getError() != null) {
 				log.error("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
@@ -183,6 +185,7 @@ public class A2aRemoteAgentConnections {
 					Task.updateTaskFromArtifactUpdateEvent(taskModel.get(), taskArtifactUpdateEvent);
 				} else {
 					String text = PartUtils.getFirstOneTextContentByParts(taskArtifactUpdateEvent.getArtifact().getParts());
+					// log.error("taskArtifactUpdateEvent： {}", text);
 					// 调用监听器
 					this.runningStreamListener.publisher(text, taskArtifactUpdateEvent.getId(), taskSendParams.getMetadata());
 				}

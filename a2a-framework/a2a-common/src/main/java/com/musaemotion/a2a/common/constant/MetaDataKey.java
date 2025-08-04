@@ -110,4 +110,8 @@ public interface MetaDataKey {
 	 */
 	String AGENT_ERROR = "agent_error";
 
+	/**
+	 * 授权auth token
+	 */
+	String AUTHORIZATION = "authorization";
 }

@@ -209,6 +209,7 @@ public class ChatManager {
 
 	/**
 	 * 处理响应消息
+	 *
 	 * @param assistantMessage
 	 * @param userMessage
 	 * @return
@@ -279,6 +280,7 @@ public class ChatManager {
 		state.put(CONVERSATION_ID, input.getConversationId());
 		// 主任务Id, 用于后续异步任务主Id使用
 		state.put(MAIN_TASK_ID, GuidUtils.createGuid());
+
 		// 工具上下文
 		Map<String, Object> toolContext = new HashMap<>();
 		toolContext.put(STATE, state);
@@ -374,11 +376,11 @@ public class ChatManager {
 	 * @param input
 	 * @return
 	 */
-	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input) {
+	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input, String authorization) {
 		var hostAgent = this.buildHostAgent();
 
 		Common.Message userMessage = this.sendBefore(input);
-		ChatResponse chatResponse = hostAgent.call(input, this.buildToolContext(input), Lists.newArrayList());
+		ChatResponse chatResponse = hostAgent.call(input, this.buildToolContext(input, authorization), Lists.newArrayList());
 
 		Common.Message agentMessage = this.sendAfter(chatResponse, userMessage);
 		var message = loadTask(agentMessage);
@@ -397,14 +399,14 @@ public class ChatManager {
 	 * @param input
 	 * @return
 	 */
-	public Flux<SendMessageResponse> stream(SendMessageRequest input) {
+	public Flux<SendMessageResponse> stream(SendMessageRequest input, String authorization) {
 		String messageId = GuidUtils.createGuid();
 
 		var hostAgent = this.buildHostAgent();
 		// 任务发送钱处理
 		Common.Message userMessage = this.sendBefore(input);
 		// 任务发送
-		Flux<ChatResponse> fluxChatResponse = hostAgent.stream(input, this.buildToolContext(input), Lists.newArrayList());
+		Flux<ChatResponse> fluxChatResponse = hostAgent.stream(input, this.buildToolContext(input, authorization), Lists.newArrayList());
 		// 当前请求所有的 messages
 		List<Common.Message> responseMessages = Lists.newArrayList();
 		// 当前最新的 ChatResponse 对象
@@ -449,7 +451,6 @@ public class ChatManager {
 					// 删除通知sse
 					SseEmitterManager.removeEmitter(input.getConversationId(), input.getMessageId());
 				});
-
 	}
 
 }

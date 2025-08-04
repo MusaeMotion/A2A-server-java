@@ -19,6 +19,7 @@ package com.a2a.demo.agent.client.controller;
 import com.a2a.demo.agent.client.configuration.HostAgentConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.musaemotion.a2a.agent.host.constant.AppEventType;
 import com.musaemotion.a2a.agent.host.event.AgentAppEvent;
 import com.musaemotion.a2a.agent.host.manager.SseEmitterManager;
@@ -36,10 +37,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,8 +68,6 @@ public class ChatController {
 	 * 对象映射转换器
 	 */
 	private ObjectMapper mapper = new ObjectMapper();
-
-
 
 	/**
 	 * 通知监听
@@ -114,13 +113,13 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/call")
-    public ResponseEntity call(@RequestBody SendMessageRequest input) {
+    public ResponseEntity call(@RequestBody SendMessageRequest input, @RequestHeader(value = "Authorization", required = false, defaultValue = "EMPTY") String authorization) {
 		try {
 			SendMessageResponse<CommonMessageExt> sendMessageResponse = this.chatManager.call(input);
 			sendMessageResponse.getResult().calAmount(HostAgentConfig.calculateAmount);
 			return ResponseEntity.ok(
 					Result.buildSuccess(
-							sendMessageResponse
+							this.chatManager.call(input)
 					)
 			);
 		} catch (Exception e) {
@@ -134,8 +133,8 @@ public class ChatController {
      * @return
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input) {
-		Flux<SendMessageResponse> flux = this.chatManager.stream(input);
+    public Flux<SendMessageResponse> stream(@RequestBody SendMessageRequest input, @RequestHeader(value = "Authorization", required = false, defaultValue = "EMPTY") String authorization) {
+		Flux<SendMessageResponse> flux = this.chatManager.stream(input, authorization);
 		return flux
 				.buffer(2, 1)// 滑动窗口，最后一个窗口长度为1
 				.concatMap(pair -> {
