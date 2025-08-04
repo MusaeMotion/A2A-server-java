@@ -187,3 +187,14 @@ logging:
   level:
     # host agent 日志
     # com.musaemotion.a2a.agent.host.core: DEBUG
+
+######################################
+# 需要透传的 headers
+######################################
+header:
+  pass:
+    enabled: true
+    headers:
+      - Authorization
+      - X-User-ID
+      - X-Trace-ID

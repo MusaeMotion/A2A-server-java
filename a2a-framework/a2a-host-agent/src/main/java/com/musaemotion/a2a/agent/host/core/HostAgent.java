@@ -322,7 +322,13 @@ public class HostAgent {
 		Map<String, Object> state = (Map<String, Object>)toolContext.getContext().get(STATE);
 
 		var request = this.sendBefore(state, agentName, message);
-		Task responseTask = client.sendTask(request, this.callback, state.get(AUTHORIZATION)==null?"":state.get(AUTHORIZATION).toString());
+		Task responseTask = client.sendTask(
+				request,
+				this.callback,
+				Optional.ofNullable((Map<String, String>) state.get(PASSTHROUGH_HEADERS))
+						.filter(m -> !m.isEmpty())
+						.orElse(null)
+		);
 		log.debug("sendTask responseTask:{}", responseTask.toString());
 		var responseJsonStr = this.sendAfter(request, responseTask, state,  agentName);
 		log.debug("sendTask responseJsonStr:{}", responseJsonStr.toString());

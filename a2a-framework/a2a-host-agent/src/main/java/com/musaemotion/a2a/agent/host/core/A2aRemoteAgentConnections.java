@@ -107,9 +107,9 @@ public class A2aRemoteAgentConnections {
 	 * @param callback
 	 * @return
 	 */
-	private Task callAgent(TaskSendParams taskSendParams, SendTaskCallbackHandle callback, String authorization){
+	private Task callAgent(TaskSendParams taskSendParams, SendTaskCallbackHandle callback, Map<String,String> headers){
 		SendTaskRequest sendTaskRequest = SendTaskRequest.newInstance(taskSendParams);
-		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest, authorization);
+		SendTaskResponse sendTaskResponse = this.a2aClient.sendTask(sendTaskRequest, headers);
 		if(sendTaskResponse.getResult() == null && sendTaskResponse.getError() != null) {
 			return buildFailedTask(taskSendParams, sendTaskResponse.getError().getMessage());
 		}
@@ -140,12 +140,13 @@ public class A2aRemoteAgentConnections {
 	 * agent 支持 stream 请求
 	 * @param taskSendParams
 	 * @param callback
+	 * @param headers
 	 * @return
 	 */
-	private Task streamAgent(TaskSendParams taskSendParams,  SendTaskCallbackHandle callback, String authorization){
+	private Task streamAgent(TaskSendParams taskSendParams,  SendTaskCallbackHandle callback, Map<String,String> headers){
 		AtomicReference<Task> taskModel = new AtomicReference<>();
 		// 流请求
-		ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams), authorization);
+		ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams), headers);
 		responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
 			if (sendTaskStreamingResponse.getError() != null) {
 				log.error("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
@@ -197,16 +198,18 @@ public class A2aRemoteAgentConnections {
 	}
 
 	/**
-	 * 发送任务, 会判断是流请求，还是 同步请求
+	 * Agent 调用  stream 优先级更高
 	 * @param taskSendParams
 	 * @param callback
+	 * @param headers
+	 * @return
 	 */
-	public Task sendTask(TaskSendParams taskSendParams, SendTaskCallbackHandle callback) {
+	public Task sendTask(TaskSendParams taskSendParams, SendTaskCallbackHandle callback, Map<String,String> headers) {
 		callback.sendTaskCallback(Task.from(taskSendParams, TaskState.SUBMITTED));
 		if (this.getAgentCard().getCapabilities().streaming()) {
-			return this.streamAgent(taskSendParams, callback);
+			return this.streamAgent(taskSendParams, callback, headers);
 		}
-		return this.callAgent(taskSendParams, callback);
+		return this.callAgent(taskSendParams, callback, headers);
 	}
 
 	/**

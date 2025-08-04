@@ -111,7 +111,7 @@ public interface MetaDataKey {
 	String AGENT_ERROR = "agent_error";
 
 	/**
-	 * 授权auth token
+	 * 透传请求头
 	 */
-	String AUTHORIZATION = "authorization";
+	String PASSTHROUGH_HEADERS  = "passthrough.headers";
 }

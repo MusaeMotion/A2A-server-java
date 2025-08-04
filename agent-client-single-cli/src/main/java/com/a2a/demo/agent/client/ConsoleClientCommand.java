@@ -34,6 +34,7 @@ import com.musaemotion.a2a.agent.client.server.PushNotificationServer;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.ConnectableFlux;
 
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -136,7 +137,7 @@ public class ConsoleClientCommand implements Runnable {
         JSONRPCResponse<Task> taskResult;
 
         if(streaming) {
-            ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams),"");
+            ConnectableFlux<SendTaskStreamingResponse> responseConnectableFlux = this.a2aClient.sendTaskStreaming(SendTaskStreamingRequest.newInstance(taskSendParams), Map.of());
             responseConnectableFlux.subscribe(sendTaskStreamingResponse -> {
                 if(sendTaskStreamingResponse.getError()!=null){
                     log.debug("stream error => {}", sendTaskStreamingResponse.getError().getMessage());
@@ -163,7 +164,7 @@ public class ConsoleClientCommand implements Runnable {
                     )
             );
         }else{
-            taskResult = this.a2aClient.sendTask(SendTaskRequest.newInstance(taskSendParams),"");
+            taskResult = this.a2aClient.sendTask(SendTaskRequest.newInstance(taskSendParams), Map.of());
         }
         Task task = taskResult.getResult();
         // 需要用户输入, 完成工件则没有信息，直接返回

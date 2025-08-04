@@ -269,18 +269,19 @@ public class ChatManager {
 	}
 
 	/**
-	 * 构建工具上下文信息，如果有的
+	 * 构建Tool 上下文信息
 	 * @param input
+	 * @param headers
 	 * @return
 	 */
-	private Map<String, Object> buildToolContext(SendMessageRequest input) {
+	private Map<String, Object> buildToolContext(SendMessageRequest input, Map<String,String> headers) {
 
 		Map<String, Object> state = new HashMap<>();
 		state.put(INPUT_MESSAGE_METADATA, input.getMetadata());
 		state.put(CONVERSATION_ID, input.getConversationId());
 		// 主任务Id, 用于后续异步任务主Id使用
 		state.put(MAIN_TASK_ID, GuidUtils.createGuid());
-
+		state.put(PASSTHROUGH_HEADERS, headers);
 		// 工具上下文
 		Map<String, Object> toolContext = new HashMap<>();
 		toolContext.put(STATE, state);
@@ -372,15 +373,16 @@ public class ChatManager {
 	}
 
 	/**
-	 * 同步请求
+	 * call 请求
 	 * @param input
+	 * @param headers
 	 * @return
 	 */
-	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input, String authorization) {
+	public SendMessageResponse<CommonMessageExt> call(SendMessageRequest input, Map<String,String> headers) {
 		var hostAgent = this.buildHostAgent();
 
 		Common.Message userMessage = this.sendBefore(input);
-		ChatResponse chatResponse = hostAgent.call(input, this.buildToolContext(input, authorization), Lists.newArrayList());
+		ChatResponse chatResponse = hostAgent.call(input, this.buildToolContext(input, headers), Lists.newArrayList());
 
 		Common.Message agentMessage = this.sendAfter(chatResponse, userMessage);
 		var message = loadTask(agentMessage);
@@ -395,18 +397,19 @@ public class ChatManager {
 
 
 	/**
-	 * 流请求
+	 * stream 请求
 	 * @param input
+	 * @param headers
 	 * @return
 	 */
-	public Flux<SendMessageResponse> stream(SendMessageRequest input, String authorization) {
+	public Flux<SendMessageResponse> stream(SendMessageRequest input, Map<String,String>  headers) {
 		String messageId = GuidUtils.createGuid();
 
 		var hostAgent = this.buildHostAgent();
 		// 任务发送钱处理
 		Common.Message userMessage = this.sendBefore(input);
 		// 任务发送
-		Flux<ChatResponse> fluxChatResponse = hostAgent.stream(input, this.buildToolContext(input, authorization), Lists.newArrayList());
+		Flux<ChatResponse> fluxChatResponse = hostAgent.stream(input, this.buildToolContext(input, headers), Lists.newArrayList());
 		// 当前请求所有的 messages
 		List<Common.Message> responseMessages = Lists.newArrayList();
 		// 当前最新的 ChatResponse 对象

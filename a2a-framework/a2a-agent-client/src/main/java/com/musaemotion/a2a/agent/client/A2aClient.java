@@ -31,7 +31,7 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.HttpHeaders;
+import org.springframework.http.HttpHeaders;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
@@ -43,7 +43,9 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 /**
  * @author：contact@musaemotion.com
@@ -94,22 +96,24 @@ public class A2aClient {
         this(null, url);
     }
 
-    /**
-     * 发送同步请求
-     * @param sendTaskRequest
-     * @return
-     */
-    public SendTaskResponse sendTask(SendTaskRequest sendTaskRequest, String authorization) {
-        return this.sendRequest(sendTaskRequest,authorization, SendTaskResponse.class).join();
+	/**
+	 * 发送同步请求
+	 * @param sendTaskRequest
+	 * @param headers
+	 * @return
+	 */
+	public SendTaskResponse sendTask(SendTaskRequest sendTaskRequest, Map<String,String> headers) {
+        return this.sendRequest(sendTaskRequest, headers, SendTaskResponse.class).join();
     }
 
-    /**
-     * 发送流请求
-     * @param sendTaskStreamingRequest
-     * @return
-     */
-    public ConnectableFlux<SendTaskStreamingResponse> sendTaskStreaming(SendTaskStreamingRequest sendTaskStreamingRequest, String authorization) {
-        return this.sendTaskStreaming(sendTaskStreamingRequest, authorization, SendTaskStreamingResponse.class);
+	/**
+	 * 发送流请求
+	 * @param sendTaskStreamingRequest
+	 * @param headers
+	 * @return
+	 */
+	public ConnectableFlux<SendTaskStreamingResponse> sendTaskStreaming(SendTaskStreamingRequest sendTaskStreamingRequest, Map<String,String> headers) {
+        return this.sendTaskStreaming(sendTaskStreamingRequest, headers, SendTaskStreamingResponse.class);
     }
 
     /**
@@ -118,7 +122,8 @@ public class A2aClient {
      * @return
      */
     public GetTaskResponse getTask(GetTaskRequest getTaskRequest) {
-        return this.sendRequest(getTaskRequest,"", GetTaskResponse.class).join();
+		// 没有透传token
+        return this.sendRequest(getTaskRequest, Map.of(), GetTaskResponse.class).join();
     }
 
     /**
@@ -129,7 +134,8 @@ public class A2aClient {
     public CancelTaskResponse cancelTask(LinkedHashMap payload){
         ObjectMapper objectMapper = new ObjectMapper();
         CancelTaskRequest cancelTaskRequest = objectMapper.convertValue(payload, CancelTaskRequest.class);
-        return this.sendRequest(cancelTaskRequest,"", CancelTaskResponse.class).join();
+		// 没有透传token
+        return this.sendRequest(cancelTaskRequest, Map.of(), CancelTaskResponse.class).join();
     }
 
     /**
@@ -140,7 +146,8 @@ public class A2aClient {
     public SetTaskPushNotificationResponse setTaskCallback(LinkedHashMap payload){
         ObjectMapper objectMapper = new ObjectMapper();
         SetTaskPushNotificationRequest setTaskPushNotificationRequest = objectMapper.convertValue(payload, SetTaskPushNotificationRequest.class);
-        return this.sendRequest(setTaskPushNotificationRequest,"", SetTaskPushNotificationResponse.class).join();
+		// 没有透传token
+        return this.sendRequest(setTaskPushNotificationRequest, Map.of(),  SetTaskPushNotificationResponse.class).join();
     }
 
     /**
@@ -151,19 +158,34 @@ public class A2aClient {
     public GetTaskPushNotificationResponse getTaskCallback(LinkedHashMap payload) {
         ObjectMapper objectMapper = new ObjectMapper();
         GetTaskPushNotificationRequest getTaskPushNotificationRequest = objectMapper.convertValue(payload, GetTaskPushNotificationRequest.class);
-        return this.sendRequest(getTaskPushNotificationRequest,"", GetTaskPushNotificationResponse.class).join();
+		// 没有透传token
+        return this.sendRequest(getTaskPushNotificationRequest, Map.of(),  GetTaskPushNotificationResponse.class).join();
     }
 
 
 	/**
-	 * 调用远程智能体流请求
+	 * 发送远程智能体流请求
 	 * @param request
+	 * @param headers
 	 * @param clazz
 	 * @return
 	 * @param <T>
 	 */
-    private <T> ConnectableFlux<T> sendTaskStreaming(JSONRPCRequest request, String authorization,  Class<T> clazz) {
-        Flux flux = Flux.create(sink -> {
+    private <T> ConnectableFlux<T> sendTaskStreaming(JSONRPCRequest request, Map<String,String> headers, Class<T> clazz) {
+
+		// 构造 header 写入器
+		Consumer<HttpHeaders> headerWriter = httpHeaders -> {
+			httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+			if (headers != null) {
+				headers.forEach((k, v) -> {
+					if (k != null && v != null) {
+						httpHeaders.add(k, v);
+					}
+				});
+			}
+		};
+
+		Flux flux = Flux.create(sink -> {
             WebClient httpClient = WebClient.create(this.url);
             Flux<String> eventStream = null;
             try {
@@ -171,8 +193,7 @@ public class A2aClient {
                 String jsonBody = objectMapper.writeValueAsString(request);
                 eventStream = httpClient.post()
                         .bodyValue(jsonBody)
-                        .header(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
-						.header(HttpHeaders.AUTHORIZATION,  authorization)
+						.headers(headerWriter)
                         .accept(MediaType.TEXT_EVENT_STREAM)
                         .retrieve()
                         .bodyToFlux(String.class);
@@ -205,21 +226,29 @@ public class A2aClient {
     }
 
 
-
-    /**
-     * 发送同步请求
-     * @param request
-     * @param clazz
-     * @return
-     * @param <T>
-     */
-    private <T> CompletableFuture<T> sendRequest(JSONRPCRequest request, String authorization, Class<T> clazz) {
+	/**
+	 * 发送远程智能体同步请求
+	 * @param request
+	 * @param headers
+	 * @param clazz
+	 * @return
+	 * @param <T>
+	 */
+	private <T> CompletableFuture<T> sendRequest(JSONRPCRequest request, Map<String,String> headers, Class<T> clazz) {
         return CompletableFuture.supplyAsync(() -> {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 String jsonBody = objectMapper.writeValueAsString(request);
                 HttpPost post = new HttpPost(this.url);
-				post.setHeader(HttpHeaders.AUTHORIZATION, authorization);
+
+				// 1️⃣ 设置 Content-Type
+				post.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString());
+				// 2️⃣ 批量添加透传头（null / empty 安全）
+				if (headers != null) {
+					headers.entrySet().stream()
+							.filter(e -> e.getKey() != null && e.getValue() != null)
+							.forEach(e -> post.setHeader(e.getKey(), e.getValue()));
+				}
                 post.setEntity(new StringEntity(jsonBody, ContentType.APPLICATION_JSON));
                 try (CloseableHttpResponse response = httpClient.execute(post)) {
                     String responseBody = EntityUtils.toString(response.getEntity());
